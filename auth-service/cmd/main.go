@@ -6,8 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/rhaloubi/payment-gateway/auth-service/inits"
 	"github.com/rhaloubi/payment-gateway/auth-service/internal/api"
-	inits "github.com/rhaloubi/payment-gateway/auth-service/pkg"
 )
 
 func init() {
