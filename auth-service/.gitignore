@@ -8,3 +8,4 @@ config.local.yaml
 *.sublime-project
 *.sublime-workspace
 .DS_Store
+/tmp/
