@@ -10,9 +10,9 @@ var R *gin.Engine
 func Routes() {
 	R = gin.Default()
 	// Define your routes here
-	R.GET("/", func(c *gin.Context) {
+	R.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
-			"message": "home page",
+			"message": "health check",
 		})
 	})
 	/*R.POST("/accounts", controllers.CreateAccount)

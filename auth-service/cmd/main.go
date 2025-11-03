@@ -20,13 +20,11 @@ func init() {
 }
 
 func main() {
-	defer logger.Sync() // flush logs before exit
+	defer logger.Sync()
 
-	// Create a channel to listen for interrupt (Ctrl+C) or system termination
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-	// Run the API server in a goroutine so we can listen for shutdown
 	go func() {
 		if err := api.R.Run(); err != nil {
 			logger.Log.Error("Server error", zap.Error(err))
@@ -35,7 +33,6 @@ func main() {
 
 	logger.Log.Info("✅ Server running... Press Ctrl+C to stop.")
 
-	// Wait until a stop signal is received
 	<-stop
 	logger.Log.Warn("🛑 Shutting down gracefully...")
 
