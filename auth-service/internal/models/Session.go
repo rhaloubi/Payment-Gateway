@@ -1,4 +1,4 @@
-package models
+package model
 
 import (
 	"database/sql"
@@ -13,7 +13,7 @@ type Session struct {
 	UserID uuid.UUID `gorm:"type:uuid;not null;index"`
 
 	// Token info
-	JWTToken string `gorm:"type:text;not null;index"` // Store JWT token hash for validation
+	JWTToken string `gorm:"type:text;not null;index"`
 
 	// Session metadata
 	IPAddress sql.NullString `gorm:"type:varchar(45)"`

@@ -1,4 +1,4 @@
-package models
+package model
 
 import (
 	"time"
@@ -9,8 +9,8 @@ import (
 
 type Permission struct {
 	ID          uuid.UUID `gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
-	Resource    string    `gorm:"type:varchar(100);not null"`
-	Action      string    `gorm:"type:varchar(50);not null"`
+	Resource    string    `gorm:"type:varchar(100);not null"` // What: e.g., 'transactions', 'invoices'
+	Action      string    `gorm:"type:varchar(50);not null"`  // How: e.g., 'read', 'create', 'delete'
 	Description string    `gorm:"type:text"`
 
 	// Relationships
