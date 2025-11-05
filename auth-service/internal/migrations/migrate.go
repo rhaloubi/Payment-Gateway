@@ -1,15 +1,31 @@
-package database
+package main
 
 import (
 	"fmt"
 
-	//"github.com/rhaloubi/payment-gateway/auth-service/inits/logger"
+	"github.com/rhaloubi/payment-gateway/auth-service/inits"
+	"github.com/rhaloubi/payment-gateway/auth-service/inits/logger"
 	model "github.com/rhaloubi/payment-gateway/auth-service/internal/models"
-	"gorm.io/gorm"
+	"go.uber.org/zap"
 )
 
-func RunAuthMigrations(db *gorm.DB) error {
+func init() {
+	inits.InitDotEnv()
+	logger.Init()
+	inits.InitDB()
+}
+func main() {
+	// Run migrations
+	if err := RunAuthMigrations(); err != nil {
+		logger.Log.Error("Migration failed", zap.Error(err))
+	}
+
+	logger.Log.Info("✅ Migrations completed successfully!")
+}
+
+func RunAuthMigrations() error {
 	// Enable UUID extension
+	db := inits.DB
 
 	if err := db.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"").Error; err != nil {
 		return fmt.Errorf("failed to create uuid extension: %w", err)
@@ -33,14 +49,16 @@ func RunAuthMigrations(db *gorm.DB) error {
 	}
 
 	// Seed default roles and permissions
-	if err := seedDefaultRolesAndPermissions(db); err != nil {
+	if err := seedDefaultRolesAndPermissions(); err != nil {
 		return fmt.Errorf("failed to seed default data: %w", err)
 	}
 
 	return nil
 }
 
-func seedDefaultRolesAndPermissions(db *gorm.DB) error {
+func seedDefaultRolesAndPermissions() error {
+	db := inits.DB
+
 	// Check if already seeded
 	var count int64
 	db.Model(&model.Role{}).Count(&count)
@@ -163,7 +181,8 @@ func seedDefaultRolesAndPermissions(db *gorm.DB) error {
 	return nil
 }
 
-func RollbackAuthMigrations(db *gorm.DB) error {
+func RollbackAuthMigrations() error {
+	db := inits.DB
 	// Drop tables in reverse order
 	models := []interface{}{
 		&model.APIKey{},
