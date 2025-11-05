@@ -9,6 +9,8 @@ import (
 type UserRole struct {
 	UserID     uuid.UUID `gorm:"type:uuid;not null;primaryKey"`
 	RoleID     uuid.UUID `gorm:"type:uuid;not null;primaryKey"`
+	MerchantID uuid.UUID `gorm:"type:uuid;not null;index"` // From merchant service
+	AssignedBy uuid.UUID `gorm:"type:uuid"`                // Who assigned this role
 	AssignedAt time.Time `gorm:"not null;default:now()"`
 
 	// Relationships
