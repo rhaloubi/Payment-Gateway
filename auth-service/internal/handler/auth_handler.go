@@ -280,16 +280,16 @@ func (h *AuthHandler) GetSessions(c *gin.Context) {
 		})
 		return
 	}
-	parsedUserID, err := uuid.Parse(userID.(string))
+	/* parsedUserID, err := uuid.Parse(userID.(string))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "invalid user ID format",
 		})
 		return
-	}
+	}*/
 	// Call service
-	sessions, err := h.authService.GetUserSessions(parsedUserID)
+	sessions, err := h.authService.GetUserSessions(uuid.MustParse(userID.(string)))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
