@@ -11,6 +11,8 @@ import (
 func Routes() {
 	r := inits.R
 	authHandler := handler.NewAuthHandler()
+	roleHandler := handler.NewRoleHandler()
+	apiKeyHandler := handler.NewAPIKeyHandler()
 	// Define your routes here
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -37,6 +39,24 @@ func Routes() {
 			authProtected.POST("/change-password", authHandler.ChangePassword)
 			authProtected.GET("/sessions", authHandler.GetSessions)
 		}
+		roles := v1.Group("/roles")
+		roles.Use(middleware.AuthMiddleware())
+		{
+			roles.GET("", roleHandler.GetAllRoles)
+			roles.GET("/:id", roleHandler.GetRoleByID)
+			roles.POST("/assign", roleHandler.AssignRoleToUser)
+			roles.DELETE("/assign", roleHandler.RemoveRoleFromUser)
+			roles.GET("/user/:user_id/merchant/:merchant_id", roleHandler.GetUserRoles)
+			roles.GET("/user/:user_id/merchant/:merchant_id/permissions", roleHandler.GetUserPermissions)
+		}
 		// ***
+		apiKeys := v1.Group("/api-keys")
+		apiKeys.Use(middleware.AuthMiddleware())
+		{
+			apiKeys.POST("", apiKeyHandler.CreateAPIKey)
+			apiKeys.GET("/merchant/:merchant_id", apiKeyHandler.GetMerchantAPIKeys)
+			apiKeys.PATCH("/:id/deactivate", apiKeyHandler.DeactivateAPIKey)
+			apiKeys.DELETE("/:id", apiKeyHandler.DeleteAPIKey)
+		}
 	}
 }
