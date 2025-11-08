@@ -18,8 +18,7 @@ const (
 )
 
 type User struct {
-	ID         uuid.UUID `gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
-	MerchantID uuid.UUID `gorm:"type:uuid;not null;index"`
+	ID uuid.UUID `gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
 
 	// Basic info
 	Name          string `gorm:"type:varchar(255);not null"`
@@ -30,16 +29,14 @@ type User struct {
 	// Status
 	Status UserStatus `gorm:"type:varchar(50);default:'pending_verification'"`
 
-	// Failed login tracking (for security)
+	// Security - Failed login tracking
 	FailedLoginAttempts int            `gorm:"default:0"`
 	LockedUntil         sql.NullTime   `gorm:"type:timestamp"`
 	LastLoginAt         sql.NullTime   `gorm:"type:timestamp"`
 	LastLoginIP         sql.NullString `gorm:"type:varchar(45)"`
 
 	// Relationships
-	Roles          []Role    `gorm:"many2many:user_roles;"`
-	Sessions       []Session `gorm:"foreignKey:UserID"`
-	CreatedAPIKeys []APIKey  `gorm:"foreignKey:CreatedBy"`
+	Sessions []Session `gorm:"foreignKey:UserID"`
 
 	// Timestamps
 	CreatedAt time.Time      `gorm:"not null;default:now()"`
