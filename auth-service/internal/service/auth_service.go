@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rhaloubi/payment-gateway/auth-service/inits"
 	"github.com/rhaloubi/payment-gateway/auth-service/inits/jwt"
 	model "github.com/rhaloubi/payment-gateway/auth-service/internal/models"
 	"github.com/rhaloubi/payment-gateway/auth-service/internal/repository"
@@ -12,16 +13,18 @@ import (
 )
 
 type AuthService struct {
-	userRepo    *repository.UserRepository
-	sessionRepo *repository.SessionRepository
-	jwtUtil     *jwt.JWTUtil
+	userRepo     *repository.UserRepository
+	sessionRepo  *repository.SessionRepository
+	jwtUtil      *jwt.JWTUtil
+	emailService *inits.EmailService
 }
 
 func NewAuthService() *AuthService {
 	return &AuthService{
-		userRepo:    repository.NewUserRepository(),
-		sessionRepo: repository.NewSessionRepository(),
-		jwtUtil:     jwt.NewJWTUtil(),
+		userRepo:     repository.NewUserRepository(),
+		sessionRepo:  repository.NewSessionRepository(),
+		jwtUtil:      jwt.NewJWTUtil(),
+		emailService: inits.NewEmailService(),
 	}
 }
 
@@ -80,8 +83,6 @@ func (s *AuthService) Register(req *RegisterRequest) (*model.User, error) {
 		return nil, err
 	}
 
-	// TODO: Send verification email
-
 	return user, nil
 }
 
@@ -104,7 +105,7 @@ func (s *AuthService) Login(req *LoginRequest) (*LoginResponse, error) {
 	}
 
 	// Verify password
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+	if err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
 		// Increment failed login attempts
 		s.userRepo.IncrementFailedLoginAttempts(user.ID)
 
