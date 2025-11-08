@@ -168,12 +168,10 @@ func (s *AuthService) Logout(accessToken string) error {
 	return s.sessionRepo.RevokeSession(session.ID)
 }
 
-// LogoutAll revokes all sessions for a user
 func (s *AuthService) LogoutAll(userID uuid.UUID) error {
 	return s.sessionRepo.RevokeAllUserSessions(userID)
 }
 
-// ValidateToken validates an access token and returns the user
 func (s *AuthService) ValidateToken(accessToken string) (*model.User, error) {
 	// Parse and validate JWT
 	claims, err := s.jwtUtil.ValidateAccessToken(accessToken)
@@ -207,7 +205,6 @@ func (s *AuthService) ValidateToken(accessToken string) (*model.User, error) {
 	return user, nil
 }
 
-// RefreshToken generates a new access token using a refresh token
 func (s *AuthService) RefreshToken(refreshToken string) (*LoginResponse, error) {
 	// Validate refresh token
 	claims, err := s.jwtUtil.ValidateRefreshToken(refreshToken)
@@ -259,7 +256,7 @@ func (s *AuthService) ChangePassword(userID uuid.UUID, oldPassword, newPassword 
 	}
 
 	// Verify old password
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(oldPassword)); err != nil {
+	if err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(oldPassword)); err != nil {
 		return errors.New("current password is incorrect")
 	}
 
