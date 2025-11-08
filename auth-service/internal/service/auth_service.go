@@ -83,6 +83,10 @@ func (s *AuthService) Register(req *RegisterRequest) (*model.User, error) {
 		return nil, err
 	}
 
+	//add this for now (verify email auto)
+	if err := s.userRepo.VerifyEmail(user.ID); err != nil {
+		return nil, err
+	}
 	return user, nil
 }
 

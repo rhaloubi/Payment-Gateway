@@ -238,10 +238,18 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 		})
 		return
 	}
+	parsedUserID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "invalid user ID format",
+		})
+		return
+	}
 
 	// Call service
-	err := h.authService.ChangePassword(
-		userID.(uuid.UUID),
+	err = h.authService.ChangePassword(
+		parsedUserID,
 		req.OldPassword,
 		req.NewPassword,
 	)
@@ -272,9 +280,16 @@ func (h *AuthHandler) GetSessions(c *gin.Context) {
 		})
 		return
 	}
-
+	parsedUserID, err := uuid.Parse(userID.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "invalid user ID format",
+		})
+		return
+	}
 	// Call service
-	sessions, err := h.authService.GetUserSessions(userID.(uuid.UUID))
+	sessions, err := h.authService.GetUserSessions(parsedUserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
