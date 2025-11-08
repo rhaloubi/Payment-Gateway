@@ -26,7 +26,7 @@ func main() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		if err := api.R.Run(); err != nil {
+		if err := inits.R.Run(); err != nil {
 			logger.Log.Error("Server error", zap.Error(err))
 		}
 	}()
