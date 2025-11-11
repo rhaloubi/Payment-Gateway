@@ -1,0 +1,79 @@
+package main
+
+import (
+	"fmt"
+
+	"github.com/rhaloubi/payment-gateway/merchant-service/inits"
+	"github.com/rhaloubi/payment-gateway/merchant-service/inits/logger"
+	model "github.com/rhaloubi/payment-gateway/merchant-service/internal/models"
+	"go.uber.org/zap"
+)
+
+func init() {
+	inits.InitDotEnv()
+	logger.Init()
+	inits.InitDB()
+}
+
+func main() {
+	// Run migrations
+	if err := RunMerchantMigrations(); err != nil {
+		logger.Log.Error("Migration failed", zap.Error(err))
+	}
+
+	logger.Log.Info("✅ Migrations completed successfully!")
+}
+
+func RunMerchantMigrations() error {
+	db := inits.DB
+
+	// Enable UUID extension (if not already enabled)
+	if err := db.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"").Error; err != nil {
+		return fmt.Errorf("failed to create uuid extension: %w", err)
+	}
+
+	// Auto migrate all models
+	models := []interface{}{
+		&model.Merchant{},
+		&model.MerchantUser{},
+		&model.MerchantInvitation{},
+		&model.MerchantSettings{},
+		&model.MerchantBusinessInfo{},
+		&model.MerchantBranding{},
+		&model.MerchantVerification{},
+		&model.MerchantActivityLog{},
+	}
+
+	for _, m := range models {
+		if err := db.AutoMigrate(m); err != nil {
+			return fmt.Errorf("failed to migrate %T: %w", m, err)
+		}
+	}
+
+	return nil
+}
+
+// RollbackMerchantMigrations rolls back all merchant service migrations
+func RollbackMerchantMigrations() error {
+	db := inits.DB
+
+	// Drop tables in reverse order
+	models := []interface{}{
+		&model.MerchantActivityLog{},
+		&model.MerchantVerification{},
+		&model.MerchantBranding{},
+		&model.MerchantBusinessInfo{},
+		&model.MerchantSettings{},
+		&model.MerchantInvitation{},
+		&model.MerchantUser{},
+		&model.Merchant{},
+	}
+
+	for _, m := range models {
+		if err := db.Migrator().DropTable(m); err != nil {
+			return fmt.Errorf("failed to drop table %T: %w", m, err)
+		}
+	}
+
+	return nil
+}
