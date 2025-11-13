@@ -58,7 +58,7 @@ func (h *MerchantHandler) CreateMerchant(c *gin.Context) {
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"error":   "unauthorized",
+			"error":   "unauthorizedd",
 		})
 		return
 	}

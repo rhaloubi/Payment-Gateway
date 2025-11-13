@@ -6,15 +6,13 @@ import (
 	"github.com/rhaloubi/payment-gateway/merchant-service/internal/middleware"
 )
 
-// SetupMerchantRoutes sets up all merchant-related routes
 func SetupMerchantRoutes() {
 	router := inits.R
 
 	merchantHandler := handler.NewMerchantHandler()
 
-	// API v1 group
 	v1 := router.Group("/api/v1")
-	//v1.Use(authMiddleware.AuthMiddleware())
+	v1.Use(middleware.AuthMiddleware())
 	{
 		// Merchant routes
 		merchants := v1.Group("/merchants")

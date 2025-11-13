@@ -7,6 +7,7 @@ import (
 
 	"github.com/rhaloubi/payment-gateway/merchant-service/inits"
 	"github.com/rhaloubi/payment-gateway/merchant-service/inits/logger"
+	"github.com/rhaloubi/payment-gateway/merchant-service/internal/api"
 	"go.uber.org/zap"
 )
 
@@ -15,7 +16,7 @@ func init() {
 	inits.InitDB()
 	inits.InitRedis()
 	logger.Init()
-	//api.Routes()
+	api.SetupMerchantRoutes()
 }
 
 func main() {

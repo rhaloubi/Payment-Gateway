@@ -5,7 +5,6 @@ import (
 	"github.com/rhaloubi/payment-gateway/auth-service/inits"
 	"github.com/rhaloubi/payment-gateway/auth-service/internal/handler"
 	"github.com/rhaloubi/payment-gateway/auth-service/internal/middleware"
-	//"github.com/rhaloubi/go-learning/db/controllers"
 )
 
 func Routes() {
@@ -13,12 +12,24 @@ func Routes() {
 	authHandler := handler.NewAuthHandler()
 	roleHandler := handler.NewRoleHandler()
 	apiKeyHandler := handler.NewAPIKeyHandler()
+	internalHandler := handler.NewInternalHandler()
+
 	// Define your routes here
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "health check",
 		})
 	})
+
+	internal := r.Group("/internal/v1")
+	internal.Use(middleware.InternalServiceMiddleware())
+	{
+		// Role assignment for merchant owners
+		internal.POST("/roles/assign-merchant-owner", internalHandler.AssignMerchantOwnerRole)
+
+		// Get user roles (for merchant service to check access)
+		internal.GET("/users/:user_id/roles", internalHandler.GetUserRolesByUserID)
+	}
 
 	// /api/v1/*
 	v1 := r.Group("/api/v1")

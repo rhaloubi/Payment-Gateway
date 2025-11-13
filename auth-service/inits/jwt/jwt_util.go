@@ -28,7 +28,7 @@ type JWTClaims struct {
 func NewJWTUtil() *JWTUtil {
 	secretKey := os.Getenv("JWT_SECRET_KEY")
 	if secretKey == "" {
-		secretKey = "default-secret-key-change-in-production" // Fallback for development
+		secretKey = "default-secret-key-change-in-production"
 	}
 	return &JWTUtil{
 		secretKey: secretKey,
