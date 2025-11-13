@@ -91,6 +91,7 @@ func (s *MerchantService) CreateMerchant(req *CreateMerchantRequest) (*model.Mer
 	}
 	if err := s.authClient.AssignMerchantOwnerRole(req.OwnerID, merchant.ID); err != nil {
 		fmt.Printf("WARNING: Failed to assign admin role to merchant owner: %v\n", err)
+		return nil, err
 	}
 
 	// Log activity

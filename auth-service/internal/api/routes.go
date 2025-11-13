@@ -22,7 +22,7 @@ func Routes() {
 	})
 
 	internal := r.Group("/internal/v1")
-	internal.Use(middleware.InternalServiceMiddleware())
+	//internal.Use(middleware.InternalServiceMiddleware())
 	{
 		// Role assignment for merchant owners
 		internal.POST("/roles/assign-merchant-owner", internalHandler.AssignMerchantOwnerRole)

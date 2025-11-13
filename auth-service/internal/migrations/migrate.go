@@ -7,6 +7,7 @@ import (
 	"github.com/rhaloubi/payment-gateway/auth-service/inits/logger"
 	model "github.com/rhaloubi/payment-gateway/auth-service/internal/models"
 	"go.uber.org/zap"
+	//"gorm.io/gorm"
 )
 
 func init() {
@@ -48,6 +49,11 @@ func RunAuthMigrations() error {
 		}
 	}
 
+	/*if err := ensureUserRoleColumns(db); err != nil {
+		return fmt.Errorf("failed to ensure UserRole merchant_id column: %w", err)
+	}
+	*/
+
 	// Seed default roles and permissions
 	if err := seedDefaultRolesAndPermissions(); err != nil {
 		return fmt.Errorf("failed to seed default data: %w", err)
@@ -55,6 +61,58 @@ func RunAuthMigrations() error {
 
 	return nil
 }
+
+/* ensureUserRoleColumns ensures the user_roles table has all required columns
+func ensureUserRoleColumns(db *gorm.DB) error {
+	// Check and add merchant_id column
+	if err := ensureColumnExists(db, "user_roles", "merchant_id", "UUID NOT NULL"); err != nil {
+		return fmt.Errorf("failed to ensure merchant_id column: %w", err)
+	}
+
+	// Check and add assigned_by column
+	if err := ensureColumnExists(db, "user_roles", "assigned_by", "UUID"); err != nil {
+		return fmt.Errorf("failed to ensure assigned_by column: %w", err)
+	}
+
+	// Check and add assigned_at column
+	if err := ensureColumnExists(db, "user_roles", "assigned_at", "TIMESTAMP NOT NULL DEFAULT NOW()"); err != nil {
+		return fmt.Errorf("failed to ensure assigned_at column: %w", err)
+	}
+
+	// Ensure index on merchant_id
+	if err := db.Exec(`CREATE INDEX IF NOT EXISTS idx_user_roles_merchant_id ON user_roles(merchant_id)`).Error; err != nil {
+		return fmt.Errorf("failed to create index on merchant_id: %w", err)
+	}
+
+	return nil
+}
+
+// ensureColumnExists checks if a column exists and adds it if it doesn't
+func ensureColumnExists(db *gorm.DB, tableName, columnName, columnDefinition string) error {
+	var columnExists bool
+	err := db.Raw(`
+		SELECT EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_name = ?
+			AND column_name = ?
+		)
+	`, tableName, columnName).Scan(&columnExists).Error
+
+	if err != nil {
+		return fmt.Errorf("failed to check if %s column exists: %w", columnName, err)
+	}
+
+	if !columnExists {
+		// Add the column
+		alterSQL := fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", tableName, columnName, columnDefinition)
+		if err := db.Exec(alterSQL).Error; err != nil {
+			return fmt.Errorf("failed to add %s column: %w", columnName, err)
+		}
+	}
+
+	return nil
+}
+*/
 
 func seedDefaultRolesAndPermissions() error {
 	db := inits.DB
