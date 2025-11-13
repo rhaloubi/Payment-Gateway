@@ -3,8 +3,10 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/rhaloubi/payment-gateway/merchant-service/internal/client"
 	model "github.com/rhaloubi/payment-gateway/merchant-service/internal/models"
 	"github.com/rhaloubi/payment-gateway/merchant-service/internal/repository"
 )
@@ -17,6 +19,8 @@ type MerchantService struct {
 	brandingRepo     *repository.BrandingRepository
 	verificationRepo *repository.VerificationRepository
 	activityLogRepo  *repository.ActivityLogRepository
+	authClient       *client.AuthServiceClient // NEW: Add auth client
+
 }
 
 // NewMerchantService creates a new merchant service
@@ -28,6 +32,7 @@ func NewMerchantService() *MerchantService {
 		brandingRepo:     repository.NewBrandingRepository(),
 		verificationRepo: repository.NewVerificationRepository(),
 		activityLogRepo:  repository.NewActivityLogRepository(),
+		authClient:       client.NewAuthServiceClient(), // NEW: Initialize auth client
 	}
 }
 
@@ -83,6 +88,9 @@ func (s *MerchantService) CreateMerchant(req *CreateMerchantRequest) (*model.Mer
 	// Create default verification record
 	if err := s.createDefaultVerification(merchant.ID); err != nil {
 		return nil, err
+	}
+	if err := s.authClient.AssignMerchantOwnerRole(req.OwnerID, merchant.ID); err != nil {
+		fmt.Printf("WARNING: Failed to assign admin role to merchant owner: %v\n", err)
 	}
 
 	// Log activity

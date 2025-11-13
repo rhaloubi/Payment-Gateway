@@ -5,14 +5,21 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/rhaloubi/payment-gateway/merchant-service/inits/jwt"
 	"github.com/rhaloubi/payment-gateway/merchant-service/internal/service"
 )
 
-// RequireMerchantAccess checks if user has access to merchant
+// AuthMiddleware returns the JWT auth middleware (lazy initialization)
+func AuthMiddleware() gin.HandlerFunc {
+	return jwt.NewJWTValidator().AuthMiddleware()
+}
+
 func RequireMerchantAccess() gin.HandlerFunc {
 	teamService := service.NewTeamService()
+	jwtValidator := jwt.NewJWTValidator()
 
 	return func(c *gin.Context) {
+		// Get merchant ID from URL parameter
 		merchantID, err := uuid.Parse(c.Param("id"))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -23,19 +30,18 @@ func RequireMerchantAccess() gin.HandlerFunc {
 			return
 		}
 
-		userID, exists := c.Get("user_id")
-		if !exists {
+		userID, err := jwtValidator.GetUserIDFromContext(c)
+		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
-				"error":   "unauthorized",
+				"error":   "unauthorized: " + err.Error(),
 			})
 			c.Abort()
 			return
 		}
 
-		userUUID, _ := uuid.Parse(userID.(string))
-
-		hasAccess, err := teamService.IsUserInMerchant(merchantID, userUUID)
+		// Check if user has access to merchant
+		hasAccess, err := teamService.IsUserInMerchant(merchantID, userID)
 		if err != nil || !hasAccess {
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
