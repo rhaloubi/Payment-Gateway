@@ -1,7 +1,6 @@
 package service
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 
@@ -90,10 +89,6 @@ func (s *MerchantService) CreateMerchant(req *CreateMerchantRequest) (*model.Mer
 	s.logActivity(merchant.ID, req.OwnerID, "merchant_created", "", merchant.ID, nil)
 
 	return merchant, nil
-}
-
-func toNullString(s string) sql.NullString {
-	panic("unimplemented")
 }
 
 // GetMerchantByID gets a merchant by ID
