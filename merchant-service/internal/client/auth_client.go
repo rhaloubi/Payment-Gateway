@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rhaloubi/payment-gateway/merchant-service/inits/logger"
+	"go.uber.org/zap"
 )
 
 // AuthServiceClient handles communication with Auth Service
@@ -58,12 +60,12 @@ func (c *AuthServiceClient) AssignMerchantOwnerRole(userID, merchantID uuid.UUID
 
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
-		return fmt.Errorf("failed to marshal request: %w", err)
+		logger.Log.Error("failed to marshal request:", zap.Error(err))
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		logger.Log.Error("failed to create request:", zap.Error(err))
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -73,13 +75,13 @@ func (c *AuthServiceClient) AssignMerchantOwnerRole(userID, merchantID uuid.UUID
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
+		logger.Log.Error("request failed:", zap.Error(err))
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read response: %w", err)
+		logger.Log.Error("failed to read response:", zap.Error(err))
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -88,11 +90,11 @@ func (c *AuthServiceClient) AssignMerchantOwnerRole(userID, merchantID uuid.UUID
 
 	var response AssignMerchantOwnerRoleResponse
 	if err := json.Unmarshal(body, &response); err != nil {
-		return fmt.Errorf("failed to unmarshal response: %w", err)
+		logger.Log.Error("failed to unmarshal response:", zap.Error(err))
 	}
 
 	if !response.Success {
-		return fmt.Errorf("role assignment failed: %s", response.Message)
+		logger.Log.Error("role assignment failed:", zap.Error(fmt.Errorf("%s", response.Message)))
 	}
 
 	return nil
@@ -112,14 +114,14 @@ func (c *AuthServiceClient) GetUserRoles(userID, merchantID uuid.UUID) ([]UserRo
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		logger.Log.Error("failed to create request:", zap.Error(err))
 	}
 
 	req.Header.Set("X-Internal-Service", "merchant-service")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
+		logger.Log.Error("request failed:", zap.Error(err))
 	}
 	defer resp.Body.Close()
 

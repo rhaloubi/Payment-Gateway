@@ -3,12 +3,13 @@ package service
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rhaloubi/payment-gateway/merchant-service/inits/logger"
 	model "github.com/rhaloubi/payment-gateway/merchant-service/internal/models"
 	"github.com/rhaloubi/payment-gateway/merchant-service/internal/repository"
+	"go.uber.org/zap"
 )
 
 type TeamService struct {
@@ -71,7 +72,7 @@ func (s *TeamService) InviteTeamMember(req *InviteTeamMemberRequest) (*model.Mer
 	// Send invitation email via Mailtrap
 	if err := s.emailService.SendInvitationEmail(invitation, merchant); err != nil {
 		// Log error but don't fail the invitation
-		fmt.Printf("Failed to send invitation email: %v\n", err)
+		logger.Log.Error("Failed to send invitation email", zap.Error(err))
 	}
 
 	// Log activity
@@ -84,7 +85,6 @@ func (s *TeamService) InviteTeamMember(req *InviteTeamMemberRequest) (*model.Mer
 	return invitation, nil
 }
 
-// AcceptInvitation accepts a team invitation
 func (s *TeamService) AcceptInvitation(token string, userID uuid.UUID) error {
 	// Find invitation
 	invitation, err := s.invitationRepo.FindByToken(token)

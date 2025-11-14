@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/rhaloubi/payment-gateway/merchant-service/inits"
 	"github.com/rhaloubi/payment-gateway/merchant-service/inits/logger"
 	model "github.com/rhaloubi/payment-gateway/merchant-service/internal/models"
@@ -29,7 +27,7 @@ func RunMerchantMigrations() error {
 
 	// Enable UUID extension (if not already enabled)
 	if err := db.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"").Error; err != nil {
-		return fmt.Errorf("failed to create uuid extension: %w", err)
+		logger.Log.Error("failed to create uuid extension:", zap.Error(err))
 	}
 
 	// Auto migrate all models
@@ -46,7 +44,7 @@ func RunMerchantMigrations() error {
 
 	for _, m := range models {
 		if err := db.AutoMigrate(m); err != nil {
-			return fmt.Errorf("failed to migrate %T: %w", m, err)
+			logger.Log.Error("failed to migrate %T:", zap.Error(err))
 		}
 	}
 
@@ -71,7 +69,7 @@ func RollbackMerchantMigrations() error {
 
 	for _, m := range models {
 		if err := db.Migrator().DropTable(m); err != nil {
-			return fmt.Errorf("failed to drop table %T: %w", m, err)
+			logger.Log.Error("failed to drop table %T:", zap.Error(err))
 		}
 	}
 
