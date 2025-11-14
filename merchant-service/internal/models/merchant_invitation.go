@@ -24,7 +24,8 @@ type MerchantInvitation struct {
 
 	// Invitation details
 	Email           string    `gorm:"type:varchar(255);not null;index"`
-	RoleID          uuid.UUID `gorm:"type:uuid;not null"` // Role to be assigned
+	RoleID          uuid.UUID `gorm:"type:uuid;not null"`         // Role to be assigned
+	RoleName        string    `gorm:"type:varchar(255);not null"` // Role name to be assigned
 	InvitationToken string    `gorm:"type:varchar(255);uniqueIndex;not null"`
 
 	// Inviter

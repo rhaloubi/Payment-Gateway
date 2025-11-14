@@ -22,23 +22,27 @@ func SetupMerchantRoutes() {
 			merchants.POST("", merchantHandler.CreateMerchant)
 			merchants.GET("", merchantHandler.ListUserMerchants)
 
-			// Merchant-specific routes (require merchant access)
 			merchantGroup := merchants.Group("/:id")
 			merchantGroup.Use(middleware.RequireMerchantAccess())
 			{
-				merchantGroup.GET("", merchantHandler.GetMerchant)
-				merchantGroup.GET("/details", merchantHandler.GetMerchantDetails)
-				merchantGroup.PATCH("", merchantHandler.UpdateMerchant)
-				merchantGroup.DELETE("", merchantHandler.DeleteMerchant)
+				// Read operations - available to all roles
+				merchantGroup.GET("", middleware.RequireRolePermission("read"), merchantHandler.GetMerchant)
+				merchantGroup.GET("/details", middleware.RequireRolePermission("read"), merchantHandler.GetMerchantDetails)
+				merchantGroup.GET("/team", middleware.RequireRolePermission("read"), teamHandler.GetTeamMembers)
+				merchantGroup.GET("/invitations", middleware.RequireRolePermission("read"), teamHandler.GetPendingInvitations)
+				merchantGroup.GET("/settings", middleware.RequireRolePermission("read"), settingsHandler.GetSettings)
 
-				merchantGroup.POST("/team/invite", teamHandler.InviteTeamMember)
-				merchantGroup.GET("/team", teamHandler.GetTeamMembers)
-				merchantGroup.DELETE("/team/:user_id", teamHandler.RemoveTeamMember)
-				merchantGroup.PATCH("/team/:user_id", teamHandler.UpdateTeamMemberRole)
-				merchantGroup.GET("/invitations", teamHandler.GetPendingInvitations)
+				// Update operations - Owner and Admin only
+				merchantGroup.PATCH("", middleware.RequireRolePermission("update"), merchantHandler.UpdateMerchant)
+				merchantGroup.PATCH("/settings", middleware.RequireRolePermission("update"), settingsHandler.UpdateSettings)
+				merchantGroup.PATCH("/team/:user_id", middleware.RequireRolePermission("update"), teamHandler.UpdateTeamMemberRole)
 
-				merchantGroup.GET("/settings", settingsHandler.GetSettings)
-				merchantGroup.PATCH("/settings", settingsHandler.UpdateSettings)
+				// Create operations - Owner, Admin, and Manager
+				merchantGroup.POST("/team/invite", middleware.RequireRolePermission("create"), teamHandler.InviteTeamMember)
+
+				// Delete operations - Owner only (Admin cannot delete)
+				merchantGroup.DELETE("", middleware.RequireRolePermission("delete"), merchantHandler.DeleteMerchant)
+				merchantGroup.DELETE("/team/:user_id", middleware.RequireRolePermission("delete"), teamHandler.RemoveTeamMember)
 			}
 		}
 
