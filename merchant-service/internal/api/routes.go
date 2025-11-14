@@ -10,6 +10,7 @@ func SetupMerchantRoutes() {
 	router := inits.R
 
 	merchantHandler := handler.NewMerchantHandler()
+	teamHandler := handler.NewTeamHandler()
 
 	v1 := router.Group("/api/v1")
 	v1.Use(middleware.AuthMiddleware())
@@ -28,6 +29,13 @@ func SetupMerchantRoutes() {
 				merchantGroup.GET("/details", merchantHandler.GetMerchantDetails)
 				merchantGroup.PATCH("", merchantHandler.UpdateMerchant)
 				merchantGroup.DELETE("", merchantHandler.DeleteMerchant)
+
+				merchantGroup.POST("/team/invite", teamHandler.InviteTeamMember)
+				merchantGroup.GET("/team", teamHandler.GetTeamMembers)
+				merchantGroup.DELETE("/team/:user_id", teamHandler.RemoveTeamMember)
+				merchantGroup.PATCH("/team/:user_id", teamHandler.UpdateTeamMemberRole)
+				merchantGroup.GET("/invitations", teamHandler.GetPendingInvitations)
+
 			}
 		}
 	}

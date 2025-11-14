@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/rhaloubi/payment-gateway/merchant-service/inits/logger"
 	model "github.com/rhaloubi/payment-gateway/merchant-service/internal/models"
+	"go.uber.org/zap"
 	"gopkg.in/gomail.v2"
 )
 
@@ -21,11 +23,19 @@ type EmailService struct {
 
 // NewEmailService creates a new email service
 func NewEmailService() *EmailService {
+	smtpUsername := os.Getenv("MAILTRAP_USERNAME")
+	smtpPassword := os.Getenv("MAILTRAP_PASSWORD")
+	
+	// Validate Mailtrap credentials
+	if smtpUsername == "" || smtpPassword == "" {
+		logger.Log.Warn("Mailtrap credentials not configured. Email sending will be disabled.")
+	}
+	
 	return &EmailService{
 		smtpHost:     getEnv("MAILTRAP_HOST", "sandbox.smtp.mailtrap.io"),
 		smtpPort:     getEnvInt("MAILTRAP_PORT", 2525),
-		smtpUsername: os.Getenv("MAILTRAP_USERNAME"),
-		smtpPassword: os.Getenv("MAILTRAP_PASSWORD"),
+		smtpUsername: smtpUsername,
+		smtpPassword: smtpPassword,
 		fromEmail:    getEnv("FROM_EMAIL", "noreply@paymentgateway.ma"),
 		fromName:     getEnv("FROM_NAME", "Payment Gateway Morocco"),
 		frontendURL:  getEnv("FRONTEND_URL", "http://localhost:3000"),
@@ -95,6 +105,13 @@ func (s *EmailService) buildInvitationEmailHTML(merchantName, invitationURL, exp
 
 // sendEmail sends an email via Mailtrap
 func (s *EmailService) sendEmail(to, subject, body string) error {
+	// Check if Mailtrap credentials are configured
+	if s.smtpUsername == "" || s.smtpPassword == "" {
+		err := fmt.Errorf("mailtrap credentials not configured")
+		logger.Log.Error("cannot send email: mailtrap credentials not configured", zap.String("to", to))
+		return err
+	}
+
 	m := gomail.NewMessage()
 	m.SetHeader("From", fmt.Sprintf("%s <%s>", s.fromName, s.fromEmail))
 	m.SetHeader("To", to)
@@ -107,7 +124,8 @@ func (s *EmailService) sendEmail(to, subject, body string) error {
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 
 	if err := d.DialAndSend(m); err != nil {
-		return fmt.Errorf("failed to send email: %w", err)
+		logger.Log.Error("failed to send email:", zap.Error(err))
+		return err
 	}
 
 	return nil

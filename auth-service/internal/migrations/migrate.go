@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/rhaloubi/payment-gateway/auth-service/inits"
 	"github.com/rhaloubi/payment-gateway/auth-service/inits/logger"
 	model "github.com/rhaloubi/payment-gateway/auth-service/internal/models"
@@ -29,7 +27,7 @@ func RunAuthMigrations() error {
 	db := inits.DB
 
 	if err := db.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"").Error; err != nil {
-		return fmt.Errorf("failed to create uuid extension: %w", err)
+		logger.Log.Error("failed to create uuid extension:", zap.Error(err))
 	}
 
 	// Auto migrate all models
@@ -45,7 +43,7 @@ func RunAuthMigrations() error {
 
 	for _, m := range models {
 		if err := db.AutoMigrate(m); err != nil {
-			return fmt.Errorf("failed to migrate %T: %w", m, err)
+			logger.Log.Error("failed to migrate:", zap.Error(err))
 		}
 	}
 
@@ -56,7 +54,7 @@ func RunAuthMigrations() error {
 
 	// Seed default roles and permissions
 	if err := seedDefaultRolesAndPermissions(); err != nil {
-		return fmt.Errorf("failed to seed default data: %w", err)
+		logger.Log.Error("failed to seed default data:", zap.Error(err))
 	}
 
 	return nil
@@ -159,7 +157,8 @@ func seedDefaultRolesAndPermissions() error {
 	// Create permissions
 	for i := range permissions {
 		if err := db.Create(&permissions[i]).Error; err != nil {
-			return fmt.Errorf("failed to create permission: %w", err)
+			logger.Log.Error("failed to create permission:", zap.Error(err))
+			//	return fmt.Errorf("failed to create permission: %w", err)
 		}
 	}
 
@@ -186,7 +185,7 @@ func seedDefaultRolesAndPermissions() error {
 	// Create roles
 	for i := range roles {
 		if err := db.Create(&roles[i]).Error; err != nil {
-			return fmt.Errorf("failed to create role: %w", err)
+			logger.Log.Error("failed to create role:", zap.Error(err))
 		}
 	}
 
@@ -198,7 +197,7 @@ func seedDefaultRolesAndPermissions() error {
 	adminRole := roles[0]
 	for _, perm := range permissions {
 		if err := db.Model(&adminRole).Association("Permissions").Append(&perm); err != nil {
-			return fmt.Errorf("failed to assign permission to admin: %w", err)
+			logger.Log.Error("failed to assign permission to admin:", zap.Error(err))
 		}
 	}
 
@@ -208,13 +207,13 @@ func seedDefaultRolesAndPermissions() error {
 		// Give access to transactions and invoices
 		if perm.Resource == "transactions" || perm.Resource == "invoices" {
 			if err := db.Model(&managerRole).Association("Permissions").Append(&perm); err != nil {
-				return fmt.Errorf("failed to assign permission to manager: %w", err)
+				logger.Log.Error("failed to assign permission to manager:", zap.Error(err))
 			}
 		}
 		// Only READ access to settings and users (not update/create)
 		if (perm.Resource == "settings" || perm.Resource == "users") && perm.Action == "read" {
 			if err := db.Model(&managerRole).Association("Permissions").Append(&perm); err != nil {
-				return fmt.Errorf("failed to assign permission to manager: %w", err)
+				logger.Log.Error("failed to assign permission to manager:", zap.Error(err))
 			}
 		}
 	}
@@ -225,13 +224,13 @@ func seedDefaultRolesAndPermissions() error {
 		// Only basic transaction operations
 		if perm.Resource == "transactions" && (perm.Action == "read" || perm.Action == "create") {
 			if err := db.Model(&staffRole).Association("Permissions").Append(&perm); err != nil {
-				return fmt.Errorf("failed to assign permission to staff: %w", err)
+				logger.Log.Error("failed to assign permission to staff:", zap.Error(err))
 			}
 		}
 		// Can view invoices (but not create/update them)
 		if perm.Resource == "invoices" && perm.Action == "read" {
 			if err := db.Model(&staffRole).Association("Permissions").Append(&perm); err != nil {
-				return fmt.Errorf("failed to assign permission to staff: %w", err)
+				logger.Log.Error("failed to assign permission to staff:", zap.Error(err))
 			}
 		}
 	}
@@ -254,7 +253,7 @@ func RollbackAuthMigrations() error {
 
 	for _, m := range models {
 		if err := db.Migrator().DropTable(m); err != nil {
-			return fmt.Errorf("failed to drop table %T: %w", m, err)
+			logger.Log.Error("failed to drop table:", zap.Error(err))
 		}
 	}
 

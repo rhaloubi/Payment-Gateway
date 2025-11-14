@@ -24,7 +24,7 @@ func RequireMerchantAccess() gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
-				"error":   "invalid merchant ID",
+				"error":   "invalid merchant ID!",
 			})
 			c.Abort()
 			return
