@@ -11,6 +11,7 @@ func SetupMerchantRoutes() {
 
 	merchantHandler := handler.NewMerchantHandler()
 	teamHandler := handler.NewTeamHandler()
+	settingsHandler := handler.NewSettingsHandler()
 
 	v1 := router.Group("/api/v1")
 	v1.Use(middleware.AuthMiddleware())
@@ -36,7 +37,16 @@ func SetupMerchantRoutes() {
 				merchantGroup.PATCH("/team/:user_id", teamHandler.UpdateTeamMemberRole)
 				merchantGroup.GET("/invitations", teamHandler.GetPendingInvitations)
 
+				merchantGroup.GET("/settings", settingsHandler.GetSettings)
+				merchantGroup.PATCH("/settings", settingsHandler.UpdateSettings)
 			}
+		}
+
+		// Invitation routes (public with auth)
+		invitations := v1.Group("/invitations")
+		{
+			invitations.POST("/:token/accept", teamHandler.AcceptInvitation)
+			invitations.DELETE("/:id", teamHandler.CancelInvitation)
 		}
 	}
 }
