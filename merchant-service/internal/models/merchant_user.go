@@ -21,7 +21,8 @@ type MerchantUser struct {
 	ID         uuid.UUID `gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
 	MerchantID uuid.UUID `gorm:"type:uuid;not null;index"`
 	UserID     uuid.UUID `gorm:"type:uuid;not null;index"`
-	RoleID     uuid.UUID `gorm:"type:uuid;not null"` // References auth.roles
+	RoleID     uuid.UUID `gorm:"type:uuid;not null"`              // References auth.roles
+	RoleName   string    `gorm:"type:varchar(50);not null;index"` // NEW: Cache role name (Admin, Manager, Staff)
 
 	// Status
 	Status MerchantUserStatus `gorm:"type:varchar(20);not null;default:'active'"`

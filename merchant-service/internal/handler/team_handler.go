@@ -21,8 +21,9 @@ func NewTeamHandler() *TeamHandler {
 
 // InviteTeamMemberRequest represents team invitation request
 type InviteTeamMemberRequest struct {
-	Email  string `json:"email" binding:"required,email"`
-	RoleID string `json:"role_id" binding:"required,uuid"`
+	Email    string `json:"email" binding:"required,email"`
+	RoleID   string `json:"role_id" binding:"required,uuid"`
+	RoleName string `json:"role_name" binding:"required"`
 }
 
 // InviteTeamMember invites a user to join the team
@@ -54,6 +55,7 @@ func (h *TeamHandler) InviteTeamMember(c *gin.Context) {
 		})
 		return
 	}
+	roleName := req.RoleName
 
 	// Get inviter ID
 	userID, exists := c.Get("user_id")
@@ -79,6 +81,7 @@ func (h *TeamHandler) InviteTeamMember(c *gin.Context) {
 		MerchantID: merchantID,
 		Email:      req.Email,
 		RoleID:     roleID,
+		RoleName:   roleName,
 		InvitedBy:  userUUID,
 	})
 
@@ -97,6 +100,7 @@ func (h *TeamHandler) InviteTeamMember(c *gin.Context) {
 				"id":               invitation.ID,
 				"email":            invitation.Email,
 				"status":           invitation.Status,
+				"role_name":        invitation.RoleName,
 				"invitation_token": invitation.InvitationToken,
 				"expires_at":       invitation.ExpiresAt,
 				"created_at":       invitation.CreatedAt,
@@ -229,7 +233,8 @@ func (h *TeamHandler) UpdateTeamMemberRole(c *gin.Context) {
 	}
 
 	var req struct {
-		RoleID string `json:"role_id" binding:"required,uuid"`
+		RoleID   string `json:"role_id" binding:"required,uuid"`
+		RoleName string `json:"role_name" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -240,13 +245,14 @@ func (h *TeamHandler) UpdateTeamMemberRole(c *gin.Context) {
 	}
 
 	newRoleID, _ := uuid.Parse(req.RoleID)
+	newRoleName := req.RoleName
 
 	// Get who is updating
 	userID, _ := c.Get("user_id")
 	userUUID, _ := uuid.Parse(userID.(string))
 
 	// Update role
-	if err := h.teamService.UpdateTeamMemberRole(merchantID, targetUserID, newRoleID, userUUID); err != nil {
+	if err := h.teamService.UpdateTeamMemberRole(merchantID, targetUserID, newRoleID, userUUID, newRoleName); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   err.Error(),

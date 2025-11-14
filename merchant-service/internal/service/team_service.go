@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rhaloubi/payment-gateway/merchant-service/inits/logger"
+	//"github.com/rhaloubi/payment-gateway/merchant-service/inits/logger"
 	model "github.com/rhaloubi/payment-gateway/merchant-service/internal/models"
 	"github.com/rhaloubi/payment-gateway/merchant-service/internal/repository"
-	"go.uber.org/zap"
+	//"go.uber.org/zap"
 )
 
 type TeamService struct {
@@ -36,13 +36,14 @@ type InviteTeamMemberRequest struct {
 	MerchantID uuid.UUID
 	Email      string
 	RoleID     uuid.UUID
+	RoleName   string
 	InvitedBy  uuid.UUID
 }
 
-// InviteTeamMember invites a user to join the merchant team
+// InviteTeamMember  ##### ------- i removed send email for testing purposes ---------- #######
 func (s *TeamService) InviteTeamMember(req *InviteTeamMemberRequest) (*model.MerchantInvitation, error) {
 	// Validate merchant exists
-	merchant, err := s.merchantRepo.FindByID(req.MerchantID)
+	_, err := s.merchantRepo.FindByID(req.MerchantID)
 	if err != nil {
 		return nil, err
 	}
@@ -61,6 +62,7 @@ func (s *TeamService) InviteTeamMember(req *InviteTeamMemberRequest) (*model.Mer
 		MerchantID: req.MerchantID,
 		Email:      req.Email,
 		RoleID:     req.RoleID,
+		RoleName:   req.RoleName,
 		InvitedBy:  req.InvitedBy,
 		Status:     model.InvitationStatusPending,
 	}
@@ -69,16 +71,17 @@ func (s *TeamService) InviteTeamMember(req *InviteTeamMemberRequest) (*model.Mer
 		return nil, err
 	}
 
-	// Send invitation email via Mailtrap
+	/* Send invitation email via Mailtrap
 	if err := s.emailService.SendInvitationEmail(invitation, merchant); err != nil {
 		// Log error but don't fail the invitation
 		logger.Log.Error("Failed to send invitation email", zap.Error(err))
 	}
-
+	*/
 	// Log activity
 	changes := map[string]interface{}{
-		"email":   req.Email,
-		"role_id": req.RoleID.String(),
+		"email":     req.Email,
+		"role_id":   req.RoleID.String(),
+		"role_name": req.RoleName,
 	}
 	s.logActivity(req.MerchantID, req.InvitedBy, "team_member_invited", "invitation", invitation.ID, changes)
 
@@ -114,6 +117,7 @@ func (s *TeamService) AcceptInvitation(token string, userID uuid.UUID) error {
 		MerchantID: invitation.MerchantID,
 		UserID:     userID,
 		RoleID:     invitation.RoleID,
+		RoleName:   invitation.RoleName,
 		InvitedBy:  invitation.InvitedBy,
 		Status:     model.MerchantUserStatusActive,
 	}
@@ -175,7 +179,7 @@ func (s *TeamService) RemoveTeamMember(merchantID, userID, removedBy uuid.UUID) 
 }
 
 // UpdateTeamMemberRole updates a team member's role
-func (s *TeamService) UpdateTeamMemberRole(merchantID, userID uuid.UUID, newRoleID uuid.UUID, updatedBy uuid.UUID) error {
+func (s *TeamService) UpdateTeamMemberRole(merchantID, userID uuid.UUID, newRoleID uuid.UUID, updatedBy uuid.UUID, newRoleName string) error {
 	merchantUser, err := s.merchantUserRepo.FindByMerchantAndUser(merchantID, userID)
 	if err != nil {
 		return err
@@ -183,6 +187,7 @@ func (s *TeamService) UpdateTeamMemberRole(merchantID, userID uuid.UUID, newRole
 
 	oldRoleID := merchantUser.RoleID
 	merchantUser.RoleID = newRoleID
+	merchantUser.RoleName = newRoleName
 
 	if err := s.merchantUserRepo.Update(merchantUser); err != nil {
 		return err
@@ -194,6 +199,10 @@ func (s *TeamService) UpdateTeamMemberRole(merchantID, userID uuid.UUID, newRole
 		"role": map[string]interface{}{
 			"old": oldRoleID.String(),
 			"new": newRoleID.String(),
+		},
+		"role_name": map[string]interface{}{
+			"old": merchantUser.RoleName,
+			"new": newRoleName,
 		},
 	}
 	s.logActivity(merchantID, updatedBy, "team_member_role_updated", "merchant_user", merchantUser.ID, changes)
@@ -243,6 +252,55 @@ func (s *TeamService) IsUserInMerchant(merchantID, userID uuid.UUID) (bool, erro
 
 	// Check if team member
 	return s.merchantUserRepo.IsUserInMerchant(merchantID, userID)
+}
+
+// CheckUserPermission checks if user has specific permission for the merchant
+func (s *TeamService) CheckUserPermission(merchantID, userID uuid.UUID, action string) (bool, error) {
+	// Get merchant
+	merchant, err := s.merchantRepo.FindByID(merchantID)
+	if err != nil {
+		return false, err
+	}
+
+	// Check if user is owner
+	if merchant.OwnerID == userID {
+		return true, nil
+	}
+
+	// Get user's role in the merchant
+	merchantUser, err := s.merchantUserRepo.FindByMerchantAndUser(merchantID, userID)
+	if err != nil {
+		return false, err
+	}
+
+	switch merchantUser.RoleName {
+	case "Admin":
+		// Admin can do everything except delete
+		switch action {
+		case "delete":
+			return false, nil
+		default:
+			return true, nil
+		}
+	case "Manager":
+		// Manager can create and read
+		switch action {
+		case "create", "read":
+			return true, nil
+		default:
+			return false, nil
+		}
+	case "Staff":
+		// Staff can only read
+		switch action {
+		case "read":
+			return true, nil
+		default:
+			return false, nil
+		}
+	default:
+		return false, nil
+	}
 }
 
 // logActivity logs team activity

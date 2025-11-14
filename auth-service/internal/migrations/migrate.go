@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/rhaloubi/payment-gateway/auth-service/inits"
 	"github.com/rhaloubi/payment-gateway/auth-service/inits/logger"
 	model "github.com/rhaloubi/payment-gateway/auth-service/internal/models"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 	//"gorm.io/gorm"
 )
 
@@ -47,10 +50,10 @@ func RunAuthMigrations() error {
 		}
 	}
 
-	/*if err := ensureUserRoleColumns(db); err != nil {
+	if err := ensureUserRoleColumns(db); err != nil {
 		return fmt.Errorf("failed to ensure UserRole merchant_id column: %w", err)
 	}
-	*/
+	//
 
 	// Seed default roles and permissions
 	if err := seedDefaultRolesAndPermissions(); err != nil {
@@ -60,7 +63,7 @@ func RunAuthMigrations() error {
 	return nil
 }
 
-/* ensureUserRoleColumns ensures the user_roles table has all required columns
+// ensureUserRoleColumns ensures the user_roles table has all required columns
 func ensureUserRoleColumns(db *gorm.DB) error {
 	// Check and add merchant_id column
 	if err := ensureColumnExists(db, "user_roles", "merchant_id", "UUID NOT NULL"); err != nil {
@@ -110,7 +113,8 @@ func ensureColumnExists(db *gorm.DB, tableName, columnName, columnDefinition str
 
 	return nil
 }
-*/
+
+//
 
 func seedDefaultRolesAndPermissions() error {
 	db := inits.DB
