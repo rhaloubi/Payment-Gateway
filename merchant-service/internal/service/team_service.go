@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	//"github.com/rhaloubi/payment-gateway/merchant-service/inits/logger"
+	"github.com/rhaloubi/payment-gateway/merchant-service/inits/logger"
 	model "github.com/rhaloubi/payment-gateway/merchant-service/internal/models"
 	"github.com/rhaloubi/payment-gateway/merchant-service/internal/repository"
-	//"go.uber.org/zap"
+	"go.uber.org/zap"
 )
 
 type TeamService struct {
@@ -43,7 +43,7 @@ type InviteTeamMemberRequest struct {
 // InviteTeamMember  ##### ------- i removed send email for testing purposes ---------- #######
 func (s *TeamService) InviteTeamMember(req *InviteTeamMemberRequest) (*model.MerchantInvitation, error) {
 	// Validate merchant exists
-	_, err := s.merchantRepo.FindByID(req.MerchantID)
+	merchant, err := s.merchantRepo.FindByID(req.MerchantID)
 	if err != nil {
 		return nil, err
 	}
@@ -71,12 +71,14 @@ func (s *TeamService) InviteTeamMember(req *InviteTeamMemberRequest) (*model.Mer
 		return nil, err
 	}
 
-	/* Send invitation email via Mailtrap
-	if err := s.emailService.SendInvitationEmail(invitation, merchant); err != nil {
-		// Log error but don't fail the invitation
-		logger.Log.Error("Failed to send invitation email", zap.Error(err))
-	}
-	*/
+	// Send invitation email via Mailtrap
+	go func(invitation *model.MerchantInvitation, merchant *model.Merchant) {
+		if err := s.emailService.SendInvitationEmail(invitation, merchant); err != nil {
+			// Log error but don't fail the invitation
+			logger.Log.Error("Failed to send invitation email", zap.Error(err))
+		}
+	}(invitation, merchant)
+	//
 	// Log activity
 	changes := map[string]interface{}{
 		"email":     req.Email,
@@ -205,7 +207,7 @@ func (s *TeamService) UpdateTeamMemberRole(merchantID, userID uuid.UUID, newRole
 			"new": newRoleName,
 		},
 	}
-	s.logActivity(merchantID, updatedBy, "team_member_role_updated", "merchant_user", merchantUser.ID, changes)
+	go s.logActivity(merchantID, updatedBy, "team_member_role_updated", "merchant_user", merchantUser.ID, changes)
 
 	return nil
 }
@@ -234,7 +236,7 @@ func (s *TeamService) CancelInvitation(invitationID, cancelledBy uuid.UUID) erro
 	changes := map[string]interface{}{
 		"email": invitation.Email,
 	}
-	s.logActivity(invitation.MerchantID, cancelledBy, "invitation_cancelled", "invitation", invitationID, changes)
+	go s.logActivity(invitation.MerchantID, cancelledBy, "invitation_cancelled", "invitation", invitationID, changes)
 
 	return nil
 }
