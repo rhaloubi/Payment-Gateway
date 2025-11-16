@@ -12,7 +12,6 @@ type EncryptionKeyMetadata struct {
 	ID         uuid.UUID `gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
 	MerchantID uuid.UUID `gorm:"type:uuid;not null;index"`
 
-	// Key identification
 	KeyID      string `gorm:"type:varchar(100);not null;uniqueIndex"` // Reference to key in Vault
 	KeyVersion int    `gorm:"type:integer;not null;default:1"`        // For key rotation
 
