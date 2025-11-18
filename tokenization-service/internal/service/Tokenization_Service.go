@@ -14,6 +14,7 @@ import (
 	"github.com/rhaloubi/payment-gateway/tokenization-service/internal/crypto"
 	model "github.com/rhaloubi/payment-gateway/tokenization-service/internal/models"
 	"github.com/rhaloubi/payment-gateway/tokenization-service/internal/repository"
+	"github.com/rhaloubi/payment-gateway/tokenization-service/internal/validation"
 	"go.uber.org/zap"
 )
 
