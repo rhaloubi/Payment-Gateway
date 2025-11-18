@@ -1,0 +1,464 @@
+# 🏦 Payment Gateway Microservices - Project Context
+
+## 📌 Project Overview
+
+**Purpose:** Educational fintech payment gateway with multi-tenant, PCI-DSS-aware microservices architecture.
+
+**Tech Stack:**
+- **Backend:** Go 1.23+
+- **Database:** PostgreSQL (with TDE encryption)
+- **Cache:** Redis
+- **Message Broker:** Apache Kafka
+- **Secret Management:** HashiCorp Vault (dev mode)
+- **Communication:** REST (public), gRPC (internal)
+
+---
+
+## 🏗️ Implemented Services
+
+### 1. **Auth Service** ✅ (Port 8001)
+
+**Purpose:** Authentication, authorization, API key management
+
+**Features:**
+- ✅ User registration/login (JWT tokens)
+- ✅ Access tokens (15 min) + Refresh tokens (7 days)
+- ✅ API key management (HMAC-SHA256)
+- ✅ Role-Based Access Control (RBAC)
+- ✅ Permissions (read, create, update, delete)
+- ✅ Multi-tenant support
+- ✅ Account security (lockout after 5 failed attempts)
+- ✅ Redis caching (15 min TTL)
+
+**Database Tables:**
+```sql
+users
+roles (Owner, Admin, Manager, Staff)
+permissions
+user_roles
+role_permissions
+sessions
+api_keys
+```
+
+**Endpoints:**
+```
+POST   /api/v1/auth/register
+POST   /api/v1/auth/login
+POST   /api/v1/auth/refresh
+POST   /api/v1/auth/logout
+GET    /api/v1/auth/profile
+POST   /api/v1/auth/change-password
+
+GET    /api/v1/roles
+POST   /api/v1/roles/assign
+DELETE /api/v1/roles/assign
+
+POST   /api/v1/api-keys
+GET    /api/v1/api-keys/merchant/:merchant_id
+DELETE /api/v1/api-keys/:id
+```
+
+---
+
+### 2. **Merchant Service** ✅ (Port 8002)
+
+**Purpose:** Merchant onboarding, team management, business configuration
+
+**Features:**
+- ✅ Merchant registration (KYC)
+- ✅ Business info management
+- ✅ Team invitations (email-based)
+- ✅ Role assignment (Owner, Admin, Manager, Staff)
+- ✅ Permission enforcement per role
+- ✅ Settings management
+- ✅ Activity logging (audit trail)
+- ✅ Multi-tenant isolation
+
+**Database Tables:**
+```sql
+merchants
+merchant_users
+merchant_invitations
+merchant_settings
+merchant_business_info
+merchant_branding
+merchant_verification
+merchant_activity_logs
+```
+
+**Endpoints:**
+```
+POST   /api/v1/merchants
+GET    /api/v1/merchants
+GET    /api/v1/merchants/:id
+PATCH  /api/v1/merchants/:id
+DELETE /api/v1/merchants/:id
+
+POST   /api/v1/merchants/:id/team/invite
+GET    /api/v1/merchants/:id/team
+PATCH  /api/v1/merchants/:id/team/:user_id
+DELETE /api/v1/merchants/:id/team/:user_id
+
+GET    /api/v1/merchants/:id/settings
+PATCH  /api/v1/merchants/:id/settings
+```
+
+**Role Permissions:**
+
+| Role    | Read | Create | Update | Delete |
+|---------|------|--------|--------|--------|
+| Owner   | ✅   | ✅     | ✅     | ✅     |
+| Admin   | ✅   | ✅     | ✅     | ❌     |
+| Manager | ✅   | ✅     | ❌     | ❌     |
+| Staff   | ✅   | ❌     | ❌     | ❌     |
+
+---
+
+### 3. **Tokenization Service** ⏳ (Port 8003)
+
+**Purpose:** Secure card tokenization (PCI scope reduction)
+
+**Features:**
+- ✅ Card validation (Luhn, expiry, CVV)
+- ✅ Card brand detection (Visa, MC, Amex, Discover, Diners, JCB)
+- ✅ AES-256-GCM encryption (field-level)
+- ✅ Per-merchant encryption keys (DEK)
+- ✅ Duplicate detection (SHA-256 fingerprinting)
+- ✅ Token generation (tok_live_xxx)
+- ✅ BIN database (card type, issuer info)
+- ✅ Single-use token support
+- ✅ Token lifecycle (active, expired, revoked, used)
+- ✅ Usage tracking & audit logging
+- ⏳ REST handlers (in progress)
+- ⏳ gRPC handlers (pending)
+
+**Database Tables:**
+```sql
+card_vault
+tokenization_requests
+token_usage_logs
+encryption_key_metadata
+card_bin_info
+```
+
+**Services Implemented:**
+```go
+✅ TokenizationService
+   - TokenizeCard()
+   - Detokenize()
+   - ValidateToken()
+   - RevokeToken()
+   - GetTokenInfo()
+
+✅ KeyManagementService
+   - GetOrCreateMerchantKey()
+   - RotateMerchantKey()
+   - RevokeKey()
+   - CheckKeyRotationNeeded()
+
+✅ CardValidationService
+   - ValidateCard()
+   - DetectCardBrand()
+   - ValidateLuhn()
+   - ValidateExpiry()
+   - ValidateCVV()
+
+✅ EncryptionService
+   - Encrypt()
+   - Decrypt()
+   - EncryptCardData()
+   - DecryptCardData()
+   - GenerateCardFingerprint()
+```
+
+**Pending:**
+```
+⏳ REST API handlers
+⏳ gRPC handlers (for internal services)
+⏳ Middleware (auth, rate limit, logging)
+⏳ Routes setup
+```
+
+---
+
+## 🔄 Payment Flow
+
+### **User Journey:**
+```
+1. User creates account → [Auth Service]
+   ↓
+2. User creates merchant → [Merchant Service]
+   ↓
+3. Merchant integrates API → Get API keys [Auth Service]
+   ↓
+4. Buyer enters card on payment page
+   ↓
+5. Card sent to Payment API → [Payment API Service] ⏳
+   ↓
+6. Tokenize card → [Tokenization Service] ⏳
+   ↓
+7. Check fraud → [Fraud Detection Service] ⏳
+   ↓
+8. Process transaction → [Transaction Service] ⏳
+   ↓
+9. Simulate issuer response → [Card Simulator] ⏳
+   ↓
+10. Return response to merchant
+    ↓
+11. Send webhook notification → [Webhook Service] ⏳
+```
+
+---
+
+## 🎯 Services to Build Next
+
+### **Priority 1: Core Payment Processing**
+
+1. **Payment API Service** (Public Gateway)
+   - REST API for merchants
+   - API key authentication
+   - Rate limiting
+   - Idempotency
+   - Routes to internal services
+
+2. **Transaction Service** (Internal)
+   - Process authorization
+   - Process capture
+   - Process void
+   - Process refund
+   - Transaction state machine
+   - Event publishing (Kafka)
+
+3. **Fraud Detection Service** (Internal)
+   - Velocity checks
+   - Amount thresholds
+   - Risk scoring
+   - Decision engine
+
+4. **Card Simulator Service** (Testing)
+   - Simulate issuer responses
+   - Test card patterns
+   - Configurable scenarios
+
+---
+
+## 🔐 Security Architecture
+
+### **Encryption:**
+```
+┌──────────────────────────────────────┐
+│   HashiCorp Vault (KEK)              │
+│   Master Encryption Key              │
+└────────────┬─────────────────────────┘
+             │
+    ┌────────┴────────┐
+    │                 │
+┌───▼────┐      ┌────▼────┐
+│ DEK 1  │      │ DEK 2   │  (Per-merchant)
+│Merchant│      │Merchant │
+│  123   │      │  456    │
+└───┬────┘      └────┬────┘
+    │                │
+┌───▼─────────────────▼────┐
+│   Encrypted Card Data    │
+│   (PostgreSQL Database)  │
+└──────────────────────────┘
+```
+
+### **Token Format:**
+```
+Production: tok_live_4xJ3kL9mN2pQ5rT8vW1yZ4bC7dE0fG
+Test:       tok_test_1aB2cD3eF4gH5iJ6kL7mN8oP9qR0sT
+```
+
+### **PCI Compliance Rules:**
+```
+✅ Encrypt card data at rest (AES-256-GCM)
+✅ Encrypt card data in transit (TLS 1.3)
+✅ Never log full PAN (only last 4 digits)
+✅ Never store CVV (validate but discard)
+✅ Use per-merchant encryption keys
+✅ Audit all access to cardholder data
+✅ Implement key rotation (90 days)
+✅ Mask card numbers in logs (****1234)
+```
+
+---
+
+## 📡 Service Communication
+
+### **Public (REST):**
+```
+Merchant → Payment API Service (REST)
+```
+
+### **Internal (gRPC):**
+```
+Payment API ←→ Tokenization Service
+Payment API ←→ Transaction Service
+Payment API ←→ Fraud Service
+Transaction ←→ Tokenization Service
+Transaction ←→ Card Simulator
+```
+
+---
+
+## 🧪 Test Cards
+
+| Card Number          | Response                | Code |
+|---------------------|-------------------------|------|
+| 4242 4242 4242 4242 | ✅ Approved             | 00   |
+| 4000 0000 0000 0002 | ❌ Generic decline      | 05   |
+| 4000 0000 0000 9995 | ❌ Insufficient funds   | 51   |
+| 4000 0000 0000 0069 | ❌ Expired card         | 54   |
+| 4000 0000 0000 0127 | ❌ Incorrect CVV        | N7   |
+
+---
+
+## 📦 Project Structure
+```
+payment-gateway/
+├── auth-service/
+│   ├── cmd/main.go
+│   ├── internal/
+│   │   ├── models/
+│   │   ├── repository/
+│   │   ├── service/
+│   │   ├── handler/
+│   │   ├── middleware/
+│   │   └── api/routes.go
+│   └── migrations/
+│
+├── merchant-service/
+│   ├── cmd/main.go
+│   ├── internal/
+│   │   ├── models/
+│   │   ├── repository/
+│   │   ├── service/
+│   │   ├── handler/
+│   │   ├── middleware/
+│   │   ├── client/ (auth_client.go)
+│   │   └── api/routes.go
+│   └── migrations/
+│
+├── tokenization-service/
+│   ├── cmd/main.go
+│   ├── internal/
+│   │   ├── models/ ✅
+│   │   ├── repository/ ✅
+│   │   ├── service/ ✅
+│   │   ├── crypto/ ✅
+│   │   ├── validation/ ✅
+│   │   ├── handler/ ⏳
+│   │   ├── middleware/ ⏳
+│   │   ├── grpc/ ⏳
+│   │   └── api/routes.go ⏳
+│   └── migrations/ ⏳
+│
+├── payment-api-service/ ⏳
+├── transaction-service/ ⏳
+├── fraud-detection-service/ ⏳
+└── card-simulator-service/ ⏳
+```
+
+---
+
+## 🚀 Current Task
+
+**Implementing Tokenization Service handlers and middleware**
+
+**Decisions made:**
+- ✅ Error format: Specific errors (better DX)
+- ✅ Idempotency: Yes, using Redis
+- ✅ Internal communication: gRPC
+- ✅ CVV: Validated but never stored
+- ✅ Response format: Detailed (with card metadata)
+
+**Next steps:**
+1. Build REST API handlers (public endpoints)
+2. Build gRPC handlers (internal endpoints)
+3. Implement middleware (auth, rate limit, logging)
+4. Setup routes
+5. Write tests
+
+---
+
+## 📝 Environment Variables
+```env
+# Database
+DATABASE_DSN=postgresql://user:pass@localhost:5432/tokenization_db
+
+# Redis
+REDIS_DSN=redis://localhost:6379/0
+
+# Vault
+VAULT_ENABLED=false  # true for production
+VAULT_ADDR=http://localhost:8200
+VAULT_TOKEN=your-vault-token
+
+# JWT
+JWT_SECRET_KEY=your-jwt-secret
+
+# Server
+PORT=8003
+GIN_MODE=release
+```
+
+---
+
+## 🎯 Key Concepts
+
+### **Terminology:**
+- **Merchant:** Business using the payment gateway
+- **Buyer:** Customer paying through merchant's site
+- **PAN:** Primary Account Number (full card number)
+- **Token:** Non-sensitive reference to card (tok_live_xxx)
+- **BIN:** Bank Identification Number (first 6 digits)
+- **DEK:** Data Encryption Key (per-merchant key)
+- **KEK:** Key Encryption Key (master key in Vault)
+
+### **Transaction Types:**
+- **Authorize:** Hold funds (not charged yet)
+- **Sale:** Authorize + Capture (immediate charge)
+- **Capture:** Charge held funds
+- **Void:** Cancel authorization
+- **Refund:** Return funds to buyer
+
+---
+
+## ⚠️ Important Notes
+
+1. **CVV is NEVER stored** - Only validated during tokenization
+2. **Full PAN is NEVER logged** - Only last 4 digits or masked
+3. **Each merchant has own encryption key** - Multi-tenant security
+4. **Keys rotate every 90 days** - Or after 1M encryptions
+5. **Tokens can be single-use** - Extra security for one-time payments
+6. **Duplicate cards return existing token** - Prevents redundant storage
+
+---
+
+## 📚 Useful Commands
+```bash
+# Start Auth Service
+cd auth-service
+air
+
+# Start Merchant Service  
+cd merchant-service
+air
+
+# Start Tokenization Service
+cd tokenization-service
+air
+
+# Run migrations
+go run internal/migrations/migrate.go
+
+# Run tests
+go test ./internal/... -v -cover
+```
+
+---
+
+This README should be provided at the start of every new AI chat session for context.
