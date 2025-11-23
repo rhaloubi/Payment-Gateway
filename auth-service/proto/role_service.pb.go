@@ -149,6 +149,158 @@ func (x *AssignMerchantOwnerRoleResponse) GetMessage() string {
 	return ""
 }
 
+type AssignRoleToUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	RoleId        string                 `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	MerchantId    string                 `protobuf:"bytes,3,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
+	AssignedBy    string                 `protobuf:"bytes,4,opt,name=assigned_by,json=assignedBy,proto3" json:"assigned_by,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignRoleToUserRequest) Reset() {
+	*x = AssignRoleToUserRequest{}
+	mi := &file_proto_role_service_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignRoleToUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignRoleToUserRequest) ProtoMessage() {}
+
+func (x *AssignRoleToUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_role_service_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignRoleToUserRequest.ProtoReflect.Descriptor instead.
+func (*AssignRoleToUserRequest) Descriptor() ([]byte, []int) {
+	return file_proto_role_service_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *AssignRoleToUserRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *AssignRoleToUserRequest) GetRoleId() string {
+	if x != nil {
+		return x.RoleId
+	}
+	return ""
+}
+
+func (x *AssignRoleToUserRequest) GetMerchantId() string {
+	if x != nil {
+		return x.MerchantId
+	}
+	return ""
+}
+
+func (x *AssignRoleToUserRequest) GetAssignedBy() string {
+	if x != nil {
+		return x.AssignedBy
+	}
+	return ""
+}
+
+type AssignRoleToUserResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	RoleId        string                 `protobuf:"bytes,2,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	RoleName      string                 `protobuf:"bytes,3,opt,name=role_name,json=roleName,proto3" json:"role_name,omitempty"`
+	MerchantId    string                 `protobuf:"bytes,4,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
+	AssignedBy    string                 `protobuf:"bytes,5,opt,name=assigned_by,json=assignedBy,proto3" json:"assigned_by,omitempty"`
+	Message       string                 `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignRoleToUserResponse) Reset() {
+	*x = AssignRoleToUserResponse{}
+	mi := &file_proto_role_service_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignRoleToUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignRoleToUserResponse) ProtoMessage() {}
+
+func (x *AssignRoleToUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_role_service_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignRoleToUserResponse.ProtoReflect.Descriptor instead.
+func (*AssignRoleToUserResponse) Descriptor() ([]byte, []int) {
+	return file_proto_role_service_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *AssignRoleToUserResponse) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *AssignRoleToUserResponse) GetRoleId() string {
+	if x != nil {
+		return x.RoleId
+	}
+	return ""
+}
+
+func (x *AssignRoleToUserResponse) GetRoleName() string {
+	if x != nil {
+		return x.RoleName
+	}
+	return ""
+}
+
+func (x *AssignRoleToUserResponse) GetMerchantId() string {
+	if x != nil {
+		return x.MerchantId
+	}
+	return ""
+}
+
+func (x *AssignRoleToUserResponse) GetAssignedBy() string {
+	if x != nil {
+		return x.AssignedBy
+	}
+	return ""
+}
+
+func (x *AssignRoleToUserResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 type GetUserRolesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -159,7 +311,7 @@ type GetUserRolesRequest struct {
 
 func (x *GetUserRolesRequest) Reset() {
 	*x = GetUserRolesRequest{}
-	mi := &file_proto_role_service_proto_msgTypes[2]
+	mi := &file_proto_role_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -171,7 +323,7 @@ func (x *GetUserRolesRequest) String() string {
 func (*GetUserRolesRequest) ProtoMessage() {}
 
 func (x *GetUserRolesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_role_service_proto_msgTypes[2]
+	mi := &file_proto_role_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -184,7 +336,7 @@ func (x *GetUserRolesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserRolesRequest.ProtoReflect.Descriptor instead.
 func (*GetUserRolesRequest) Descriptor() ([]byte, []int) {
-	return file_proto_role_service_proto_rawDescGZIP(), []int{2}
+	return file_proto_role_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetUserRolesRequest) GetUserId() string {
@@ -211,7 +363,7 @@ type Role struct {
 
 func (x *Role) Reset() {
 	*x = Role{}
-	mi := &file_proto_role_service_proto_msgTypes[3]
+	mi := &file_proto_role_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -223,7 +375,7 @@ func (x *Role) String() string {
 func (*Role) ProtoMessage() {}
 
 func (x *Role) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_role_service_proto_msgTypes[3]
+	mi := &file_proto_role_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -236,7 +388,7 @@ func (x *Role) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Role.ProtoReflect.Descriptor instead.
 func (*Role) Descriptor() ([]byte, []int) {
-	return file_proto_role_service_proto_rawDescGZIP(), []int{3}
+	return file_proto_role_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Role) GetId() string {
@@ -264,7 +416,7 @@ type GetUserRolesResponse struct {
 
 func (x *GetUserRolesResponse) Reset() {
 	*x = GetUserRolesResponse{}
-	mi := &file_proto_role_service_proto_msgTypes[4]
+	mi := &file_proto_role_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -276,7 +428,7 @@ func (x *GetUserRolesResponse) String() string {
 func (*GetUserRolesResponse) ProtoMessage() {}
 
 func (x *GetUserRolesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_role_service_proto_msgTypes[4]
+	mi := &file_proto_role_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -289,7 +441,7 @@ func (x *GetUserRolesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserRolesResponse.ProtoReflect.Descriptor instead.
 func (*GetUserRolesResponse) Descriptor() ([]byte, []int) {
-	return file_proto_role_service_proto_rawDescGZIP(), []int{4}
+	return file_proto_role_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetUserRolesResponse) GetUserId() string {
@@ -328,7 +480,23 @@ const file_proto_role_service_proto_rawDesc = "" +
 	"\trole_name\x18\x03 \x01(\tR\broleName\x12\x1f\n" +
 	"\vmerchant_id\x18\x04 \x01(\tR\n" +
 	"merchantId\x12\x18\n" +
-	"\amessage\x18\x05 \x01(\tR\amessage\"O\n" +
+	"\amessage\x18\x05 \x01(\tR\amessage\"\x8d\x01\n" +
+	"\x17AssignRoleToUserRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x17\n" +
+	"\arole_id\x18\x02 \x01(\tR\x06roleId\x12\x1f\n" +
+	"\vmerchant_id\x18\x03 \x01(\tR\n" +
+	"merchantId\x12\x1f\n" +
+	"\vassigned_by\x18\x04 \x01(\tR\n" +
+	"assignedBy\"\xc5\x01\n" +
+	"\x18AssignRoleToUserResponse\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x17\n" +
+	"\arole_id\x18\x02 \x01(\tR\x06roleId\x12\x1b\n" +
+	"\trole_name\x18\x03 \x01(\tR\broleName\x12\x1f\n" +
+	"\vmerchant_id\x18\x04 \x01(\tR\n" +
+	"merchantId\x12\x1f\n" +
+	"\vassigned_by\x18\x05 \x01(\tR\n" +
+	"assignedBy\x12\x18\n" +
+	"\amessage\x18\x06 \x01(\tR\amessage\"O\n" +
 	"\x13GetUserRolesRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1f\n" +
 	"\vmerchant_id\x18\x02 \x01(\tR\n" +
@@ -340,10 +508,11 @@ const file_proto_role_service_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1f\n" +
 	"\vmerchant_id\x18\x02 \x01(\tR\n" +
 	"merchantId\x12!\n" +
-	"\x05roles\x18\x03 \x03(\v2\v.proto.RoleR\x05roles2\xc0\x01\n" +
+	"\x05roles\x18\x03 \x03(\v2\v.proto.RoleR\x05roles2\x95\x02\n" +
 	"\vRoleService\x12h\n" +
 	"\x17AssignMerchantOwnerRole\x12%.proto.AssignMerchantOwnerRoleRequest\x1a&.proto.AssignMerchantOwnerRoleResponse\x12G\n" +
-	"\fGetUserRoles\x12\x1a.proto.GetUserRolesRequest\x1a\x1b.proto.GetUserRolesResponseB>Z<github.com/rhaloubi/payment-gateway/auth-service/proto;protob\x06proto3"
+	"\fGetUserRoles\x12\x1a.proto.GetUserRolesRequest\x1a\x1b.proto.GetUserRolesResponse\x12S\n" +
+	"\x10AssignRoleToUser\x12\x1e.proto.AssignRoleToUserRequest\x1a\x1f.proto.AssignRoleToUserResponseB>Z<github.com/rhaloubi/payment-gateway/auth-service/proto;protob\x06proto3"
 
 var (
 	file_proto_role_service_proto_rawDescOnce sync.Once
@@ -357,22 +526,26 @@ func file_proto_role_service_proto_rawDescGZIP() []byte {
 	return file_proto_role_service_proto_rawDescData
 }
 
-var file_proto_role_service_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_proto_role_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_proto_role_service_proto_goTypes = []any{
 	(*AssignMerchantOwnerRoleRequest)(nil),  // 0: proto.AssignMerchantOwnerRoleRequest
 	(*AssignMerchantOwnerRoleResponse)(nil), // 1: proto.AssignMerchantOwnerRoleResponse
-	(*GetUserRolesRequest)(nil),             // 2: proto.GetUserRolesRequest
-	(*Role)(nil),                            // 3: proto.Role
-	(*GetUserRolesResponse)(nil),            // 4: proto.GetUserRolesResponse
+	(*AssignRoleToUserRequest)(nil),         // 2: proto.AssignRoleToUserRequest
+	(*AssignRoleToUserResponse)(nil),        // 3: proto.AssignRoleToUserResponse
+	(*GetUserRolesRequest)(nil),             // 4: proto.GetUserRolesRequest
+	(*Role)(nil),                            // 5: proto.Role
+	(*GetUserRolesResponse)(nil),            // 6: proto.GetUserRolesResponse
 }
 var file_proto_role_service_proto_depIdxs = []int32{
-	3, // 0: proto.GetUserRolesResponse.roles:type_name -> proto.Role
+	5, // 0: proto.GetUserRolesResponse.roles:type_name -> proto.Role
 	0, // 1: proto.RoleService.AssignMerchantOwnerRole:input_type -> proto.AssignMerchantOwnerRoleRequest
-	2, // 2: proto.RoleService.GetUserRoles:input_type -> proto.GetUserRolesRequest
-	1, // 3: proto.RoleService.AssignMerchantOwnerRole:output_type -> proto.AssignMerchantOwnerRoleResponse
-	4, // 4: proto.RoleService.GetUserRoles:output_type -> proto.GetUserRolesResponse
-	3, // [3:5] is the sub-list for method output_type
-	1, // [1:3] is the sub-list for method input_type
+	4, // 2: proto.RoleService.GetUserRoles:input_type -> proto.GetUserRolesRequest
+	2, // 3: proto.RoleService.AssignRoleToUser:input_type -> proto.AssignRoleToUserRequest
+	1, // 4: proto.RoleService.AssignMerchantOwnerRole:output_type -> proto.AssignMerchantOwnerRoleResponse
+	6, // 5: proto.RoleService.GetUserRoles:output_type -> proto.GetUserRolesResponse
+	3, // 6: proto.RoleService.AssignRoleToUser:output_type -> proto.AssignRoleToUserResponse
+	4, // [4:7] is the sub-list for method output_type
+	1, // [1:4] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -389,7 +562,7 @@ func file_proto_role_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_role_service_proto_rawDesc), len(file_proto_role_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
