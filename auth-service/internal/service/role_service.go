@@ -73,3 +73,8 @@ func (s *RoleService) UpdateUserRole(userID, oldRoleID, newRoleID, merchantID uu
 
 	return s.userRoleRepo.UpdateUserRole(userID, oldRoleID, newRoleID, merchantID)
 }
+
+func (s *RoleService) GetRoleName(roleID uuid.UUID) string {
+	role, _ := s.roleRepo.FindByID(roleID)
+	return role.Name
+}

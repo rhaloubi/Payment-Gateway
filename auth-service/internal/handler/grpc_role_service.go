@@ -83,3 +83,41 @@ func (s *GRPCRoleService) GetUserRoles(ctx context.Context, req *pb.GetUserRoles
 		Roles:      protoRoles,
 	}, nil
 }
+
+// AssignRoleToUser implements the gRPC method
+func (s *GRPCRoleService) AssignRoleToUser(ctx context.Context, req *pb.AssignRoleToUserRequest) (*pb.AssignRoleToUserResponse, error) {
+
+	userID, err := uuid.Parse(req.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	roleID, err := uuid.Parse(req.RoleId)
+	if err != nil {
+		return nil, err
+	}
+
+	merchantID, err := uuid.Parse(req.MerchantId)
+	if err != nil {
+		return nil, err
+	}
+
+	assignedBy, err := uuid.Parse(req.AssignedBy)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.roleService.AssignRoleToUser(userID, roleID, merchantID, assignedBy)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.AssignRoleToUserResponse{
+		UserId:     userID.String(),
+		RoleId:     roleID.String(),
+		RoleName:   s.roleService.GetRoleName(roleID),
+		MerchantId: merchantID.String(),
+		AssignedBy: assignedBy.String(),
+		Message:    "Role assigned successfully",
+	}, nil
+}

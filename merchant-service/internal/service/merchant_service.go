@@ -95,7 +95,7 @@ func (s *MerchantService) CreateMerchant(req *CreateMerchantRequest) (*model.Mer
 	}
 
 	// Log activity
-	s.logActivity(merchant.ID, req.OwnerID, "merchant_created", "", merchant.ID, nil)
+	go s.logActivity(merchant.ID, req.OwnerID, "merchant_created", "", merchant.ID, nil)
 
 	return merchant, nil
 }

@@ -8,7 +8,6 @@ package proto
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -22,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	RoleService_AssignMerchantOwnerRole_FullMethodName = "/proto.RoleService/AssignMerchantOwnerRole"
 	RoleService_GetUserRoles_FullMethodName            = "/proto.RoleService/GetUserRoles"
+	RoleService_AssignRoleToUser_FullMethodName        = "/proto.RoleService/AssignRoleToUser"
 )
 
 // RoleServiceClient is the client API for RoleService service.
@@ -30,6 +30,7 @@ const (
 type RoleServiceClient interface {
 	AssignMerchantOwnerRole(ctx context.Context, in *AssignMerchantOwnerRoleRequest, opts ...grpc.CallOption) (*AssignMerchantOwnerRoleResponse, error)
 	GetUserRoles(ctx context.Context, in *GetUserRolesRequest, opts ...grpc.CallOption) (*GetUserRolesResponse, error)
+	AssignRoleToUser(ctx context.Context, in *AssignRoleToUserRequest, opts ...grpc.CallOption) (*AssignRoleToUserResponse, error)
 }
 
 type roleServiceClient struct {
@@ -60,12 +61,23 @@ func (c *roleServiceClient) GetUserRoles(ctx context.Context, in *GetUserRolesRe
 	return out, nil
 }
 
+func (c *roleServiceClient) AssignRoleToUser(ctx context.Context, in *AssignRoleToUserRequest, opts ...grpc.CallOption) (*AssignRoleToUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AssignRoleToUserResponse)
+	err := c.cc.Invoke(ctx, RoleService_AssignRoleToUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RoleServiceServer is the server API for RoleService service.
 // All implementations must embed UnimplementedRoleServiceServer
 // for forward compatibility.
 type RoleServiceServer interface {
 	AssignMerchantOwnerRole(context.Context, *AssignMerchantOwnerRoleRequest) (*AssignMerchantOwnerRoleResponse, error)
 	GetUserRoles(context.Context, *GetUserRolesRequest) (*GetUserRolesResponse, error)
+	AssignRoleToUser(context.Context, *AssignRoleToUserRequest) (*AssignRoleToUserResponse, error)
 	mustEmbedUnimplementedRoleServiceServer()
 }
 
@@ -81,6 +93,9 @@ func (UnimplementedRoleServiceServer) AssignMerchantOwnerRole(context.Context, *
 }
 func (UnimplementedRoleServiceServer) GetUserRoles(context.Context, *GetUserRolesRequest) (*GetUserRolesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserRoles not implemented")
+}
+func (UnimplementedRoleServiceServer) AssignRoleToUser(context.Context, *AssignRoleToUserRequest) (*AssignRoleToUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AssignRoleToUser not implemented")
 }
 func (UnimplementedRoleServiceServer) mustEmbedUnimplementedRoleServiceServer() {}
 func (UnimplementedRoleServiceServer) testEmbeddedByValue()                     {}
@@ -139,6 +154,24 @@ func _RoleService_GetUserRoles_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RoleService_AssignRoleToUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AssignRoleToUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoleServiceServer).AssignRoleToUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoleService_AssignRoleToUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoleServiceServer).AssignRoleToUser(ctx, req.(*AssignRoleToUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RoleService_ServiceDesc is the grpc.ServiceDesc for RoleService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -153,6 +186,10 @@ var RoleService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserRoles",
 			Handler:    _RoleService_GetUserRoles_Handler,
+		},
+		{
+			MethodName: "AssignRoleToUser",
+			Handler:    _RoleService_AssignRoleToUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
