@@ -29,7 +29,6 @@ type TokenizationService struct {
 	keyManagementSvc  *KeyManagementService
 }
 
-// NewTokenizationService creates a new tokenization service
 func NewTokenizationService() *TokenizationService {
 	return &TokenizationService{
 		cardVaultRepo:     repository.NewCardVaultRepository(),
@@ -43,11 +42,6 @@ func NewTokenizationService() *TokenizationService {
 	}
 }
 
-// =========================================================================
-// Request/Response DTOs
-// =========================================================================
-
-// TokenizeCardRequest represents a request to tokenize card data
 type TokenizeCardRequest struct {
 	MerchantID     uuid.UUID
 	CardNumber     string
@@ -56,18 +50,15 @@ type TokenizeCardRequest struct {
 	ExpiryYear     int
 	CVV            string
 
-	// Optional settings
 	IsSingleUse bool
 	ExpiresAt   *time.Time
 
-	// Audit fields
 	RequestID string
 	IPAddress string
 	UserAgent string
 	CreatedBy uuid.UUID
 }
 
-// TokenizeCardResponse represents the response after tokenization
 type TokenizeCardResponse struct {
 	Token       string
 	CardBrand   model.CardBrand
@@ -78,22 +69,18 @@ type TokenizeCardResponse struct {
 	Fingerprint string
 	IsNewToken  bool // true if new, false if returning existing token
 }
-
-// DetokenizeRequest represents a request to retrieve card data
 type DetokenizeRequest struct {
 	Token      string
 	MerchantID uuid.UUID
 
-	// Usage context
 	TransactionID uuid.UUID
-	UsageType     string // "payment", "verification", "recurring"
+	UsageType     string
 	Amount        int64
 	Currency      string
 	IPAddress     string
 	UserAgent     string
 }
 
-// DetokenizeResponse represents decrypted card data
 type DetokenizeResponse struct {
 	CardNumber     string
 	CardholderName string
@@ -103,41 +90,30 @@ type DetokenizeResponse struct {
 	Last4Digits    string
 }
 
-// =========================================================================
-// Tokenization - Main Operations
-// =========================================================================
-
-// TokenizeCard tokenizes sensitive card data
 func (s *TokenizationService) TokenizeCard(req *TokenizeCardRequest) (*TokenizeCardResponse, error) {
 	startTime := time.Now()
 
-	// Step 1: Validate card data
 	if err := s.validateCardData(req); err != nil {
-		s.logTokenizationRequest(req, nil, false, err, time.Since(startTime))
+		go s.logTokenizationRequest(req, nil, false, err, time.Since(startTime))
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
-	// Step 2: Sanitize card number
 	req.CardNumber = s.validationService.SanitizeCardNumber(req.CardNumber)
 
-	// Step 3: Detect card brand
 	cardBrand := s.validationService.DetectCardBrand(req.CardNumber)
 
-	// Step 4: Generate fingerprint for duplicate detection
 	fingerprint := s.encryptionService.GenerateCardFingerprint(
 		req.CardNumber,
 		strconv.Itoa(req.ExpiryMonth),
 		strconv.Itoa(req.ExpiryYear),
 	)
 
-	// Step 5: Check for existing token (duplicate card)
 	existingCard, err := s.cardVaultRepo.FindByFingerprint(req.MerchantID, fingerprint)
 	if err != nil {
 		logger.Log.Error("Error checking for duplicate", zap.Error(err))
 	}
 
 	if existingCard != nil && existingCard.IsValid() {
-		// Return existing token (no need to re-encrypt)
 		logger.Log.Info("Returning existing token for duplicate card",
 			zap.String("token", existingCard.Token),
 			zap.String("merchant_id", req.MerchantID.String()),
@@ -154,18 +130,16 @@ func (s *TokenizationService) TokenizeCard(req *TokenizeCardRequest) (*TokenizeC
 			IsNewToken:  false,
 		}
 
-		s.logTokenizationRequest(req, existingCard, true, nil, time.Since(startTime))
+		go s.logTokenizationRequest(req, existingCard, true, nil, time.Since(startTime))
 		return response, nil
 	}
 
-	// Step 6: Get encryption key for merchant
 	encryptionKey, keyID, err := s.keyManagementSvc.GetOrCreateMerchantKey(req.MerchantID)
 	if err != nil {
-		s.logTokenizationRequest(req, nil, false, err, time.Since(startTime))
+		go s.logTokenizationRequest(req, nil, false, err, time.Since(startTime))
 		return nil, fmt.Errorf("failed to get encryption key: %w", err)
 	}
 
-	// Step 7: Encrypt card data
 	encryptedData, err := s.encryptionService.EncryptCardData(crypto.CardData{
 		CardNumber:     req.CardNumber,
 		CardholderName: req.CardholderName,
@@ -173,25 +147,21 @@ func (s *TokenizationService) TokenizeCard(req *TokenizeCardRequest) (*TokenizeC
 		ExpiryYear:     strconv.Itoa(req.ExpiryYear),
 	}, encryptionKey)
 	if err != nil {
-		s.logTokenizationRequest(req, nil, false, err, time.Since(startTime))
+		go s.logTokenizationRequest(req, nil, false, err, time.Since(startTime))
 		return nil, fmt.Errorf("encryption failed: %w", err)
 	}
 
-	// Step 8: Generate token
-	token := s.generateToken("live") // or "test" based on environment
+	token := s.generateToken("live")
 
-	// Step 9: Get card metadata
 	last4 := s.validationService.GetLast4Digits(req.CardNumber)
 	first6 := s.validationService.GetFirst6Digits(req.CardNumber)
 
-	// Lookup BIN info
 	binInfo, _ := s.binRepo.FindByBIN(first6)
 	cardType := model.CardTypeUnknown
 	if binInfo != nil {
 		cardType = binInfo.CardType
 	}
 
-	// Step 10: Create card vault entry
 	cardVault := &model.CardVault{
 		MerchantID:              req.MerchantID,
 		Token:                   token,
@@ -219,19 +189,15 @@ func (s *TokenizationService) TokenizeCard(req *TokenizeCardRequest) (*TokenizeC
 		cardVault.ExpiresAt.Valid = true
 	}
 
-	// Step 11: Save to database
 	if err := s.cardVaultRepo.Create(cardVault); err != nil {
-		s.logTokenizationRequest(req, nil, false, err, time.Since(startTime))
+		go s.logTokenizationRequest(req, nil, false, err, time.Since(startTime))
 		return nil, fmt.Errorf("failed to save token: %w", err)
 	}
 
-	// Step 12: Increment key usage count
 	s.keyRepo.IncrementEncryptedRecords(keyID)
 
-	// Step 13: Log successful tokenization
-	s.logTokenizationRequest(req, cardVault, true, nil, time.Since(startTime))
+	go s.logTokenizationRequest(req, cardVault, true, nil, time.Since(startTime))
 
-	// Step 14: Return response
 	response := &TokenizeCardResponse{
 		Token:       cardVault.Token,
 		CardBrand:   cardVault.CardBrand,
@@ -252,15 +218,12 @@ func (s *TokenizationService) TokenizeCard(req *TokenizeCardRequest) (*TokenizeC
 	return response, nil
 }
 
-// Detokenize retrieves original card data from a token
 func (s *TokenizationService) Detokenize(req *DetokenizeRequest) (*DetokenizeResponse, error) {
-	// Step 1: Find token in vault
 	cardVault, err := s.cardVaultRepo.FindByToken(req.Token)
 	if err != nil {
 		return nil, fmt.Errorf("token not found: %w", err)
 	}
 
-	// Step 2: Verify merchant ownership
 	if cardVault.MerchantID != req.MerchantID {
 		logger.Log.Warn("Attempted access to token from different merchant",
 			zap.String("token", req.Token),
@@ -336,11 +299,6 @@ func (s *TokenizationService) Detokenize(req *DetokenizeRequest) (*DetokenizeRes
 	return response, nil
 }
 
-// =========================================================================
-// Token Management Operations
-// =========================================================================
-
-// ValidateToken checks if a token is valid and active
 func (s *TokenizationService) ValidateToken(token string, merchantID uuid.UUID) (bool, error) {
 	cardVault, err := s.cardVaultRepo.FindByToken(token)
 	if err != nil {
@@ -396,13 +354,7 @@ func (s *TokenizationService) GetTokenInfo(token string, merchantID uuid.UUID) (
 	return cardVault, nil
 }
 
-// =========================================================================
-// Helper Methods
-// =========================================================================
-
-// validateCardData validates card data before tokenization
 func (s *TokenizationService) validateCardData(req *TokenizeCardRequest) error {
-	// Validate using CardValidator
 	validationReq := validation.CardValidationRequest{
 		CardNumber:     req.CardNumber,
 		CardholderName: req.CardholderName,
@@ -414,9 +366,7 @@ func (s *TokenizationService) validateCardData(req *TokenizeCardRequest) error {
 	return s.validationService.ValidateCard(validationReq)
 }
 
-// generateToken generates a unique token string
 func (s *TokenizationService) generateToken(environment string) string {
-	// Generate 32 random bytes
 	randomBytes := make([]byte, 32)
 	rand.Read(randomBytes)
 

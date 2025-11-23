@@ -44,26 +44,21 @@ func NewCardValidator() *CardValidator {
 	return cv
 }
 
-// ValidateCard performs comprehensive card validation
 func (cv *CardValidator) ValidateCard(req CardValidationRequest) error {
 	var validationErrors []string
 
-	// Validate card number
 	if err := cv.ValidateCardNumber(req.CardNumber); err != nil {
 		validationErrors = append(validationErrors, err.Error())
 	}
 
-	// Validate cardholder name
 	if err := cv.ValidateCardholderName(req.CardholderName); err != nil {
 		validationErrors = append(validationErrors, err.Error())
 	}
 
-	// Validate expiry date
 	if err := cv.ValidateExpiryDate(req.ExpiryMonth, req.ExpiryYear); err != nil {
 		validationErrors = append(validationErrors, err.Error())
 	}
 
-	// Validate CVV
 	if err := cv.ValidateCVV(req.CVV, req.CardNumber); err != nil {
 		validationErrors = append(validationErrors, err.Error())
 	}
@@ -75,27 +70,21 @@ func (cv *CardValidator) ValidateCard(req CardValidationRequest) error {
 	return nil
 }
 
-// ValidateCardNumber validates the card number format and performs Luhn check
 func (cv *CardValidator) ValidateCardNumber(cardNumber string) error {
-	// Remove all non-digit characters
 	sanitized := cv.SanitizeCardNumber(cardNumber)
 
-	// Check if empty
 	if sanitized == "" {
 		return errors.New("card number is required")
 	}
 
-	// Check length (typically 13-19 digits)
 	if len(sanitized) < 13 || len(sanitized) > 19 {
 		return errors.New("card number must be between 13 and 19 digits")
 	}
 
-	// Perform Luhn algorithm check
 	if !cv.isLuhnValid(sanitized) {
 		return errors.New("card number is invalid")
 	}
 
-	// Check if it's a supported card brand
 	cardBrand := cv.DetectCardBrand(sanitized)
 	if cardBrand == model.CardBrandUnknown {
 		return errors.New("unsupported card brand (only Visa and Mastercard are accepted)")
@@ -104,13 +93,11 @@ func (cv *CardValidator) ValidateCardNumber(cardNumber string) error {
 	return nil
 }
 
-// ValidateCardholderName validates the cardholder name
 func (cv *CardValidator) ValidateCardholderName(name string) error {
 	if strings.TrimSpace(name) == "" {
 		return errors.New("cardholder name is required")
 	}
 
-	// Basic validation: at least 2 characters, only letters, spaces, hyphens, and dots
 	nameRegex := regexp.MustCompile(`^[a-zA-Z\s\-\.]{2,100}$`)
 	if !nameRegex.MatchString(name) {
 		return errors.New("cardholder name contains invalid characters")
@@ -119,7 +106,6 @@ func (cv *CardValidator) ValidateCardholderName(name string) error {
 	return nil
 }
 
-// ValidateExpiryDate validates the expiry date
 func (cv *CardValidator) ValidateExpiryDate(month, year int) error {
 	if month < 1 || month > 12 {
 		return errors.New("expiry month must be between 1 and 12")
@@ -128,17 +114,14 @@ func (cv *CardValidator) ValidateExpiryDate(month, year int) error {
 	currentYear := time.Now().Year()
 	currentMonth := int(time.Now().Month())
 
-	// Check if year is in the past
 	if year < currentYear {
 		return errors.New("card has expired")
 	}
 
-	// Check if month/year is in the past
 	if year == currentYear && month < currentMonth {
 		return errors.New("card has expired")
 	}
 
-	// Check if year is too far in the future (max 20 years)
 	if year > currentYear+20 {
 		return errors.New("expiry year is too far in the future")
 	}
@@ -146,22 +129,18 @@ func (cv *CardValidator) ValidateExpiryDate(month, year int) error {
 	return nil
 }
 
-// ValidateCVV validates the CVV/Security code
 func (cv *CardValidator) ValidateCVV(cvv string, cardNumber string) error {
 	if strings.TrimSpace(cvv) == "" {
 		return errors.New("CVV is required")
 	}
 
-	// Remove any non-digit characters
 	sanitized := strings.ReplaceAll(cvv, " ", "")
 	sanitized = strings.ReplaceAll(sanitized, "-", "")
 
-	// Check if all digits
 	if !regexp.MustCompile(`^\d+$`).MatchString(sanitized) {
 		return errors.New("CVV must contain only digits")
 	}
 
-	// For Visa and Mastercard, CVV is always 3 digits
 	if len(sanitized) != 3 {
 		return errors.New("CVV must be 3 digits")
 	}
@@ -169,7 +148,6 @@ func (cv *CardValidator) ValidateCVV(cvv string, cardNumber string) error {
 	return nil
 }
 
-// DetectCardBrand detects the card brand from card number
 func (cv *CardValidator) DetectCardBrand(cardNumber string) model.CardBrand {
 	sanitized := cv.SanitizeCardNumber(cardNumber)
 
@@ -182,24 +160,19 @@ func (cv *CardValidator) DetectCardBrand(cardNumber string) model.CardBrand {
 	return model.CardBrandUnknown
 }
 
-// DetectCardNumberBrand is an alias for DetectCardBrand for backward compatibility
 func (cv *CardValidator) DetectCardNumberBrand(cardNumber string) model.CardBrand {
 	return cv.DetectCardBrand(cardNumber)
 }
 
-// SanitizeCardNumber removes spaces and dashes from card number
 func (cv *CardValidator) SanitizeCardNumber(cardNumber string) string {
-	// Remove spaces and dashes
 	sanitized := strings.ReplaceAll(cardNumber, " ", "")
 	sanitized = strings.ReplaceAll(sanitized, "-", "")
 
-	// Keep only digits
 	sanitized = regexp.MustCompile(`\D`).ReplaceAllString(sanitized, "")
 
 	return sanitized
 }
 
-// GetLast4Digits extracts the last 4 digits from a card number
 func (cv *CardValidator) GetLast4Digits(cardNumber string) string {
 	sanitized := cv.SanitizeCardNumber(cardNumber)
 	if len(sanitized) >= 4 {
@@ -217,9 +190,7 @@ func (cv *CardValidator) GetFirst6Digits(cardNumber string) string {
 	return sanitized
 }
 
-// isLuhnValid performs the Luhn algorithm check
 func (cv *CardValidator) isLuhnValid(cardNumber string) bool {
-	// Convert string to slice of integers
 	digits := make([]int, len(cardNumber))
 	for i, char := range cardNumber {
 		digit, err := strconv.Atoi(string(char))

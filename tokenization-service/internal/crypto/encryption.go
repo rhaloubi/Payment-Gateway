@@ -176,7 +176,6 @@ func (s *EncryptionService) DecryptCardData(encrypted EncryptedCardData, key []b
 	return data, nil
 }
 
-// Used to detect duplicate cards
 func (s *EncryptionService) GenerateCardFingerprint(cardNumber, expiryMonth, expiryYear string) string {
 	data := fmt.Sprintf("%s:%s:%s", cardNumber, expiryMonth, expiryYear)
 	hash := sha256.Sum256([]byte(data))
