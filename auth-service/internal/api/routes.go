@@ -12,7 +12,6 @@ func Routes() {
 	authHandler := handler.NewAuthHandler()
 	roleHandler := handler.NewRoleHandler()
 	apiKeyHandler := handler.NewAPIKeyHandler()
-	internalHandler := handler.NewInternalHandler()
 
 	// Define your routes here
 	r.GET("/health", func(c *gin.Context) {
@@ -20,16 +19,6 @@ func Routes() {
 			"message": "health check",
 		})
 	})
-
-	internal := r.Group("/internal/v1")
-	//internal.Use(middleware.InternalServiceMiddleware())
-	{
-		// Role assignment for merchant owners
-		internal.POST("/roles/assign-merchant-owner", internalHandler.AssignMerchantOwnerRole)
-
-		// Get user roles (for merchant service to check access)
-		internal.GET("/users/:user_id/roles", internalHandler.GetUserRolesByUserID)
-	}
 
 	// /api/v1/*
 	v1 := r.Group("/api/v1")

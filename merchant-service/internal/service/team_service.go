@@ -3,13 +3,15 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rhaloubi/payment-gateway/merchant-service/inits/logger"
+	//"github.com/rhaloubi/payment-gateway/merchant-service/inits/logger"
+	"github.com/rhaloubi/payment-gateway/merchant-service/internal/client"
 	model "github.com/rhaloubi/payment-gateway/merchant-service/internal/models"
 	"github.com/rhaloubi/payment-gateway/merchant-service/internal/repository"
-	"go.uber.org/zap"
+	//"go.uber.org/zap"
 )
 
 type TeamService struct {
@@ -18,6 +20,7 @@ type TeamService struct {
 	merchantRepo     *repository.MerchantRepository
 	activityLogRepo  *repository.ActivityLogRepository
 	emailService     *EmailService
+	authClient       *client.AuthServiceClient
 }
 
 // NewTeamService creates a new team service
@@ -28,6 +31,7 @@ func NewTeamService() *TeamService {
 		merchantRepo:     repository.NewMerchantRepository(),
 		activityLogRepo:  repository.NewActivityLogRepository(),
 		emailService:     NewEmailService(),
+		authClient:       client.NewAuthServiceClient(),
 	}
 }
 
@@ -43,7 +47,7 @@ type InviteTeamMemberRequest struct {
 // InviteTeamMember  ##### ------- i removed send email for testing purposes ---------- #######
 func (s *TeamService) InviteTeamMember(req *InviteTeamMemberRequest) (*model.MerchantInvitation, error) {
 	// Validate merchant exists
-	merchant, err := s.merchantRepo.FindByID(req.MerchantID)
+	_, err := s.merchantRepo.FindByID(req.MerchantID)
 	if err != nil {
 		return nil, err
 	}
@@ -71,21 +75,21 @@ func (s *TeamService) InviteTeamMember(req *InviteTeamMemberRequest) (*model.Mer
 		return nil, err
 	}
 
-	// Send invitation email via Mailtrap
+	/* Send invitation email via Mailtrap
 	go func(invitation *model.MerchantInvitation, merchant *model.Merchant) {
 		if err := s.emailService.SendInvitationEmail(invitation, merchant); err != nil {
 			// Log error but don't fail the invitation
 			logger.Log.Error("Failed to send invitation email", zap.Error(err))
 		}
 	}(invitation, merchant)
-	//
+	*/
 	// Log activity
 	changes := map[string]interface{}{
 		"email":     req.Email,
 		"role_id":   req.RoleID.String(),
 		"role_name": req.RoleName,
 	}
-	s.logActivity(req.MerchantID, req.InvitedBy, "team_member_invited", "invitation", invitation.ID, changes)
+	go s.logActivity(req.MerchantID, req.InvitedBy, "team_member_invited", "invitation", invitation.ID, changes)
 
 	return invitation, nil
 }
@@ -124,6 +128,11 @@ func (s *TeamService) AcceptInvitation(token string, userID uuid.UUID) error {
 		Status:     model.MerchantUserStatusActive,
 	}
 	merchantUser.JoinedAt = toNullTime(time.Now())
+
+	if err := s.authClient.AssignRoleToUser(userID, invitation.MerchantID, invitation.RoleID, invitation.InvitedBy); err != nil {
+		fmt.Printf("WARNING: Failed to assign role %s to merchant owner: %v\n", invitation.RoleName, err)
+		return err
+	}
 
 	if err := s.merchantUserRepo.Create(merchantUser); err != nil {
 		return err
