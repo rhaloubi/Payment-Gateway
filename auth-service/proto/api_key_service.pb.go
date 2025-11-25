@@ -340,6 +340,7 @@ func (x *GetMerchantAPIKeysResponse) GetApiKeys() []*APIKey {
 type DeactivateAPIKeyRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	MerchantId    string                 `protobuf:"bytes,2,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -377,6 +378,13 @@ func (*DeactivateAPIKeyRequest) Descriptor() ([]byte, []int) {
 func (x *DeactivateAPIKeyRequest) GetId() string {
 	if x != nil {
 		return x.Id
+	}
+	return ""
+}
+
+func (x *DeactivateAPIKeyRequest) GetMerchantId() string {
+	if x != nil {
+		return x.MerchantId
 	}
 	return ""
 }
@@ -428,6 +436,7 @@ func (x *DeactivateAPIKeyResponse) GetMessage() string {
 type DeleteAPIKeyRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	MerchantId    string                 `protobuf:"bytes,2,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -465,6 +474,13 @@ func (*DeleteAPIKeyRequest) Descriptor() ([]byte, []int) {
 func (x *DeleteAPIKeyRequest) GetId() string {
 	if x != nil {
 		return x.Id
+	}
+	return ""
+}
+
+func (x *DeleteAPIKeyRequest) GetMerchantId() string {
+	if x != nil {
+		return x.MerchantId
 	}
 	return ""
 }
@@ -547,13 +563,17 @@ const file_proto_api_key_service_proto_rawDesc = "" +
 	"\vmerchant_id\x18\x01 \x01(\tR\n" +
 	"merchantId\"F\n" +
 	"\x1aGetMerchantAPIKeysResponse\x12(\n" +
-	"\bapi_keys\x18\x01 \x03(\v2\r.proto.APIKeyR\aapiKeys\")\n" +
+	"\bapi_keys\x18\x01 \x03(\v2\r.proto.APIKeyR\aapiKeys\"J\n" +
 	"\x17DeactivateAPIKeyRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"4\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
+	"\vmerchant_id\x18\x02 \x01(\tR\n" +
+	"merchantId\"4\n" +
 	"\x18DeactivateAPIKeyResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"%\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"F\n" +
 	"\x13DeleteAPIKeyRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"0\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
+	"\vmerchant_id\x18\x02 \x01(\tR\n" +
+	"merchantId\"0\n" +
 	"\x14DeleteAPIKeyResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage2\xd1\x02\n" +
 	"\rAPIKeyService\x12G\n" +

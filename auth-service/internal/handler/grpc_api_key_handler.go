@@ -91,6 +91,16 @@ func (s *GRPCAPIKeyService) DeactivateAPIKey(ctx context.Context, req *pb.Deacti
 		return nil, status.Error(codes.InvalidArgument, "invalid id")
 	}
 
+	merchantID, err := uuid.Parse(req.MerchantId)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid merchant_id")
+	}
+
+	// Check if merchant has that api-key
+	if !s.apiKeyService.CheckMerchantApikey(merchantID, keyID) {
+		return nil, status.Error(codes.PermissionDenied, "merchant does not have that api-key")
+	}
+
 	if err := s.apiKeyService.DeactivateAPIKey(keyID); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -104,6 +114,16 @@ func (s *GRPCAPIKeyService) DeleteAPIKey(ctx context.Context, req *pb.DeleteAPIK
 	keyID, err := uuid.Parse(req.Id)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid id")
+	}
+
+	merchantID, err := uuid.Parse(req.MerchantId)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid merchant_id")
+	}
+
+	// Check if merchant has that api-key
+	if !s.apiKeyService.CheckMerchantApikey(merchantID, keyID) {
+		return nil, status.Error(codes.PermissionDenied, "merchant does not have that api-key")
 	}
 
 	if err := s.apiKeyService.DeleteAPIKey(keyID); err != nil {

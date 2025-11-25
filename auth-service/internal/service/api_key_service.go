@@ -111,3 +111,18 @@ func (s *APIKeyService) generateAPIKey() string {
 	randomBytes := uuid.New().String() + uuid.New().String()
 	return "pk_" + randomBytes[:32]
 }
+
+// get key by id
+func (s *APIKeyService) GetAPIKeyByID(keyID uuid.UUID) (*model.APIKey, error) {
+	return s.apiKeyRepo.FindByID(keyID)
+}
+
+// checks if merchant has that api-key
+func (s *APIKeyService) CheckMerchantApikey(merchantID uuid.UUID, id uuid.UUID) bool {
+	apiKeyModel, err := s.apiKeyRepo.FindByID(id)
+	if err != nil {
+		return false
+	}
+	// Check if the API key belongs to the merchant
+	return apiKeyModel.MerchantID == merchantID
+}

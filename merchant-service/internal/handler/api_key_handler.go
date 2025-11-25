@@ -144,6 +144,34 @@ func (h *APIKeyHandler) DeactivateAPIKey(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "invalid key ID"})
 		return
 	}
+	merchantIDStr := c.Param("merchant_id")
+	merchantID, err := uuid.Parse(merchantIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "invalid merchant ID"})
+		return
+	}
+
+	// Get user ID from auth middleware
+	userIDStr, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "unauthorized"})
+		return
+	}
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "invalid user ID"})
+		return
+	}
+
+	hasPermission, err := h.teamService.CheckUserPermission(merchantID, userID, "delete")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
+		return
+	}
+	if !hasPermission {
+		c.JSON(http.StatusForbidden, gin.H{"success": false, "error": "forbidden"})
+		return
+	}
 
 	err = h.authClient.DeactivateAPIKey(keyID)
 	if err != nil {
@@ -162,7 +190,34 @@ func (h *APIKeyHandler) DeleteAPIKey(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "invalid key ID"})
 		return
 	}
+	merchantIDStr := c.Param("merchant_id")
+	merchantID, err := uuid.Parse(merchantIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "invalid merchant ID"})
+		return
+	}
 
+	// Get user ID from auth middleware
+	userIDStr, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "unauthorized"})
+		return
+	}
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "invalid user ID"})
+		return
+	}
+
+	hasPermission, err := h.teamService.CheckUserPermission(merchantID, userID, "delete")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
+		return
+	}
+	if !hasPermission {
+		c.JSON(http.StatusForbidden, gin.H{"success": false, "error": "forbidden"})
+		return
+	}
 	err = h.authClient.DeleteAPIKey(keyID)
 	if err != nil {
 		st := status.Convert(err)
