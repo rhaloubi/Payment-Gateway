@@ -16,11 +16,12 @@ import (
 )
 
 type AuthServiceClient struct {
-	baseURL     string
-	httpClient  *http.Client
-	grpcConn    *grpc.ClientConn
-	grpcClient  pb.RoleServiceClient
-	grpcTimeout time.Duration
+	baseURL      string
+	httpClient   *http.Client
+	grpcConn     *grpc.ClientConn
+	grpcClient   pb.RoleServiceClient
+	grpcTimeout  time.Duration
+	apiKeyClient pb.APIKeyServiceClient
 }
 
 func NewAuthServiceClient() *AuthServiceClient {
@@ -74,11 +75,6 @@ func (c *AuthServiceClient) AssignMerchantOwnerRole(userID, merchantID uuid.UUID
 	return nil
 }
 
-// Close closes the gRPC connection (call this on shutdown if needed)
-func (c *AuthServiceClient) Close() error {
-	return c.grpcConn.Close()
-}
-
 // ... (Keep your existing GetUserRoles or other HTTP methods here unchanged)
 
 func (c *AuthServiceClient) AssignRoleToUser(userID, merchantID, roleId, assignedBy uuid.UUID) error {
@@ -103,4 +99,75 @@ func (c *AuthServiceClient) AssignRoleToUser(userID, merchantID, roleId, assigne
 		zap.String("merchant_id", resp.MerchantId))
 
 	return nil
+}
+
+// CreateAPIKey calls gRPC to create an API key
+func (c *AuthServiceClient) CreateAPIKey(merchantID, createdBy uuid.UUID, name string) (*pb.CreateAPIKeyResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.grpcTimeout)
+	defer cancel()
+
+	req := &pb.CreateAPIKeyRequest{
+		MerchantId: merchantID.String(),
+		Name:       name,
+		CreatedBy:  createdBy.String(),
+	}
+
+	resp, err := c.apiKeyClient.CreateAPIKey(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("gRPC CreateAPIKey failed: %w", err)
+	}
+	return resp, nil
+}
+
+// GetMerchantAPIKeys calls gRPC to get API keys for a merchant
+func (c *AuthServiceClient) GetMerchantAPIKeys(merchantID uuid.UUID) (*pb.GetMerchantAPIKeysResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.grpcTimeout)
+	defer cancel()
+
+	req := &pb.GetMerchantAPIKeysRequest{
+		MerchantId: merchantID.String(),
+	}
+
+	resp, err := c.apiKeyClient.GetMerchantAPIKeys(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("gRPC GetMerchantAPIKeys failed: %w", err)
+	}
+	return resp, nil
+}
+
+// DeactivateAPIKey calls gRPC to deactivate an API key
+func (c *AuthServiceClient) DeactivateAPIKey(keyID uuid.UUID) error {
+	ctx, cancel := context.WithTimeout(context.Background(), c.grpcTimeout)
+	defer cancel()
+
+	req := &pb.DeactivateAPIKeyRequest{
+		Id: keyID.String(),
+	}
+
+	_, err := c.apiKeyClient.DeactivateAPIKey(ctx, req)
+	if err != nil {
+		return fmt.Errorf("gRPC DeactivateAPIKey failed: %w", err)
+	}
+	return nil
+}
+
+// DeleteAPIKey calls gRPC to delete an API key
+func (c *AuthServiceClient) DeleteAPIKey(keyID uuid.UUID) error {
+	ctx, cancel := context.WithTimeout(context.Background(), c.grpcTimeout)
+	defer cancel()
+
+	req := &pb.DeleteAPIKeyRequest{
+		Id: keyID.String(),
+	}
+
+	_, err := c.apiKeyClient.DeleteAPIKey(ctx, req)
+	if err != nil {
+		return fmt.Errorf("gRPC DeleteAPIKey failed: %w", err)
+	}
+	return nil
+}
+
+// Close closes the gRPC connection
+func (c *AuthServiceClient) Close() error {
+	return c.grpcConn.Close()
 }
