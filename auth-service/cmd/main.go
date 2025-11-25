@@ -33,6 +33,7 @@ func main() {
 	// Initialize gRPC server and register service
 	grpcServer := util.InitGRPC()
 	pb.RegisterRoleServiceServer(grpcServer, handler.NewGRPCRoleService())
+	pb.RegisterAPIKeyServiceServer(grpcServer, handler.NewGRPCAPIKeyService())
 
 	httpServer := &http.Server{
 		Addr:    ":" + os.Getenv("PORT"),

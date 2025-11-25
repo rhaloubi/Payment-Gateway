@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "github.com/rhaloubi/payment-gateway/auth-service/proto;proto";
+
+service APIKeyService {
+  rpc CreateAPIKey (CreateAPIKeyRequest) returns (CreateAPIKeyResponse);
+  rpc GetMerchantAPIKeys (GetMerchantAPIKeysRequest) returns (GetMerchantAPIKeysResponse);
+  rpc DeactivateAPIKey (DeactivateAPIKeyRequest) returns (DeactivateAPIKeyResponse);
+  rpc DeleteAPIKey (DeleteAPIKeyRequest) returns (DeleteAPIKeyResponse);
+}
+
+message CreateAPIKeyRequest {
+  string merchant_id = 1;
+  string name = 2;
+  string created_by = 3; // UUID of the user creating the key
+}
+
+message CreateAPIKeyResponse {
+  string id = 1;
+  string name = 2;
+  string key_prefix = 3;
+  string plain_key = 4; // ⚠️ Only shown once!
+  string created_at = 5;
+  string message = 6;
+}
+
+message APIKey {
+  string id = 1;
+  string name = 2;
+  string key_prefix = 3;
+  bool is_active = 4;
+  string last_used_at = 5;
+  string created_at = 6;
+}
+
+message GetMerchantAPIKeysRequest {
+  string merchant_id = 1;
+}
+
+message GetMerchantAPIKeysResponse {
+  repeated APIKey api_keys = 1;
+}
+
+message DeactivateAPIKeyRequest {
+  string id = 1;
+}
+
+message DeactivateAPIKeyResponse {
+  string message = 1;
+}
+
+message DeleteAPIKeyRequest {
+  string id = 1;
+}
+
+message DeleteAPIKeyResponse {
+  string message = 1;
+}
