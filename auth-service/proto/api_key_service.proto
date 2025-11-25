@@ -45,6 +45,7 @@ message GetMerchantAPIKeysResponse {
 
 message DeactivateAPIKeyRequest {
   string id = 1;
+  string merchant_id = 2;
 }
 
 message DeactivateAPIKeyResponse {
@@ -53,6 +54,7 @@ message DeactivateAPIKeyResponse {
 
 message DeleteAPIKeyRequest {
   string id = 1;
+  string merchant_id = 2;
 }
 
 message DeleteAPIKeyResponse {
