@@ -34,9 +34,8 @@ func main() {
 	grpcServer := util.InitGRPC()
 	pb.RegisterRoleServiceServer(grpcServer, handler.NewGRPCRoleService())
 
-	// Wrap Gin in http.Server for graceful shutdown
 	httpServer := &http.Server{
-		Addr:    ":8080", // Change to your Gin port if different
+		Addr:    ":" + os.Getenv("PORT"),
 		Handler: inits.R,
 	}
 
@@ -45,7 +44,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		logger.Log.Info("🚀 HTTP (Gin) server running on :8080")
+		logger.Log.Info("🚀 HTTP (Gin) server running on :" + os.Getenv("PORT"))
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Log.Error("HTTP server error", zap.Error(err))
 		}
