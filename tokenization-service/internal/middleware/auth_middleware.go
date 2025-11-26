@@ -8,13 +8,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/rhaloubi/payment-gateway/tokenization-service/inits/logger"
 	"github.com/rhaloubi/payment-gateway/tokenization-service/internal/client"
+	"github.com/rhaloubi/payment-gateway/tokenization-service/internal/jwt"
 
 	"go.uber.org/zap"
 )
 
 // AuthMiddleware validates JWT tokens or API keys
 func AuthMiddleware() gin.HandlerFunc {
-	authClient := client.NewAuthClient()
+	authClient := client.NewAuthServiceClient()
+	authJWT := jwt.NewJWTValidator()
 
 	return func(c *gin.Context) {
 		// Try JWT first (Authorization: Bearer xxx)
@@ -23,7 +25,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			token := strings.TrimPrefix(authHeader, "Bearer ")
 
 			// Validate JWT
-			jwtData, err := authClient.ValidateJWT(token)
+			jwtData, err := authJWT.ValidateToken(token)
 			if err != nil {
 				logger.Log.Warn("JWT validation failed",
 					zap.Error(err),
@@ -38,15 +40,12 @@ func AuthMiddleware() gin.HandlerFunc {
 			}
 
 			// Set user context
-			c.Set("user_id", jwtData.UserID.String())
-			c.Set("merchant_id", jwtData.MerchantID.String())
+			c.Set("user_id", jwtData.UserID)
 			c.Set("email", jwtData.Email)
-			c.Set("roles", jwtData.Roles)
 			c.Set("auth_type", "jwt")
 
 			logger.Log.Debug("JWT authentication successful",
-				zap.String("user_id", jwtData.UserID.String()),
-				zap.String("merchant_id", jwtData.MerchantID.String()),
+				zap.String("user_id", jwtData.UserID),
 			)
 
 			c.Next()
@@ -85,7 +84,6 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Set("merchant_id", apiKeyData.MerchantID.String())
 			c.Set("api_key_id", apiKeyData.KeyID.String())
 			c.Set("api_key_name", apiKeyData.Name)
-			c.Set("permissions", apiKeyData.Permissions)
 			c.Set("auth_type", "api_key")
 
 			logger.Log.Debug("API key authentication successful",
@@ -106,85 +104,6 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
 			"error":   "authentication required (Bearer token or X-API-Key header)",
-		})
-		c.Abort()
-	}
-}
-
-// RequirePermission middleware checks if user has specific permission
-func RequirePermission(permission string) gin.HandlerFunc {
-	authClient := client.NewAuthClient()
-
-	return func(c *gin.Context) {
-		// Get user context
-		userIDStr, userExists := c.Get("user_id")
-		merchantIDStr, merchantExists := c.Get("merchant_id")
-
-		if !merchantExists {
-			c.JSON(http.StatusForbidden, gin.H{
-				"success": false,
-				"error":   "merchant context required",
-			})
-			c.Abort()
-			return
-		}
-
-		// If API key auth, check permissions array
-		authType, _ := c.Get("auth_type")
-		if authType == "api_key" {
-			permissions, exists := c.Get("permissions")
-			if exists {
-				permList, ok := permissions.([]string)
-				if ok {
-					for _, p := range permList {
-						if p == permission {
-							c.Next()
-							return
-						}
-					}
-				}
-			}
-
-			c.JSON(http.StatusForbidden, gin.H{
-				"success": false,
-				"error":   "insufficient permissions",
-			})
-			c.Abort()
-			return
-		}
-
-		// If JWT auth, check via auth service
-		if userExists {
-			userID := parseUUID(userIDStr.(string))
-			merchantID := parseUUID(merchantIDStr.(string))
-
-			hasPermission, err := authClient.CheckPermission(userID, merchantID, permission)
-			if err != nil {
-				logger.Log.Error("Permission check failed", zap.Error(err))
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"success": false,
-					"error":   "failed to verify permissions",
-				})
-				c.Abort()
-				return
-			}
-
-			if !hasPermission {
-				c.JSON(http.StatusForbidden, gin.H{
-					"success": false,
-					"error":   "insufficient permissions",
-				})
-				c.Abort()
-				return
-			}
-
-			c.Next()
-			return
-		}
-
-		c.JSON(http.StatusForbidden, gin.H{
-			"success": false,
-			"error":   "authorization failed",
 		})
 		c.Abort()
 	}

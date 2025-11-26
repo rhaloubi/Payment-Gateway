@@ -23,6 +23,7 @@ const (
 	APIKeyService_GetMerchantAPIKeys_FullMethodName = "/proto.APIKeyService/GetMerchantAPIKeys"
 	APIKeyService_DeactivateAPIKey_FullMethodName   = "/proto.APIKeyService/DeactivateAPIKey"
 	APIKeyService_DeleteAPIKey_FullMethodName       = "/proto.APIKeyService/DeleteAPIKey"
+	APIKeyService_GetInfoByAPIKey_FullMethodName    = "/proto.APIKeyService/GetInfoByAPIKey"
 )
 
 // APIKeyServiceClient is the client API for APIKeyService service.
@@ -33,6 +34,7 @@ type APIKeyServiceClient interface {
 	GetMerchantAPIKeys(ctx context.Context, in *GetMerchantAPIKeysRequest, opts ...grpc.CallOption) (*GetMerchantAPIKeysResponse, error)
 	DeactivateAPIKey(ctx context.Context, in *DeactivateAPIKeyRequest, opts ...grpc.CallOption) (*DeactivateAPIKeyResponse, error)
 	DeleteAPIKey(ctx context.Context, in *DeleteAPIKeyRequest, opts ...grpc.CallOption) (*DeleteAPIKeyResponse, error)
+	GetInfoByAPIKey(ctx context.Context, in *GetInfoByAPIKeyRequest, opts ...grpc.CallOption) (*GetInfoByAPIKeyResponse, error)
 }
 
 type aPIKeyServiceClient struct {
@@ -83,6 +85,16 @@ func (c *aPIKeyServiceClient) DeleteAPIKey(ctx context.Context, in *DeleteAPIKey
 	return out, nil
 }
 
+func (c *aPIKeyServiceClient) GetInfoByAPIKey(ctx context.Context, in *GetInfoByAPIKeyRequest, opts ...grpc.CallOption) (*GetInfoByAPIKeyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetInfoByAPIKeyResponse)
+	err := c.cc.Invoke(ctx, APIKeyService_GetInfoByAPIKey_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // APIKeyServiceServer is the server API for APIKeyService service.
 // All implementations must embed UnimplementedAPIKeyServiceServer
 // for forward compatibility.
@@ -91,6 +103,7 @@ type APIKeyServiceServer interface {
 	GetMerchantAPIKeys(context.Context, *GetMerchantAPIKeysRequest) (*GetMerchantAPIKeysResponse, error)
 	DeactivateAPIKey(context.Context, *DeactivateAPIKeyRequest) (*DeactivateAPIKeyResponse, error)
 	DeleteAPIKey(context.Context, *DeleteAPIKeyRequest) (*DeleteAPIKeyResponse, error)
+	GetInfoByAPIKey(context.Context, *GetInfoByAPIKeyRequest) (*GetInfoByAPIKeyResponse, error)
 	mustEmbedUnimplementedAPIKeyServiceServer()
 }
 
@@ -112,6 +125,9 @@ func (UnimplementedAPIKeyServiceServer) DeactivateAPIKey(context.Context, *Deact
 }
 func (UnimplementedAPIKeyServiceServer) DeleteAPIKey(context.Context, *DeleteAPIKeyRequest) (*DeleteAPIKeyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAPIKey not implemented")
+}
+func (UnimplementedAPIKeyServiceServer) GetInfoByAPIKey(context.Context, *GetInfoByAPIKeyRequest) (*GetInfoByAPIKeyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInfoByAPIKey not implemented")
 }
 func (UnimplementedAPIKeyServiceServer) mustEmbedUnimplementedAPIKeyServiceServer() {}
 func (UnimplementedAPIKeyServiceServer) testEmbeddedByValue()                       {}
@@ -206,6 +222,24 @@ func _APIKeyService_DeleteAPIKey_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _APIKeyService_GetInfoByAPIKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetInfoByAPIKeyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIKeyServiceServer).GetInfoByAPIKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: APIKeyService_GetInfoByAPIKey_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIKeyServiceServer).GetInfoByAPIKey(ctx, req.(*GetInfoByAPIKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // APIKeyService_ServiceDesc is the grpc.ServiceDesc for APIKeyService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -228,6 +262,10 @@ var APIKeyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteAPIKey",
 			Handler:    _APIKeyService_DeleteAPIKey_Handler,
+		},
+		{
+			MethodName: "GetInfoByAPIKey",
+			Handler:    _APIKeyService_GetInfoByAPIKey_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

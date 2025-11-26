@@ -134,3 +134,18 @@ func (s *GRPCAPIKeyService) DeleteAPIKey(ctx context.Context, req *pb.DeleteAPIK
 		Message: "API key deleted successfully",
 	}, nil
 }
+
+func (s *GRPCAPIKeyService) GetInfoByAPIKey(ctx context.Context, req *pb.GetInfoByAPIKeyRequest) (*pb.GetInfoByAPIKeyResponse, error) {
+	resp, err := s.apiKeyService.FindByKeyHash(req.ApiKey)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &pb.GetInfoByAPIKeyResponse{
+		Id:         resp.ID.String(),
+		Name:       resp.Name,
+		MerchantId: resp.MerchantID.String(),
+		CreatedAt:  resp.CreatedAt.Format(time.RFC3339),
+		Message:    "API key info retrieved successfully",
+	}, nil
+}

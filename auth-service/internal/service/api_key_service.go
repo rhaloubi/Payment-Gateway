@@ -30,7 +30,7 @@ type CreateAPIKeyRequest struct {
 // CreateAPIKeyResponse represents created API key data
 type CreateAPIKeyResponse struct {
 	APIKey   *model.APIKey
-	PlainKey string // Only returned once!
+	PlainKey string
 }
 
 // CreateAPIKey creates a new API key
@@ -125,4 +125,18 @@ func (s *APIKeyService) CheckMerchantApikey(merchantID uuid.UUID, id uuid.UUID) 
 	}
 	// Check if the API key belongs to the merchant
 	return apiKeyModel.MerchantID == merchantID
+}
+
+// find by hashkey
+func (s *APIKeyService) FindByKeyHash(key string) (*model.APIKey, error) {
+
+	validKey, err := s.ValidateAPIKey(key)
+	if err != nil {
+		return nil, err
+	}
+	apiKey, err := s.apiKeyRepo.FindByKeyHash(validKey.KeyHash)
+	if err != nil {
+		return nil, err
+	}
+	return apiKey, nil
 }

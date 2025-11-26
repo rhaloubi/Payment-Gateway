@@ -33,13 +33,9 @@ func SetupRoutes(router *gin.Engine) {
 		}
 
 		keys := v1.Group("/keys")
-		keys.Use(middleware.RequirePermission("keys:read"))
 		{
 			keys.GET("/statistics", tokenizationHandler.GetKeyStatistics)
-			keys.POST("/rotate",
-				middleware.RequirePermission("keys:rotate"),
-				tokenizationHandler.RotateKey,
-			)
+			keys.POST("/rotate", tokenizationHandler.RotateKey)
 		}
 	}
 

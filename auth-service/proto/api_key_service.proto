@@ -9,6 +9,7 @@ service APIKeyService {
   rpc GetMerchantAPIKeys (GetMerchantAPIKeysRequest) returns (GetMerchantAPIKeysResponse);
   rpc DeactivateAPIKey (DeactivateAPIKeyRequest) returns (DeactivateAPIKeyResponse);
   rpc DeleteAPIKey (DeleteAPIKeyRequest) returns (DeleteAPIKeyResponse);
+  rpc GetInfoByAPIKey (GetInfoByAPIKeyRequest) returns (GetInfoByAPIKeyResponse);
 }
 
 message CreateAPIKeyRequest {
@@ -59,4 +60,16 @@ message DeleteAPIKeyRequest {
 
 message DeleteAPIKeyResponse {
   string message = 1;
+}
+
+message GetInfoByAPIKeyRequest {
+  string api_key = 1;
+}
+
+message GetInfoByAPIKeyResponse {
+  string id = 1;
+  string name = 2;
+  string merchant_id = 3;
+  string created_at = 4;
+  string message = 5;
 }

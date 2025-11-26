@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "github.com/rhaloubi/payment-gateway/auth-service/proto;proto";
+
+service APIKeyService {
+  rpc GetInfoByAPIKey (GetInfoByAPIKeyRequest) returns (GetInfoByAPIKeyResponse);
+}
+
+
+message GetInfoByAPIKeyRequest {
+  string api_key = 1;
+}
+
+message GetInfoByAPIKeyResponse {
+  string id = 1;
+  string name = 2;
+  string merchant_id = 3;
+  string created_at = 4;
+  string message = 5;
+}

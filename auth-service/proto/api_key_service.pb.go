@@ -529,6 +529,126 @@ func (x *DeleteAPIKeyResponse) GetMessage() string {
 	return ""
 }
 
+type GetInfoByAPIKeyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ApiKey        string                 `protobuf:"bytes,1,opt,name=api_key,json=apiKey,proto3" json:"api_key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetInfoByAPIKeyRequest) Reset() {
+	*x = GetInfoByAPIKeyRequest{}
+	mi := &file_proto_api_key_service_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetInfoByAPIKeyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetInfoByAPIKeyRequest) ProtoMessage() {}
+
+func (x *GetInfoByAPIKeyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_api_key_service_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetInfoByAPIKeyRequest.ProtoReflect.Descriptor instead.
+func (*GetInfoByAPIKeyRequest) Descriptor() ([]byte, []int) {
+	return file_proto_api_key_service_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GetInfoByAPIKeyRequest) GetApiKey() string {
+	if x != nil {
+		return x.ApiKey
+	}
+	return ""
+}
+
+type GetInfoByAPIKeyResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	MerchantId    string                 `protobuf:"bytes,3,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	Message       string                 `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetInfoByAPIKeyResponse) Reset() {
+	*x = GetInfoByAPIKeyResponse{}
+	mi := &file_proto_api_key_service_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetInfoByAPIKeyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetInfoByAPIKeyResponse) ProtoMessage() {}
+
+func (x *GetInfoByAPIKeyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_api_key_service_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetInfoByAPIKeyResponse.ProtoReflect.Descriptor instead.
+func (*GetInfoByAPIKeyResponse) Descriptor() ([]byte, []int) {
+	return file_proto_api_key_service_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *GetInfoByAPIKeyResponse) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *GetInfoByAPIKeyResponse) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *GetInfoByAPIKeyResponse) GetMerchantId() string {
+	if x != nil {
+		return x.MerchantId
+	}
+	return ""
+}
+
+func (x *GetInfoByAPIKeyResponse) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+func (x *GetInfoByAPIKeyResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_proto_api_key_service_proto protoreflect.FileDescriptor
 
 const file_proto_api_key_service_proto_rawDesc = "" +
@@ -575,12 +695,23 @@ const file_proto_api_key_service_proto_rawDesc = "" +
 	"\vmerchant_id\x18\x02 \x01(\tR\n" +
 	"merchantId\"0\n" +
 	"\x14DeleteAPIKeyResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage2\xd1\x02\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"1\n" +
+	"\x16GetInfoByAPIKeyRequest\x12\x17\n" +
+	"\aapi_key\x18\x01 \x01(\tR\x06apiKey\"\x97\x01\n" +
+	"\x17GetInfoByAPIKeyResponse\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n" +
+	"\vmerchant_id\x18\x03 \x01(\tR\n" +
+	"merchantId\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x04 \x01(\tR\tcreatedAt\x12\x18\n" +
+	"\amessage\x18\x05 \x01(\tR\amessage2\xa3\x03\n" +
 	"\rAPIKeyService\x12G\n" +
 	"\fCreateAPIKey\x12\x1a.proto.CreateAPIKeyRequest\x1a\x1b.proto.CreateAPIKeyResponse\x12Y\n" +
 	"\x12GetMerchantAPIKeys\x12 .proto.GetMerchantAPIKeysRequest\x1a!.proto.GetMerchantAPIKeysResponse\x12S\n" +
 	"\x10DeactivateAPIKey\x12\x1e.proto.DeactivateAPIKeyRequest\x1a\x1f.proto.DeactivateAPIKeyResponse\x12G\n" +
-	"\fDeleteAPIKey\x12\x1a.proto.DeleteAPIKeyRequest\x1a\x1b.proto.DeleteAPIKeyResponseB>Z<github.com/rhaloubi/payment-gateway/auth-service/proto;protob\x06proto3"
+	"\fDeleteAPIKey\x12\x1a.proto.DeleteAPIKeyRequest\x1a\x1b.proto.DeleteAPIKeyResponse\x12P\n" +
+	"\x0fGetInfoByAPIKey\x12\x1d.proto.GetInfoByAPIKeyRequest\x1a\x1e.proto.GetInfoByAPIKeyResponseB>Z<github.com/rhaloubi/payment-gateway/auth-service/proto;protob\x06proto3"
 
 var (
 	file_proto_api_key_service_proto_rawDescOnce sync.Once
@@ -594,7 +725,7 @@ func file_proto_api_key_service_proto_rawDescGZIP() []byte {
 	return file_proto_api_key_service_proto_rawDescData
 }
 
-var file_proto_api_key_service_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_proto_api_key_service_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_proto_api_key_service_proto_goTypes = []any{
 	(*CreateAPIKeyRequest)(nil),        // 0: proto.CreateAPIKeyRequest
 	(*CreateAPIKeyResponse)(nil),       // 1: proto.CreateAPIKeyResponse
@@ -605,22 +736,26 @@ var file_proto_api_key_service_proto_goTypes = []any{
 	(*DeactivateAPIKeyResponse)(nil),   // 6: proto.DeactivateAPIKeyResponse
 	(*DeleteAPIKeyRequest)(nil),        // 7: proto.DeleteAPIKeyRequest
 	(*DeleteAPIKeyResponse)(nil),       // 8: proto.DeleteAPIKeyResponse
+	(*GetInfoByAPIKeyRequest)(nil),     // 9: proto.GetInfoByAPIKeyRequest
+	(*GetInfoByAPIKeyResponse)(nil),    // 10: proto.GetInfoByAPIKeyResponse
 }
 var file_proto_api_key_service_proto_depIdxs = []int32{
-	2, // 0: proto.GetMerchantAPIKeysResponse.api_keys:type_name -> proto.APIKey
-	0, // 1: proto.APIKeyService.CreateAPIKey:input_type -> proto.CreateAPIKeyRequest
-	3, // 2: proto.APIKeyService.GetMerchantAPIKeys:input_type -> proto.GetMerchantAPIKeysRequest
-	5, // 3: proto.APIKeyService.DeactivateAPIKey:input_type -> proto.DeactivateAPIKeyRequest
-	7, // 4: proto.APIKeyService.DeleteAPIKey:input_type -> proto.DeleteAPIKeyRequest
-	1, // 5: proto.APIKeyService.CreateAPIKey:output_type -> proto.CreateAPIKeyResponse
-	4, // 6: proto.APIKeyService.GetMerchantAPIKeys:output_type -> proto.GetMerchantAPIKeysResponse
-	6, // 7: proto.APIKeyService.DeactivateAPIKey:output_type -> proto.DeactivateAPIKeyResponse
-	8, // 8: proto.APIKeyService.DeleteAPIKey:output_type -> proto.DeleteAPIKeyResponse
-	5, // [5:9] is the sub-list for method output_type
-	1, // [1:5] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	2,  // 0: proto.GetMerchantAPIKeysResponse.api_keys:type_name -> proto.APIKey
+	0,  // 1: proto.APIKeyService.CreateAPIKey:input_type -> proto.CreateAPIKeyRequest
+	3,  // 2: proto.APIKeyService.GetMerchantAPIKeys:input_type -> proto.GetMerchantAPIKeysRequest
+	5,  // 3: proto.APIKeyService.DeactivateAPIKey:input_type -> proto.DeactivateAPIKeyRequest
+	7,  // 4: proto.APIKeyService.DeleteAPIKey:input_type -> proto.DeleteAPIKeyRequest
+	9,  // 5: proto.APIKeyService.GetInfoByAPIKey:input_type -> proto.GetInfoByAPIKeyRequest
+	1,  // 6: proto.APIKeyService.CreateAPIKey:output_type -> proto.CreateAPIKeyResponse
+	4,  // 7: proto.APIKeyService.GetMerchantAPIKeys:output_type -> proto.GetMerchantAPIKeysResponse
+	6,  // 8: proto.APIKeyService.DeactivateAPIKey:output_type -> proto.DeactivateAPIKeyResponse
+	8,  // 9: proto.APIKeyService.DeleteAPIKey:output_type -> proto.DeleteAPIKeyResponse
+	10, // 10: proto.APIKeyService.GetInfoByAPIKey:output_type -> proto.GetInfoByAPIKeyResponse
+	6,  // [6:11] is the sub-list for method output_type
+	1,  // [1:6] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_proto_api_key_service_proto_init() }
@@ -634,7 +769,7 @@ func file_proto_api_key_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_api_key_service_proto_rawDesc), len(file_proto_api_key_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
