@@ -2,16 +2,20 @@ package api
 
 import (
 	"github.com/rhaloubi/payment-gateway/merchant-service/inits"
+	"github.com/rhaloubi/payment-gateway/merchant-service/internal/client"
 	"github.com/rhaloubi/payment-gateway/merchant-service/internal/handler"
 	"github.com/rhaloubi/payment-gateway/merchant-service/internal/middleware"
+	"github.com/rhaloubi/payment-gateway/merchant-service/internal/service"
 )
 
 func SetupMerchantRoutes() {
 	router := inits.R
 
+	authClient := client.NewAuthServiceClient()
 	merchantHandler := handler.NewMerchantHandler()
 	teamHandler := handler.NewTeamHandler()
 	settingsHandler := handler.NewSettingsHandler()
+	apiKeyHandler := handler.NewAPIKeyHandler(authClient, service.NewTeamService())
 
 	v1 := router.Group("/api/v1")
 	v1.Use(middleware.AuthMiddleware())
@@ -21,6 +25,15 @@ func SetupMerchantRoutes() {
 		{
 			merchants.POST("", merchantHandler.CreateMerchant)
 			merchants.GET("", merchantHandler.ListUserMerchants)
+
+			apiKeys := merchants.Group("/api-keys")
+			{
+				apiKeys.POST("", apiKeyHandler.CreateAPIKey)
+				apiKeys.GET("/merchant/:merchant_id", apiKeyHandler.GetMerchantAPIKeys)
+				apiKeys.PATCH("/:id/deactivate", apiKeyHandler.DeactivateAPIKey)
+				apiKeys.DELETE("/:id", apiKeyHandler.DeleteAPIKey)
+
+			}
 
 			merchantGroup := merchants.Group("/:id")
 			merchantGroup.Use(middleware.RequireMerchantAccess())
