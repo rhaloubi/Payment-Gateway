@@ -42,11 +42,12 @@ func NewAuthServiceClient() *AuthServiceClient {
 	}
 
 	return &AuthServiceClient{
-		baseURL:     baseURL,
-		httpClient:  &http.Client{Timeout: 10 * time.Second},
-		grpcConn:    conn,
-		grpcClient:  pb.NewRoleServiceClient(conn),
-		grpcTimeout: 400 * time.Millisecond, // Adjustable timeout for gRPC calls
+		baseURL:      baseURL,
+		httpClient:   &http.Client{Timeout: 10 * time.Second},
+		grpcConn:     conn,
+		grpcClient:   pb.NewRoleServiceClient(conn),
+		apiKeyClient: pb.NewAPIKeyServiceClient(conn),
+		grpcTimeout:  400 * time.Millisecond, // Adjustable timeout for gRPC calls
 	}
 }
 
