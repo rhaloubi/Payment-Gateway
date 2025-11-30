@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/rhaloubi/payment-gateway/tokenization-service/inits/logger"
 	"github.com/rhaloubi/payment-gateway/tokenization-service/internal/client"
 	"github.com/rhaloubi/payment-gateway/tokenization-service/internal/jwt"
@@ -107,10 +106,4 @@ func AuthMiddleware() gin.HandlerFunc {
 		})
 		c.Abort()
 	}
-}
-
-// Helper function
-func parseUUID(s string) uuid.UUID {
-	id, _ := uuid.Parse(s)
-	return id
 }

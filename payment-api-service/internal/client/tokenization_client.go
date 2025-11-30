@@ -114,7 +114,7 @@ func (c *TokenizationClient) ValidateToken(ctx context.Context, token string, me
 
 // Helper functions
 func detectCardBrand(cardNumber string) string {
-	if len(cardNumber) < 2 {
+	if len(cardNumber) < 1 {
 		return "unknown"
 	}
 
