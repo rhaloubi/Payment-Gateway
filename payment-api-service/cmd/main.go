@@ -15,14 +15,16 @@ import (
 
 func init() {
 	inits.InitDotEnv()
+	logger.Init()
 	inits.InitDB()
 	inits.InitRedis()
-	logger.Init()
 	api.SetupRoutes(inits.R)
 }
 
 func main() {
 	defer logger.Sync()
+
+	logger.Log.Info("Starting Payment API Service...")
 
 	// Start webhook retry worker
 	webhookService := service.NewWebhookService()
@@ -36,26 +38,47 @@ func main() {
 	}()
 	logger.Log.Info("Webhook retry worker started")
 
+	// Setup graceful shutdown
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
+	// Start HTTP server
 	go func() {
 		if err := inits.R.Run(); err != nil {
 			logger.Log.Error("Server error", zap.Error(err))
 		}
 	}()
 
-	logger.Log.Info("✅ Server running... Press Ctrl+C to stop.")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8004"
+	}
+
+	logger.Log.Info("✅ Payment API Service running on port " + port)
+	logger.Log.Info("Press Ctrl+C to stop...")
 
 	<-stop
 	logger.Log.Warn("🛑 Shutting down gracefully...")
 
-	// ✅ Close Redis connection
+	// Stop webhook worker
+	cancel()
+
+	// Close Redis connection
 	if err := inits.RDB.Close(); err != nil {
 		logger.Log.Error("Error closing Redis", zap.Error(err))
 	} else {
-		logger.Log.Info("🧹 Redis connection closed.")
+		logger.Log.Info("🧹 Redis connection closed")
 	}
 
-	logger.Log.Info("✅ Shutdown complete.")
+	// Close database connection
+	sqlDB, err := inits.DB.DB()
+	if err == nil {
+		if err := sqlDB.Close(); err != nil {
+			logger.Log.Error("Error closing database", zap.Error(err))
+		} else {
+			logger.Log.Info("🧹 Database connection closed")
+		}
+	}
+
+	logger.Log.Info("✅ Shutdown complete")
 }
