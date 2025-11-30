@@ -91,3 +91,11 @@ func (c *AuthServiceClient) ValidateAPIKey(apiKey string) (*ValidateAPIKeyRespon
 		Permissions: []string{}, // Permissions are not returned by GetInfoByAPIKey
 	}, nil
 }
+
+// Close closes the gRPC connection
+func (c *AuthServiceClient) Close() error {
+	if c.grpcConn != nil {
+		return c.grpcConn.Close()
+	}
+	return nil
+}
