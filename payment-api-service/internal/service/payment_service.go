@@ -12,6 +12,7 @@ import (
 	"github.com/rhaloubi/payment-gateway/payment-api-service/internal/client"
 	model "github.com/rhaloubi/payment-gateway/payment-api-service/internal/models"
 	"github.com/rhaloubi/payment-gateway/payment-api-service/internal/repository"
+	pb "github.com/rhaloubi/payment-gateway/payment-api-service/proto"
 	"go.uber.org/zap"
 )
 
@@ -94,15 +95,15 @@ func (s *PaymentService) AuthorizePayment(ctx context.Context, req *AuthorizePay
 	}
 
 	// Step 2: Tokenize card
-	tokenResp, err := s.tokenizationClient.TokenizeCard(ctx, &client.TokenizeCardRequest{
-		MerchantID:     req.MerchantID.String(),
+	tokenResp, err := s.tokenizationClient.TokenizeCard(ctx, &pb.TokenizeCardRequest{
+		MerchantId:     req.MerchantID.String(),
 		CardNumber:     req.CardNumber,
 		CardholderName: req.CardholderName,
-		ExpMonth:       req.ExpMonth,
-		ExpYear:        req.ExpYear,
-		CVV:            req.CVV,
+		ExpMonth:       int32(req.ExpMonth),
+		ExpYear:        int32(req.ExpYear),
+		Cvv:            req.CVV,
 		IsSingleUse:    false,
-		IPAddress:      req.IPAddress,
+		IpAddress:      req.IPAddress,
 		UserAgent:      req.UserAgent,
 	})
 	if err != nil {
