@@ -12,7 +12,7 @@ func init() {
 	// Set Gin mode
 	ginMode := os.Getenv("GIN_MODE")
 	if ginMode == "" {
-		ginMode = "debug"
+		ginMode = "release"
 	}
 	gin.SetMode(ginMode)
 

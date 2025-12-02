@@ -28,6 +28,7 @@ func main() {
 
 	// Start webhook retry worker
 	webhookService := service.NewWebhookService()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

@@ -31,7 +31,7 @@ func NewTokenizationClient() (*TokenizationClient, error) {
 
 	grpcAddress := os.Getenv("TOKENIZATION_SERVICE_GRPC_URL") // From your response
 	if grpcAddress == "" {
-		grpcAddress = "localhost:50051"
+		grpcAddress = "localhost:50052"
 	}
 
 	// Dial gRPC connection (insecure for dev)
