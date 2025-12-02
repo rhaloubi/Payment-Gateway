@@ -9,7 +9,7 @@ import (
 var R *gin.Engine
 
 func init() {
-	// Set Gin mode
+	//Set Gin mode
 	ginMode := os.Getenv("GIN_MODE")
 	if ginMode == "" {
 		ginMode = "debug"

@@ -30,8 +30,16 @@ func main() {
 	defer logger.Sync()
 
 	// Initialize gRPC server and register service
-	grpcServer := util.InitGRPC()
+	grpcServer, lis := util.InitGRPC()
 	pb.RegisterTokenizationServiceServer(grpcServer, grpc.NewTokenizationServer())
+
+	// Start gRPC server in a goroutine
+	go func() {
+		logger.Log.Info("🚀 gRPC server running on :" + os.Getenv("GRPC_PORT"))
+		if err := grpcServer.Serve(lis); err != nil {
+			logger.Log.Fatal("❌ Failed to serve gRPC", zap.Error(err))
+		}
+	}()
 
 	httpServer := &http.Server{
 		Addr:    ":" + os.Getenv("PORT"),
