@@ -26,10 +26,7 @@ func NewTransactionRepository() *TransactionRepository {
 	}
 }
 
-// =========================================================================
 // Create Operations
-// =========================================================================
-
 func (r *TransactionRepository) Create(txn *model.Transaction) error {
 	if err := r.db.Create(txn).Error; err != nil {
 		logger.Log.Error("Failed to create transaction", zap.Error(err))
@@ -37,7 +34,7 @@ func (r *TransactionRepository) Create(txn *model.Transaction) error {
 	}
 
 	// Cache transaction
-	r.cacheTransaction(txn)
+	go r.cacheTransaction(txn)
 
 	return nil
 }
@@ -54,10 +51,7 @@ func (r *TransactionRepository) CreateIssuerResponse(response *model.IssuerRespo
 	return r.db.Create(response).Error
 }
 
-// =========================================================================
 // Read Operations
-// =========================================================================
-
 func (r *TransactionRepository) FindByID(id uuid.UUID) (*model.Transaction, error) {
 	// Try cache first
 	if cached := r.getCachedTransaction(id); cached != nil {
@@ -141,10 +135,7 @@ func (r *TransactionRepository) GetTransactionEvents(txnID uuid.UUID) ([]model.T
 	return events, nil
 }
 
-// =========================================================================
 // Update Operations
-// =========================================================================
-
 func (r *TransactionRepository) Update(txn *model.Transaction) error {
 	if err := r.db.Save(txn).Error; err != nil {
 		logger.Log.Error("Failed to update transaction", zap.Error(err))
@@ -275,10 +266,7 @@ func (r *TransactionRepository) LinkToSettlementBatch(txnIDs []uuid.UUID, batchI
 	return nil
 }
 
-// =========================================================================
 // Statistics
-// =========================================================================
-
 type TransactionStatistics struct {
 	TotalTransactions int64
 	TotalAmount       int64

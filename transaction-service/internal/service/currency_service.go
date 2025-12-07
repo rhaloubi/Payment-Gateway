@@ -78,7 +78,6 @@ func (s *CurrencyService) GetExchangeRate(fromCurrency, toCurrency string) (floa
 	return rateValue, nil
 }
 
-// getDefaultRate returns hardcoded exchange rates (for development)
 func (s *CurrencyService) getDefaultRate(fromCurrency, toCurrency string) float64 {
 	key := fromCurrency + "_" + toCurrency
 	if rate, exists := model.DefaultExchangeRates[key]; exists {
