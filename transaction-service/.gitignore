@@ -1,0 +1,11 @@
+*.exe
+*.bin
+.env
+config.local.yaml
+*.log
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+/tmp/
