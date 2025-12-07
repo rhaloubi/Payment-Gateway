@@ -16,7 +16,6 @@ import (
 
 // TokenizationClient communicates with Tokenization Service via gRPC
 type TokenizationClient struct {
-	baseURL            string
 	httpClient         *http.Client
 	grpcConn           *grpc.ClientConn
 	grpcTimeout        time.Duration
@@ -24,10 +23,6 @@ type TokenizationClient struct {
 }
 
 func NewTokenizationClient() (*TokenizationClient, error) {
-	baseURL := os.Getenv("TOKENIZATION_SERVICE_URL")
-	if baseURL == "" {
-		baseURL = "http://localhost:8001"
-	}
 
 	grpcAddress := os.Getenv("TOKENIZATION_SERVICE_GRPC_URL") // From your response
 	if grpcAddress == "" {
@@ -41,7 +36,6 @@ func NewTokenizationClient() (*TokenizationClient, error) {
 	}
 
 	return &TokenizationClient{
-		baseURL:            baseURL,
 		httpClient:         &http.Client{Timeout: 10 * time.Second},
 		grpcConn:           conn,
 		grpcTimeout:        400 * time.Millisecond,
