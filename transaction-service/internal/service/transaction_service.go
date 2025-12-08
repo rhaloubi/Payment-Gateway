@@ -302,7 +302,7 @@ func (s *TransactionService) Capture(ctx context.Context, req *CaptureRequest) (
 	}
 
 	// Step 6: Log event
-	s.txnRepo.CreateEvent(&model.TransactionEvent{
+	go s.txnRepo.CreateEvent(&model.TransactionEvent{
 		TransactionID: req.TransactionID,
 		EventType:     "captured",
 		OldStatus:     model.TransactionStatusAuthorized,
@@ -363,7 +363,7 @@ func (s *TransactionService) Void(ctx context.Context, req *VoidRequest) (*VoidR
 	}
 
 	// Step 5: Log event
-	s.txnRepo.CreateEvent(&model.TransactionEvent{
+	go s.txnRepo.CreateEvent(&model.TransactionEvent{
 		TransactionID: req.TransactionID,
 		EventType:     "voided",
 		OldStatus:     model.TransactionStatusAuthorized,
@@ -455,7 +455,7 @@ func (s *TransactionService) Refund(ctx context.Context, req *RefundRequest) (*R
 	}
 
 	// Step 8: Log event
-	s.txnRepo.CreateEvent(&model.TransactionEvent{
+	go s.txnRepo.CreateEvent(&model.TransactionEvent{
 		TransactionID: req.TransactionID,
 		EventType:     "refunded",
 		OldStatus:     originalTxn.Status,
@@ -490,12 +490,15 @@ func (s *TransactionService) validateAuthorizationRequest(req *AuthorizeRequest)
 		return errors.New("amount must be greater than 0")
 	}
 
-	if req.Amount < 50 {
-		return errors.New("minimum transaction amount is 50 cents")
+	if req.Currency == model.CurrencyMAD || req.Currency == model.CurrencyEUR {
+		if 500 > req.Amount || req.Amount > 2500000 {
+			return errors.New("transaction amount must be between $5 and $25,000")
+		}
 	}
-
-	if req.Amount > 2500000 {
-		return errors.New("maximum transaction amount is $25,000")
+	if req.Currency == model.CurrencyMAD {
+		if 5000 > req.Amount || req.Amount > 25000000 {
+			return errors.New("transaction amount must be between DH50 and DH250,000")
+		}
 	}
 
 	if req.Currency != model.CurrencyUSD && req.Currency != model.CurrencyEUR && req.Currency != model.CurrencyMAD {
@@ -539,6 +542,13 @@ func (s *TransactionService) storeIssuerResponse(txnID uuid.UUID, resp *client.A
 	// Store for debugging
 	s.txnRepo.CreateIssuerResponse(&model.IssuerResponse{
 		TransactionID:    txnID,
+		Approved:         resp.Approved,
+		AuthCode:         sql.NullString{String: resp.AuthCode, Valid: resp.Approved},
+		ResponseCode:     sql.NullString{String: resp.ResponseCode, Valid: true},
+		ResponseMessage:  sql.NullString{String: resp.ResponseMessage, Valid: true},
+		DeclineReason:    sql.NullString{String: resp.DeclineReason, Valid: !resp.Approved},
+		AVSResult:        sql.NullString{String: resp.AVSResult, Valid: true},
+		CVVResult:        sql.NullString{String: resp.CVVResult, Valid: true},
 		ProcessingTimeMs: int(processingTime.Milliseconds()),
 	})
 }
