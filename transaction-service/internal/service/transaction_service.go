@@ -556,3 +556,11 @@ func (s *TransactionService) storeIssuerResponse(txnID uuid.UUID, resp *client.A
 func (s *TransactionService) GetTransaction(txnID, merchantID uuid.UUID) (*model.Transaction, error) {
 	return s.txnRepo.FindByIDAndMerchant(txnID, merchantID)
 }
+
+func (s *TransactionService) FindByStatus(merchantID uuid.UUID, status model.TransactionStatus) ([]model.Transaction, error) {
+	return s.txnRepo.FindByStatus(merchantID, status)
+}
+
+func (s *TransactionService) FindByMerchant(merchantID uuid.UUID, limit, offset int) ([]model.Transaction, error) {
+	return s.txnRepo.FindByMerchant(merchantID, limit, offset)
+}
