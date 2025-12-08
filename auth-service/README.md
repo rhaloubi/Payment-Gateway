@@ -134,7 +134,7 @@ REDIS_DSN=redis://localhost:6379/0
 JWT_SECRET_KEY=your-super-secret-jwt-key-minimum-32-characters
 
 # Server
-PORT=8080
+PORT=8001
 GIN_MODE=release
 ```
 
@@ -177,13 +177,13 @@ go run cmd/main.go
 # Output:
 # ✅ Database connected
 # ✅ Redis connected
-# 🚀 Auth service starting on :8080
+# 🚀 Auth service starting on :8001
 ````
 
 ### Health Check
 
 ```bash
-curl http://localhost:8080/health
+curl http://localhost:8001/health
 
 # Response:
 {
@@ -199,7 +199,7 @@ curl http://localhost:8080/health
 ### Base URL
 
 ```
-http://localhost:8080/api/v1
+http://localhost:8001/api/v1
 ```
 
 ### Authentication

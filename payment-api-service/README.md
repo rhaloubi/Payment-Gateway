@@ -643,13 +643,12 @@ go run cmd/migrate/migrate.go
 Copyright © 2025 Payment Gateway. All rights reserved.
 
 ---
+## Support
 
-## 👥 Support
+For issues and questions:
 
-- **Email:** support@payment-gateway.com
-- **Documentation:** https://docs.payment-gateway.com
-- **Status:** https://status.payment-gateway.com
-
+- GitHub : https://github.com/rhaloubi/Payment-Gateway-Microservices
+- Email: redahaloubi8@gmail.com
 ---
 
 **Service Version:** v1.0.0  

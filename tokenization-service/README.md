@@ -42,7 +42,7 @@ The Tokenization Service provides secure card data tokenization, reducing PCI co
 - ✅ **Field-Level Encryption** - Each field encrypted separately
 - ✅ **Never Logs Sensitive Data** - Full PAN/CVV never logged
 - ✅ **Access Controls** - Merchant-scoped data access
-- ✅ **Secure Key Management** - HashiCorp Vault integration (production)
+- ✅ **Secure Key Management** - HashiCorp Vault integration (production) 'NOT USED FOR NOW'
 - ✅ **Audit Trail** - All tokenization/detokenization requests logged
 
 ### Communication Protocols
@@ -110,12 +110,14 @@ The Tokenization Service provides secure card data tokenization, reducing PCI co
 8. Get/Create Encryption Key (per merchant)
 9. Encrypt Card Data (AES-256-GCM)
 10. Generate Token (tok_live_xxx)
-11. Store in Vault (PostgreSQL)
+11. Store in Vault PostgreSQL
 12. Cache Response (Redis - 24h for idempotency)
 13. Return Token to Merchant
 ```
 
 ---
+
+## WE REMOUVED THE REST API ENDPOINT SO THIS IS A INTERNAL SERVER GO TO THE PAYMENT SERVICE TO ACCESS THE ENDPOINTS
 
 ## 🔌 API Endpoints
 
@@ -330,7 +332,6 @@ Retrieve original card data from token (internal services only).
   }
 }
 ```
-
 ---
 
 ## 🌐 gRPC Interface
@@ -518,7 +519,10 @@ psql -U postgres -c "CREATE DATABASE tokenization_db;"
 go run cmd/migrate/migrate.go
 
 # 6. Generate gRPC code (if modified proto files)
-protoc --go_out=. --go-grpc_out=. proto/tokenization.proto
+protoc \
+  --go_out=. --go_opt=paths=source_relative \
+  --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+  proto/tokenization.proto
 
 # 7. Start service
 go run cmd/main.go
@@ -543,12 +547,9 @@ GIN_MODE=release            # gin mode: debug | release
 DATABASE_DSN=postgresql://user:pass@localhost:5432/tokenization_db?sslmode=disable
 
 # Redis
-REDIS_DSN=redis://localhost:6379/0
+REDIS_DSN=redis://localhost:6379/3
 
-# Vault (Production)
-VAULT_ENABLED=true          # Enable Vault for key storage
-VAULT_ADDR=https://vault:8200
-VAULT_TOKEN=<vault_token>
+
 
 # Auth Service
 AUTH_SERVICE_URL=http://localhost:8001
@@ -556,8 +557,6 @@ AUTH_SERVICE_URL=http://localhost:8001
 # Internal Service Authentication
 INTERNAL_SERVICE_SECRET=<change_in_production>
 
-# JWT
-JWT_SECRET_KEY=<your_jwt_secret>
 
 # Logging
 LOG_LEVEL=info              # debug | info | warn | error
@@ -769,8 +768,10 @@ go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 # Generate code
-protoc --go_out=. --go-grpc_out=. proto/tokenization.proto
-```
+protoc \
+  --go_out=. --go_opt=paths=source_relative \
+  --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+  proto/tokenization.proto```
 
 ### Run with Hot Reload
 
@@ -808,13 +809,12 @@ go run cmd/migrate/migrate.go
 Copyright © 2025 Payment Gateway. All rights reserved.
 
 ---
+## Support
 
-## 👥 Support
+For issues and questions:
 
-- **Email:** support@payment-gateway.com
-- **Slack:** #tokenization-service
-- **Documentation:** https://docs.payment-gateway.com
-
+- GitHub : https://github.com/rhaloubi/Payment-Gateway-Microservices
+- Email: redahaloubi8@gmail.com
 ---
 
 **Last Updated:** November 18, 2025  
