@@ -79,6 +79,14 @@ func (c *TokenizationClient) TokenizeCard(ctx context.Context, req *pb.TokenizeC
 		logger.Log.Error("Tokenization service gRPC request failed", zap.Error(err))
 		return nil, fmt.Errorf("tokenization service unavailable or invalid key: %w", err)
 	}
+
+	if resp.Card == nil {
+		if resp.Error != "" {
+			return nil, fmt.Errorf("tokenization failed: %s", resp.Error)
+		}
+		return nil, fmt.Errorf("tokenization failed: unknown error")
+	}
+
 	// Simulate tokenization response
 	response := &TokenizeCardResponse{
 		Token:       resp.Token,

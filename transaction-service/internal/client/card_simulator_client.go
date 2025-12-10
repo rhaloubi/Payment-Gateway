@@ -172,12 +172,9 @@ func (c *CardSimulatorClient) simulateAuthorization(last4 string) *AuthorizeCard
 	default:
 		// Real card simulation - approve
 		return &AuthorizeCardResponse{
-			Approved:        true,
-			AuthCode:        c.generateAuthCode(),
-			ResponseCode:    "00",
-			ResponseMessage: "Approved",
-			AVSResult:       "Y",
-			CVVResult:       "M",
+			Approved:      false,
+			ResponseCode:  "05",
+			DeclineReason: "Do not honor",
 		}
 	}
 }

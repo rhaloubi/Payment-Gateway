@@ -3,7 +3,6 @@ package validation
 import (
 	"errors"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -38,8 +37,10 @@ func NewCardValidator() *CardValidator {
 	}
 
 	// Initialize card brand patterns (Visa and Mastercard only)
-	cv.cardPatterns[model.CardBrandVisa] = regexp.MustCompile(`^4[0-9]{12}(?:[0-9]{3})?$`)
-	cv.cardPatterns[model.CardBrandMastercard] = regexp.MustCompile(`^5[1-5][0-9]{14}$`)
+	// Visa: Starts with 4, length 13-19
+	cv.cardPatterns[model.CardBrandVisa] = regexp.MustCompile(`^4[0-9]{12,18}$`)
+	// Mastercard: Starts with 51-55 or 2221-2720, length 16
+	cv.cardPatterns[model.CardBrandMastercard] = regexp.MustCompile(`^(?:5[1-5][0-9]{14}|2(?:22[1-9]|2[3-9][0-9]|[3-6][0-9]{2}|7[0-1][0-9]|720)[0-9]{12})$`)
 
 	return cv
 }
@@ -79,10 +80,6 @@ func (cv *CardValidator) ValidateCardNumber(cardNumber string) error {
 
 	if len(sanitized) < 13 || len(sanitized) > 19 {
 		return errors.New("card number must be between 13 and 19 digits")
-	}
-
-	if !cv.isLuhnValid(sanitized) {
-		return errors.New("card number is invalid")
 	}
 
 	cardBrand := cv.DetectCardBrand(sanitized)
@@ -188,36 +185,4 @@ func (cv *CardValidator) GetFirst6Digits(cardNumber string) string {
 		return sanitized[:6]
 	}
 	return sanitized
-}
-
-func (cv *CardValidator) isLuhnValid(cardNumber string) bool {
-	digits := make([]int, len(cardNumber))
-	for i, char := range cardNumber {
-		digit, err := strconv.Atoi(string(char))
-		if err != nil {
-			return false
-		}
-		digits[i] = digit
-	}
-
-	// Luhn algorithm
-	sum := 0
-	isEven := false
-
-	// Process from right to left
-	for i := len(digits) - 1; i >= 0; i-- {
-		digit := digits[i]
-
-		if isEven {
-			digit *= 2
-			if digit > 9 {
-				digit -= 9
-			}
-		}
-
-		sum += digit
-		isEven = !isEven
-	}
-
-	return sum%10 == 0
 }
