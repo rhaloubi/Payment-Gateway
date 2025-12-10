@@ -3,22 +3,44 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/rhaloubi/payment-gateway/payment-api-service/inits/logger"
+	pb "github.com/rhaloubi/payment-gateway/payment-api-service/proto"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // TransactionClient communicates with Transaction Service
 // TODO: Replace with actual gRPC client when transaction service is built
 type TransactionClient struct {
-	enabled bool
+	httpClient        *http.Client
+	grpcConn          *grpc.ClientConn
+	grpcTimeout       time.Duration
+	transactionClient pb.TransactionServiceClient
 }
 
 func NewTransactionClient() *TransactionClient {
+	grpcAddress := os.Getenv("TRANSACTION_SERVICE_GRPC_URL") // From your response
+	if grpcAddress == "" {
+		grpcAddress = "localhost:50053"
+	}
+
+	// Dial gRPC connection (insecure for dev)
+	conn, err := grpc.Dial(grpcAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.Log.Fatal("failed to dial gRPC", zap.Error(err))
+	}
+
 	return &TransactionClient{
-		enabled: true,
+		httpClient:        &http.Client{Timeout: 10 * time.Second},
+		grpcConn:          conn,
+		grpcTimeout:       400 * time.Millisecond,
+		transactionClient: pb.NewTransactionServiceClient(conn),
 	}
 }
 
@@ -89,61 +111,77 @@ type RefundResponse struct {
 // Authorization
 // =========================================================================
 
-// Authorize processes an authorization request
-func (c *TransactionClient) Authorize(ctx context.Context, req *AuthorizeRequest) (*AuthorizeResponse, error) {
-	logger.Log.Info("Processing authorization (mock)",
-		zap.String("merchant_id", req.MerchantID),
+func (c *TransactionClient) Authorize(ctx context.Context, req *pb.AuthorizeRequest) (*pb.AuthorizeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.grpcTimeout)
+	defer cancel()
+
+	logger.Log.Info("Processing authorization ",
+		zap.String("merchant_id", req.MerchantId),
 		zap.Int64("amount", req.Amount),
 		zap.String("card_last4", req.CardLast4),
 	)
-
-	// Simulate processing time
-	time.Sleep(100 * time.Millisecond)
-
-	// Use card simulator logic
-	approved := simulateCardResponse(req.CardLast4, req.Amount)
-
-	response := &AuthorizeResponse{
-		TransactionID: uuid.New(),
-		Approved:      approved,
+	resp, err := c.transactionClient.Authorize(ctx, &pb.AuthorizeRequest{
+		MerchantId:    req.MerchantId,
+		Amount:        req.Amount,
+		Currency:      req.Currency,
+		CardToken:     req.CardToken,
+		CardBrand:     req.CardBrand,
+		CardLast4:     req.CardLast4,
+		FraudScore:    req.FraudScore,
+		CustomerEmail: req.CustomerEmail,
+		Description:   req.Description,
+		IpAddress:     req.IpAddress,
+		UserAgent:     req.UserAgent,
+	})
+	if err != nil {
+		logger.Log.Error("Transaction service gRPC request failed", zap.Error(err))
+		return nil, fmt.Errorf("transaction service unavailable or invalid key: %w", err)
 	}
 
-	if approved {
-		response.AuthCode = generateAuthCode()
-		response.ResponseCode = "00"
-		response.ResponseMsg = "Approved"
-	} else {
-		response.ResponseCode = getDeclineCode(req.CardLast4)
-		response.ResponseMsg = getDeclineMessage(response.ResponseCode)
-		response.DeclineReason = response.ResponseMsg
-	}
-
-	logger.Log.Info("Authorization completed",
-		zap.Bool("approved", approved),
-		zap.String("response_code", response.ResponseCode),
-	)
-
-	return response, nil
+	return &pb.AuthorizeResponse{
+		TransactionId:   resp.TransactionId,
+		Status:          resp.Status,
+		Approved:        resp.Approved,
+		AuthCode:        resp.AuthCode,
+		ResponseCode:    resp.ResponseCode,
+		ResponseMessage: resp.ResponseMessage,
+		DeclineReason:   resp.DeclineReason,
+		Amount:          resp.Amount,
+		AmountMad:       resp.AmountMad,
+		ExchangeRate:    resp.ExchangeRate,
+		ProcessingFee:   resp.ProcessingFee,
+		NetAmount:       resp.NetAmount,
+	}, nil
 }
 
 // =========================================================================
 // Capture
 // =========================================================================
 
-// Capture captures a previously authorized transaction
-func (c *TransactionClient) Capture(ctx context.Context, req *CaptureRequest) (*CaptureResponse, error) {
+func (c *TransactionClient) Capture(ctx context.Context, req *pb.CaptureRequest) (*pb.CaptureResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.grpcTimeout)
+	defer cancel()
+
 	logger.Log.Info("Processing capture (mock)",
-		zap.String("transaction_id", req.TransactionID.String()),
+		zap.String("transaction_id", req.TransactionId),
 		zap.Int64("amount", req.Amount),
 	)
 
-	time.Sleep(50 * time.Millisecond)
+	resp, err := c.transactionClient.Capture(ctx, &pb.CaptureRequest{
+		TransactionId: req.TransactionId,
+		Amount:        req.Amount,
+		MerchantId:    req.MerchantId,
+	})
+	if err != nil {
+		logger.Log.Error("Transaction service gRPC request failed", zap.Error(err))
+		return nil, fmt.Errorf("transaction service unavailable or invalid key: %w", err)
+	}
 
-	// Mock: Always succeed
-	return &CaptureResponse{
-		Success:        true,
-		CapturedAmount: req.Amount,
-		ResponseMsg:    "Capture successful",
+	return &pb.CaptureResponse{
+		TransactionId:   resp.TransactionId,
+		Status:          resp.Status,
+		CapturedAmount:  resp.CapturedAmount,
+		ResponseMessage: resp.ResponseMessage,
 	}, nil
 }
 
@@ -152,18 +190,29 @@ func (c *TransactionClient) Capture(ctx context.Context, req *CaptureRequest) (*
 // =========================================================================
 
 // Void cancels an authorized transaction
-func (c *TransactionClient) Void(ctx context.Context, req *VoidRequest) (*VoidResponse, error) {
+func (c *TransactionClient) Void(ctx context.Context, req *pb.VoidRequest) (*pb.VoidResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.grpcTimeout)
+	defer cancel()
+
 	logger.Log.Info("Processing void (mock)",
-		zap.String("transaction_id", req.TransactionID.String()),
+		zap.String("transaction_id", req.TransactionId),
 		zap.String("reason", req.Reason),
 	)
 
-	time.Sleep(50 * time.Millisecond)
+	resp, err := c.transactionClient.Void(ctx, &pb.VoidRequest{
+		TransactionId: req.TransactionId,
+		Reason:        req.Reason,
+		MerchantId:    req.MerchantId,
+	})
+	if err != nil {
+		logger.Log.Error("Transaction service gRPC request failed", zap.Error(err))
+		return nil, fmt.Errorf("transaction service unavailable or invalid key: %w", err)
+	}
 
-	// Mock: Always succeed
-	return &VoidResponse{
-		Success:     true,
-		ResponseMsg: "Transaction voided successfully",
+	return &pb.VoidResponse{
+		TransactionId:   resp.TransactionId,
+		Status:          resp.Status,
+		ResponseMessage: resp.ResponseMessage,
 	}, nil
 }
 
@@ -172,86 +221,96 @@ func (c *TransactionClient) Void(ctx context.Context, req *VoidRequest) (*VoidRe
 // =========================================================================
 
 // Refund processes a refund
-func (c *TransactionClient) Refund(ctx context.Context, req *RefundRequest) (*RefundResponse, error) {
+func (c *TransactionClient) Refund(ctx context.Context, req *pb.RefundRequest) (*pb.RefundResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.grpcTimeout)
+	defer cancel()
+
 	logger.Log.Info("Processing refund (mock)",
-		zap.String("transaction_id", req.TransactionID.String()),
+		zap.String("transaction_id", req.TransactionId),
 		zap.Int64("amount", req.Amount),
 	)
 
-	time.Sleep(50 * time.Millisecond)
+	resp, err := c.transactionClient.Refund(ctx, &pb.RefundRequest{
+		TransactionId: req.TransactionId,
+		Amount:        req.Amount,
+		MerchantId:    req.MerchantId,
+	})
+	if err != nil {
+		logger.Log.Error("Transaction service gRPC request failed", zap.Error(err))
+		return nil, fmt.Errorf("transaction service unavailable or invalid key: %w", err)
+	}
 
-	// Mock: Always succeed
-	return &RefundResponse{
-		RefundID:       uuid.New(),
-		Success:        true,
-		RefundedAmount: req.Amount,
-		ResponseMsg:    "Refund processed successfully",
+	return &pb.RefundResponse{
+		RefundId:        resp.RefundId,
+		RefundedAmount:  resp.RefundedAmount,
+		ResponseMessage: resp.ResponseMessage,
 	}, nil
 }
 
-// =========================================================================
-// Card Simulator Logic
-// =========================================================================
+func (c *TransactionClient) GetTransaction(ctx context.Context, req *pb.GetTransactionRequest) (*pb.TransactionResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.grpcTimeout)
+	defer cancel()
 
-// simulateCardResponse simulates issuer bank response based on card number
-func simulateCardResponse(last4 string, amount int64) bool {
-	// Test cards (based on last 4 digits)
-	switch last4 {
-	case "4242": // Success
-		return true
-	case "0002": // Generic decline
-		return false
-	case "9995": // Insufficient funds
-		return false
-	case "0069": // Expired card
-		return false
-	case "0127": // Incorrect CVV
-		return false
-	case "0119": // Processing error
-		return false
-	default:
-		// Real card - approve
-		return true
+	logger.Log.Info("Processing get transaction (mock)",
+		zap.String("transaction_id", req.TransactionId),
+		zap.String("merchant_id", req.MerchantId),
+	)
+
+	resp, err := c.transactionClient.GetTransaction(ctx, &pb.GetTransactionRequest{
+		TransactionId: req.TransactionId,
+		MerchantId:    req.MerchantId,
+	})
+	if err != nil {
+		logger.Log.Error("Transaction service gRPC request failed", zap.Error(err))
+		return nil, fmt.Errorf("transaction service unavailable or invalid key: %w", err)
 	}
+
+	return &pb.TransactionResponse{
+		Id:             resp.Id,
+		MerchantId:     resp.MerchantId,
+		Type:           resp.Type,
+		Status:         resp.Status,
+		Amount:         resp.Amount,
+		Currency:       resp.Currency,
+		CardBrand:      resp.CardBrand,
+		CardLast4:      resp.CardLast4,
+		AuthCode:       resp.AuthCode,
+		AmountMad:      resp.AmountMad,
+		ExchangeRate:   resp.ExchangeRate,
+		FraudScore:     resp.FraudScore,
+		CapturedAmount: resp.CapturedAmount,
+		RefundedAmount: resp.RefundedAmount,
+		ProcessingFee:  resp.ProcessingFee,
+		NetAmount:      resp.NetAmount,
+		CreatedAt:      resp.CreatedAt,
+		AuthorizedAt:   resp.AuthorizedAt,
+		CapturedAt:     resp.CapturedAt,
+	}, nil
 }
 
-// getDeclineCode returns appropriate decline code
-func getDeclineCode(last4 string) string {
-	switch last4 {
-	case "0002":
-		return "05" // Do not honor
-	case "9995":
-		return "51" // Insufficient funds
-	case "0069":
-		return "54" // Expired card
-	case "0127":
-		return "N7" // CVV mismatch
-	case "0119":
-		return "96" // System error
-	default:
-		return "05"
-	}
-}
+func (c *TransactionClient) ListTransactions(ctx context.Context, req *pb.ListTransactionsRequest) (*pb.ListTransactionsResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.grpcTimeout)
+	defer cancel()
 
-// getDeclineMessage returns human-readable decline message
-func getDeclineMessage(code string) string {
-	messages := map[string]string{
-		"05": "Transaction declined",
-		"51": "Insufficient funds",
-		"54": "Expired card",
-		"N7": "CVV verification failed",
-		"96": "System error - please try again",
+	logger.Log.Info("Processing list transactions (mock)",
+		zap.String("merchant_id", req.MerchantId),
+	)
+
+	resp, err := c.transactionClient.ListTransactions(ctx, &pb.ListTransactionsRequest{
+		MerchantId: req.MerchantId,
+		Status:     req.Status,
+		Limit:      req.Limit,
+		Offset:     req.Offset,
+	})
+	if err != nil {
+		logger.Log.Error("Transaction service gRPC request failed", zap.Error(err))
+		return nil, fmt.Errorf("transaction service unavailable or invalid key: %w", err)
 	}
 
-	if msg, ok := messages[code]; ok {
-		return msg
-	}
-	return "Transaction declined"
-}
-
-// generateAuthCode generates a random authorization code
-func generateAuthCode() string {
-	return fmt.Sprintf("%06d", time.Now().Unix()%1000000)
+	return &pb.ListTransactionsResponse{
+		Transactions: resp.Transactions,
+		Total:        resp.Total,
+	}, nil
 }
 
 // Close closes the client connection (no-op for mock)

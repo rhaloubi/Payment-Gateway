@@ -140,14 +140,14 @@ func (s *PaymentService) AuthorizePayment(ctx context.Context, req *AuthorizePay
 	}
 
 	// Step 5: Authorize transaction
-	authResp, err := s.transactionClient.Authorize(ctx, &client.AuthorizeRequest{
-		MerchantID:    req.MerchantID.String(),
+	authResp, err := s.transactionClient.Authorize(ctx, &pb.AuthorizeRequest{
+		MerchantId:    req.MerchantID.String(),
 		Amount:        req.Amount,
 		Currency:      req.Currency,
 		CardToken:     tokenResp.Token,
 		CardBrand:     tokenResp.CardBrand,
 		CardLast4:     tokenResp.Last4,
-		FraudScore:    fraudResp.RiskScore,
+		FraudScore:    int32(fraudResp.RiskScore),
 		CustomerEmail: req.CustomerEmail,
 		Description:   req.Description,
 	})
@@ -159,7 +159,7 @@ func (s *PaymentService) AuthorizePayment(ctx context.Context, req *AuthorizePay
 	// Step 6: Create payment record
 	payment := &model.Payment{
 		MerchantID:    req.MerchantID,
-		TransactionID: authResp.TransactionID,
+		TransactionID: uuid.MustParse(authResp.TransactionId),
 		Type:          model.PaymentTypeAuthorize,
 		Amount:        req.Amount,
 		Currency:      req.Currency,
@@ -193,7 +193,7 @@ func (s *PaymentService) AuthorizePayment(ctx context.Context, req *AuthorizePay
 		payment.Status = model.PaymentStatusAuthorized
 		payment.AuthCode = sql.NullString{String: authResp.AuthCode, Valid: true}
 		payment.ResponseCode = sql.NullString{String: authResp.ResponseCode, Valid: true}
-		payment.ResponseMsg = sql.NullString{String: authResp.ResponseMsg, Valid: true}
+		payment.ResponseMsg = sql.NullString{String: authResp.ResponseMessage, Valid: true}
 	} else {
 		payment.Status = model.PaymentStatusFailed
 		payment.ResponseCode = sql.NullString{String: authResp.ResponseCode, Valid: true}
@@ -260,8 +260,9 @@ func (s *PaymentService) CapturePayment(ctx context.Context, paymentID, merchant
 	}
 
 	// Capture via transaction service
-	_, err = s.transactionClient.Capture(ctx, &client.CaptureRequest{
-		TransactionID: payment.TransactionID,
+	_, err = s.transactionClient.Capture(ctx, &pb.CaptureRequest{
+		TransactionId: payment.TransactionID.String(),
+		MerchantId:    payment.MerchantID.String(),
 		Amount:        amount,
 	})
 	if err != nil {
@@ -305,8 +306,9 @@ func (s *PaymentService) VoidPayment(ctx context.Context, paymentID, merchantID 
 	}
 
 	// Void via transaction service
-	_, err = s.transactionClient.Void(ctx, &client.VoidRequest{
-		TransactionID: payment.TransactionID,
+	_, err = s.transactionClient.Void(ctx, &pb.VoidRequest{
+		TransactionId: payment.TransactionID.String(),
+		MerchantId:    payment.MerchantID.String(),
 		Reason:        reason,
 	})
 	if err != nil {
@@ -349,8 +351,9 @@ func (s *PaymentService) RefundPayment(ctx context.Context, paymentID, merchantI
 	}
 
 	// Refund via transaction service
-	_, err = s.transactionClient.Refund(ctx, &client.RefundRequest{
-		TransactionID: payment.TransactionID,
+	_, err = s.transactionClient.Refund(ctx, &pb.RefundRequest{
+		TransactionId: payment.TransactionID.String(),
+		MerchantId:    payment.MerchantID.String(),
 		Amount:        amount,
 		Reason:        reason,
 	})

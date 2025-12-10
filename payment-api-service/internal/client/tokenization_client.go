@@ -69,8 +69,6 @@ func (c *TokenizationClient) TokenizeCard(ctx context.Context, req *pb.TokenizeC
 	ctx, cancel := context.WithTimeout(context.Background(), c.grpcTimeout)
 	defer cancel()
 
-	// For now, simulate tokenization
-
 	logger.Log.Info("Tokenizing card (simulated)",
 		zap.String("merchant_id", req.MerchantId),
 		zap.String("last4", req.CardNumber[len(req.CardNumber)-4:]),
