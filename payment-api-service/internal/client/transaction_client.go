@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/rhaloubi/payment-gateway/payment-api-service/inits/logger"
 	pb "github.com/rhaloubi/payment-gateway/payment-api-service/proto"
 	"go.uber.org/zap"
@@ -25,7 +24,7 @@ type TransactionClient struct {
 }
 
 func NewTransactionClient() *TransactionClient {
-	grpcAddress := os.Getenv("TRANSACTION_SERVICE_GRPC_URL") // From your response
+	grpcAddress := os.Getenv("TRANSACTION_SERVICE_GRPC_URL")
 	if grpcAddress == "" {
 		grpcAddress = "localhost:50053"
 	}
@@ -42,69 +41,6 @@ func NewTransactionClient() *TransactionClient {
 		grpcTimeout:       400 * time.Millisecond,
 		transactionClient: pb.NewTransactionServiceClient(conn),
 	}
-}
-
-// AuthorizeRequest represents authorization request
-type AuthorizeRequest struct {
-	MerchantID    string
-	Amount        int64
-	Currency      string
-	CardToken     string
-	CardBrand     string
-	CardLast4     string
-	FraudScore    int
-	CustomerEmail string
-	Description   string
-}
-
-// AuthorizeResponse represents authorization result
-type AuthorizeResponse struct {
-	TransactionID uuid.UUID
-	Approved      bool
-	AuthCode      string
-	ResponseCode  string
-	ResponseMsg   string
-	DeclineReason string
-}
-
-// CaptureRequest represents capture request
-type CaptureRequest struct {
-	TransactionID uuid.UUID
-	Amount        int64 // Optional: partial capture
-}
-
-// CaptureResponse represents capture result
-type CaptureResponse struct {
-	Success        bool
-	CapturedAmount int64
-	ResponseMsg    string
-}
-
-// VoidRequest represents void request
-type VoidRequest struct {
-	TransactionID uuid.UUID
-	Reason        string
-}
-
-// VoidResponse represents void result
-type VoidResponse struct {
-	Success     bool
-	ResponseMsg string
-}
-
-// RefundRequest represents refund request
-type RefundRequest struct {
-	TransactionID uuid.UUID
-	Amount        int64 // Optional: partial refund
-	Reason        string
-}
-
-// RefundResponse represents refund result
-type RefundResponse struct {
-	RefundID       uuid.UUID
-	Success        bool
-	RefundedAmount int64
-	ResponseMsg    string
 }
 
 // =========================================================================

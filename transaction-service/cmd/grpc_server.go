@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/rhaloubi/payment-gateway/transaction-service/inits/logger"
@@ -18,8 +19,14 @@ import (
 // =========================================================================
 
 func startGRPCServer(port string) {
+	// Handle address with or without host
+	addr := port
+	if !strings.Contains(port, ":") {
+		addr = ":" + port
+	}
+
 	// Create TCP listener
-	lis, err := net.Listen("tcp", ":"+port)
+	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		logger.Log.Fatal("Failed to listen on gRPC port", zap.Error(err))
 	}

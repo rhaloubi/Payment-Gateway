@@ -81,8 +81,15 @@ type RefundCardResponse struct {
 // =========================================================================
 
 func (c *CardSimulatorClient) Authorize(ctx context.Context, req *AuthorizeCardRequest) (*AuthorizeCardResponse, error) {
+	cardLast4 := "N/A"
+	if len(req.CardNumber) >= 4 {
+		cardLast4 = req.CardNumber[len(req.CardNumber)-4:]
+	} else {
+		cardLast4 = req.CardNumber
+	}
+
 	logger.Log.Info("Simulating card authorization",
-		zap.String("card_last4", req.CardNumber[len(req.CardNumber)-4:]),
+		zap.String("card_last4", cardLast4),
 		zap.Int64("amount", req.Amount),
 	)
 
@@ -90,11 +97,8 @@ func (c *CardSimulatorClient) Authorize(ctx context.Context, req *AuthorizeCardR
 	processingTime := time.Duration(100+rand.Intn(400)) * time.Millisecond
 	time.Sleep(processingTime) */
 
-	// Get last 4 digits for test card detection
-	last4 := req.CardNumber[len(req.CardNumber)-4:]
-
 	// Simulate authorization based on test cards
-	response := c.simulateAuthorization(last4)
+	response := c.simulateAuthorization(cardLast4)
 
 	logger.Log.Info("Authorization simulation complete",
 		zap.Bool("approved", response.Approved),
