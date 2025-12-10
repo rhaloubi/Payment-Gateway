@@ -12,12 +12,12 @@ type IssuerResponse struct {
 	ID               uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
 	TransactionID    uuid.UUID      `gorm:"type:uuid;not null;index" json:"transaction_id"`
 	Approved         bool           `gorm:"not null" json:"approved"`
-	AuthCode         sql.NullString `gorm:"type:jsonb" json:"auth_code,omitempty"`
-	ResponseCode     sql.NullString `gorm:"type:jsonb" json:"response_code,omitempty"`
-	ResponseMessage  sql.NullString `gorm:"type:jsonb" json:"response_message,omitempty"`
-	DeclineReason    sql.NullString `gorm:"type:jsonb" json:"decline_reason,omitempty"`
-	AVSResult        sql.NullString `gorm:"type:jsonb" json:"avs_result,omitempty"`
-	CVVResult        sql.NullString `gorm:"type:jsonb" json:"cvv_result,omitempty"`
+	AuthCode         sql.NullString `gorm:"type:varchar(50)" json:"auth_code,omitempty"`
+	ResponseCode     sql.NullString `gorm:"type:varchar(10)" json:"response_code,omitempty"`
+	ResponseMessage  sql.NullString `gorm:"type:varchar(255)" json:"response_message,omitempty"`
+	DeclineReason    sql.NullString `gorm:"type:varchar(255)" json:"decline_reason,omitempty"`
+	AVSResult        sql.NullString `gorm:"type:varchar(10)" json:"avs_result,omitempty"`
+	CVVResult        sql.NullString `gorm:"type:varchar(10)" json:"cvv_result,omitempty"`
 	RequestPayload   sql.NullString `gorm:"type:jsonb" json:"request_payload,omitempty"`
 	ResponsePayload  sql.NullString `gorm:"type:jsonb" json:"response_payload,omitempty"`
 	ProcessingTimeMs int            `json:"processing_time_ms"`

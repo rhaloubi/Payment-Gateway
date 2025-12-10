@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -24,9 +25,9 @@ func NewTransactionHandler() (*TransactionHandler, error) {
 	}, nil
 }
 
-func (h *TransactionHandler) GetTransaction(c *gin.Context, req *pb.GetTransactionRequest) {
+func (h *TransactionHandler) GetTransaction(c *gin.Context) {
 	// Get transaction ID from request
-	transactionID := req.TransactionId
+	transactionID := c.Param("id")
 	if transactionID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -62,7 +63,7 @@ func (h *TransactionHandler) GetTransaction(c *gin.Context, req *pb.GetTransacti
 	})
 }
 
-func (h *TransactionHandler) GetTransactions(c *gin.Context, req *pb.ListTransactionsRequest) {
+func (h *TransactionHandler) ListTransactions(c *gin.Context) {
 
 	merchantIDStr, _ := c.Get("merchant_id")
 	merchantID, err := uuid.Parse(merchantIDStr.(string))
@@ -73,11 +74,15 @@ func (h *TransactionHandler) GetTransactions(c *gin.Context, req *pb.ListTransac
 		})
 		return
 	}
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
 	serviceReq := &pb.ListTransactionsRequest{
 		MerchantId: merchantID.String(),
-		Status:     req.Status,
-		Limit:      req.Limit,
-		Offset:     req.Offset,
+		Status:     c.Query("status"),
+		Limit:      int32(limit),
+		Offset:     int32(offset),
 	}
 	resp, err := h.transactionService.ListTransactions(c.Request.Context(), serviceReq)
 	if err != nil {

@@ -13,9 +13,12 @@ func SetupRoutes(router *gin.Engine) {
 	healthHandler := handler.NewHealthHandler()
 
 	paymentHandler, err := handler.NewPaymentHandler()
-	transactionHandler, err := handler.NewTransactionHandler()
 	if err != nil {
 		logger.Log.Fatal("Failed to initialize payment handler", zap.Error(err))
+	}
+	transactionHandler, err := handler.NewTransactionHandler()
+	if err != nil {
+		logger.Log.Fatal("Failed to initialize transaction handler", zap.Error(err))
 	}
 
 	router.Use(middleware.ErrorHandlerMiddleware())
@@ -43,6 +46,7 @@ func SetupRoutes(router *gin.Engine) {
 
 			payments.GET("/:id", paymentHandler.GetPayment)
 		}
+
 		transactions := v1.Group("/transactions")
 		{
 			transactions.GET("/", transactionHandler.ListTransactions)
