@@ -1,0 +1,67 @@
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/rhaloubi/payment-gateway-cli/internal/commands"
+	"github.com/spf13/cobra"
+)
+
+var (
+	version = "1.0.0"
+	cfgFile string
+	debug   bool
+	output  string
+)
+
+func main() {
+	rootCmd := &cobra.Command{
+		Use:   "payment-cli",
+		Short: "💳 Payment Gateway CLI",
+		Long: `
+╔═══════════════════════════════════════════════════════════════╗
+║                  💳 Payment Gateway CLI                       ║
+║                                                               ║
+║  Beautiful command-line tool for payment gateway management  ║
+╚═══════════════════════════════════════════════════════════════╝
+
+A developer-friendly CLI for managing merchants, testing payments,
+and debugging your payment infrastructure.
+
+Examples:
+  payment-cli init
+  payment-cli register
+  payment-cli login
+  payment-cli merchant create
+  payment-cli payment authorize --amount 5000
+  payment-cli interactive
+`,
+		Version: version,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			if err := config.Load(cfgFile); err != nil {
+				// Config doesn't exist yet, that's OK
+			}
+			if debug {
+				config.SetDebug(true)
+			}
+			if output != "" {
+				config.SetOutputFormat(output)
+			}
+		},
+	}
+
+	// Global flags
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default: ~/.payment-cli/config.yaml)")
+	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug mode")
+	rootCmd.PersistentFlags().StringVarP(&output, "output", "o", "table", "output format (table|json|yaml)")
+
+	// Add commands
+	rootCmd.AddCommand(commands.NewInitCommand())
+	rootCmd.AddCommand(commands.NewAuthCommands())
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "❌ Error: %v\n", err)
+		os.Exit(1)
+	}
+}
