@@ -22,6 +22,8 @@ func NewAuthCommands() *cobra.Command {
 	cmd.AddCommand(newLoginCommand())
 	cmd.AddCommand(newLogoutCommand())
 	cmd.AddCommand(newWhoamiCommand())
+	cmd.AddCommand(profileCommand())
+	cmd.AddCommand(changePasswordCommand())
 
 	return cmd
 }
@@ -202,6 +204,12 @@ func newLogoutCommand() *cobra.Command {
 		Use:   "logout",
 		Short: "👋 Logout from your account",
 		RunE: func(cmd *cobra.Command, args []string) error {
+
+			authClient := client.NewAuthClient()
+			if err := authClient.Logout(); err != nil {
+				return fmt.Errorf("failed to logout: %w", err)
+			}
+
 			if err := config.ClearCredentials(); err != nil {
 				return fmt.Errorf("failed to logout: %w", err)
 			}
@@ -229,6 +237,91 @@ func newWhoamiCommand() *cobra.Command {
 			ui.Info(fmt.Sprintf("🌍 Environment: %s", config.GetCurrentEnv()))
 			ui.Info(fmt.Sprintf("🔗 API URL: %s", config.GetAPIURL()))
 
+			return nil
+		},
+	}
+}
+
+// Profile command
+func profileCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "profile",
+		Short: "👤 Show user profile",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			email := config.GetUserEmail()
+			if email == "" {
+				ui.Warning("⚠️  Not logged in")
+				ui.Info("Run: payment-cli login")
+				return nil
+			}
+
+			authClient := client.NewAuthClient()
+			user, err := authClient.GetUserProfile(email)
+			if err != nil {
+				return fmt.Errorf("failed to get profile: %w", err)
+			}
+
+			ui.Info(fmt.Sprintf("👤 Name: %s", user.Name))
+			ui.Info(fmt.Sprintf("📧 Email: %s", user.Email))
+			ui.Info(fmt.Sprintf("🆔 User ID: %s", user.ID))
+
+			return nil
+		},
+	}
+}
+
+// ChangePassword command
+func changePasswordCommand() *cobra.Command {
+	var oldPassword, newPassword string
+
+	return &cobra.Command{
+		Use:   "change-password",
+		Short: "🔑 Change user password",
+		Example: `  payment-cli login
+  payment-cli change-password --old-password oldpassword --new-password newpassword`,
+
+		RunE: func(cmd *cobra.Command, args []string) error {
+			email := config.GetUserEmail()
+			if email == "" {
+				ui.Warning("⚠️  Not logged in")
+				ui.Info("Run: payment-cli login")
+				return nil
+			}
+
+			if oldPassword == "" {
+				prompt := promptui.Prompt{
+					Label: "Old Password",
+					Mask:  '*',
+				}
+				result, err := prompt.Run()
+				if err != nil {
+					return err
+				}
+				oldPassword = result
+			}
+			if newPassword == "" {
+				prompt := promptui.Prompt{
+					Label: "New Password",
+					Mask:  '*',
+				}
+				result, err := prompt.Run()
+				if err != nil {
+					return err
+				}
+				newPassword = result
+			}
+			// Login
+			spinner := ui.NewSpinner("Changing password...")
+			spinner.Start()
+
+			authClient := client.NewAuthClient()
+			spinner.Stop()
+
+			if err := authClient.ChangePassword(email, oldPassword, newPassword); err != nil {
+				return fmt.Errorf("failed to change password: %w", err)
+			}
+
+			ui.Success("✅ Password changed successfully!")
 			return nil
 		},
 	}

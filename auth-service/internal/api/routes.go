@@ -27,7 +27,7 @@ func Routes() {
 		{
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)
-			auth.POST("/refresh", authHandler.RefreshToken)
+			//auth.POST("/refresh", authHandler.RefreshToken)
 		}
 
 		authProtected := v1.Group("/auth")
@@ -43,8 +43,8 @@ func Routes() {
 		{
 			roles.GET("", roleHandler.GetAllRoles)
 			roles.GET("/:id", roleHandler.GetRoleByID)
-			roles.POST("/assign", roleHandler.AssignRoleToUser)
-			roles.DELETE("/assign", roleHandler.RemoveRoleFromUser)
+			//roles.POST("/assign", roleHandler.AssignRoleToUser)
+			//roles.DELETE("/assign", roleHandler.RemoveRoleFromUser)
 			roles.GET("/user/:user_id/merchant/:merchant_id", roleHandler.GetUserRoles)
 			roles.GET("/user/:user_id/merchant/:merchant_id/permissions", roleHandler.GetUserPermissions)
 		}
