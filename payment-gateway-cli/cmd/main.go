@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/rhaloubi/payment-gateway-cli/internal/commands"
+	"github.com/rhaloubi/payment-gateway-cli/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +24,7 @@ func main() {
 ╔═══════════════════════════════════════════════════════════════╗
 ║                  💳 Payment Gateway CLI                       ║
 ║                                                               ║
-║  Beautiful command-line tool for payment gateway management  ║
+║  Beautiful command-line tool for payment gateway management   ║
 ╚═══════════════════════════════════════════════════════════════╝
 
 A developer-friendly CLI for managing merchants, testing payments,
@@ -59,6 +60,12 @@ Examples:
 	// Add commands
 	rootCmd.AddCommand(commands.NewInitCommand())
 	rootCmd.AddCommand(commands.NewAuthCommands())
+	rootCmd.AddCommand(commands.NewMerchantCommands())
+	rootCmd.AddCommand(commands.NewAPIKeyCommands())
+	rootCmd.AddCommand(commands.NewPaymentCommands())
+	rootCmd.AddCommand(commands.NewConfigCommands())
+	rootCmd.AddCommand(commands.NewHealthCommand())
+	rootCmd.AddCommand(commands.NewInteractiveCommand())
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "❌ Error: %v\n", err)
