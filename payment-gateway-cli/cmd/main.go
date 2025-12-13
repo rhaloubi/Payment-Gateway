@@ -66,6 +66,7 @@ Examples:
 	rootCmd.AddCommand(commands.NewConfigCommands())
 	rootCmd.AddCommand(commands.NewHealthCommand())
 	rootCmd.AddCommand(commands.NewInteractiveCommand())
+	rootCmd.AddCommand(commands.NewRolesCommands())
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "❌ Error: %v\n", err)

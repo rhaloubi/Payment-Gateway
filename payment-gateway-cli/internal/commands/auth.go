@@ -35,8 +35,8 @@ func newRegisterCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "register",
 		Short: "📝 Register a new user",
-		Example: `  payment-cli register
-  payment-cli register --email admin@company.com --name "John Doe"`,
+		Example: `  payment-cli auth register
+  payment-cli auth register --email admin@company.com --name "John Doe"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Prompt for missing fields
 			if email == "" {
@@ -136,8 +136,8 @@ func newLoginCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "login",
 		Short: "🔐 Login to your user account",
-		Example: `  payment-cli login
-  payment-cli login --email admin@company.com`,
+		Example: `  payment-cli auth login
+  payment-cli auth login --email admin@company.com`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Prompt for credentials
 			if email == "" {
@@ -251,7 +251,7 @@ func profileCommand() *cobra.Command {
 			email := config.GetUserEmail()
 			if email == "" {
 				ui.Warning("⚠️  Not logged in")
-				ui.Info("Run: payment-cli login")
+				ui.Info("Run: payment-cli auth login")
 				return nil
 			}
 
@@ -277,14 +277,14 @@ func changePasswordCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "change-password",
 		Short: "🔑 Change user password",
-		Example: `  payment-cli login
-  payment-cli change-password --old-password oldpassword --new-password newpassword`,
+		Example: `  payment-cli auth login
+  payment-cli auth change-password --old-password oldpassword --new-password newpassword`,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			email := config.GetUserEmail()
 			if email == "" {
 				ui.Warning("⚠️  Not logged in")
-				ui.Info("Run: payment-cli login")
+				ui.Info("Run: payment-cli auth login")
 				return nil
 			}
 

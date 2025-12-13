@@ -248,3 +248,35 @@ func (c *AuthClient) get(endpoint string, token string) ([]byte, error) {
 
 	return body, nil
 }
+
+type Role struct {
+	ID          string `json:"ID"`
+	Name        string `json:"Name"`
+	Description string `json:"Description"`
+}
+
+func (c *AuthClient) GetAllRoles() ([]Role, error) {
+	accessToken := config.GetAccessToken()
+
+	resp, err := c.get("/api/v1/roles", accessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	var result struct {
+		Success bool `json:"success"`
+		Data    struct {
+			Roles []Role `json:"roles"`
+		} `json:"data"`
+	}
+
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, fmt.Errorf("failed to parse roles response: %w", err)
+	}
+
+	if !result.Success {
+		return nil, fmt.Errorf("failed to get roles")
+	}
+
+	return result.Data.Roles, nil
+}

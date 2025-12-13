@@ -26,10 +26,10 @@ func NewInitCommand() *cobra.Command {
 			ui.Success("✅ CLI initialized successfully!")
 			ui.Info(fmt.Sprintf("📁 Config file: %s", config.GetConfigPath()))
 			ui.Info("\n🚀 Next steps:")
-			ui.Info("  1. payment-cli register")
-			ui.Info("  2. payment-cli login")
+			ui.Info("  1. payment-cli auth register")
+			ui.Info("  2. payment-cli auth login")
 			ui.Info("  3. payment-cli merchant create")
-			
+
 			return nil
 		},
 	}
