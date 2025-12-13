@@ -19,6 +19,7 @@ func NewMerchantCommands() *cobra.Command {
 	cmd.AddCommand(newMerchantCreateCommand())
 	cmd.AddCommand(newMerchantGetCommand())
 	//cmd.AddCommand(newMerchantListCommand())
+	cmd.AddCommand(newMerchantInviteCommand())
 
 	return cmd
 }
@@ -190,6 +191,75 @@ func newMerchantGetCommand() *cobra.Command {
 			ui.Info(fmt.Sprintf("💵 Currency Code: %s", merchant.CurrencyCode))
 			ui.Info(fmt.Sprintf("👤 Owner ID: %s", merchant.OwnerID))
 			ui.Info(fmt.Sprintf("🔑 Merchant Code: %s", merchant.MerchantCode))
+
+			return nil
+		},
+	}
+}
+
+func newMerchantInviteCommand() *cobra.Command {
+	var email, rolename, roleID string
+	return &cobra.Command{
+		Use:   "invite",
+		Short: "Invite a user to the merchant",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if config.GetAccessToken() == "" {
+				ui.Warning("⚠️  Not logged in")
+				ui.Info("Run: payment-cli auth login")
+				return nil
+			}
+
+			merchantID := config.GetMerchantID()
+			if merchantID == "" {
+				ui.Warning("⚠️  Merchant ID not set")
+				ui.Info("Set it with: payment-cli merchant create")
+				return nil
+			}
+			ui.Info("please run ' payment-cli roles view ' to get role name and id")
+
+			if email == "" {
+				prompt := promptui.Prompt{Label: "Email"}
+				result, err := prompt.Run()
+				if err != nil {
+					return err
+				}
+				email = result
+			}
+			if rolename == "" {
+				prompt := promptui.Prompt{Label: "Role Name"}
+				result, err := prompt.Run()
+				if err != nil {
+					return err
+				}
+				rolename = result
+			}
+			if roleID == "" {
+				prompt := promptui.Prompt{Label: "Role ID"}
+				result, err := prompt.Run()
+				if err != nil {
+					return err
+				}
+				roleID = result
+			}
+
+			spinner := ui.NewSpinner("Fetching invitations...")
+			spinner.Start()
+
+			merchantClient := client.NewMerchantClient()
+			invitation, err := merchantClient.InviteUser(merchantID, email, rolename, roleID)
+
+			spinner.Stop()
+
+			if err != nil {
+				ui.Error(fmt.Sprintf("❌ Failed: %v", err))
+				return err
+			}
+			ui.Info(fmt.Sprintf("📧 Email: %s", invitation.Email))
+			ui.Info(fmt.Sprintf("🏪 Role Name: %s", invitation.RoleName))
+			ui.Info(fmt.Sprintf("🔑 Status: %s", invitation.Status))
+			ui.Info(fmt.Sprintf("🔑 Invitation Token: %s", invitation.InvitationToken))
+			ui.Info(fmt.Sprintf("🕒 Expires At: %s", invitation.ExpiresAt))
+			ui.Info(fmt.Sprintf("📅 Created At: %s", invitation.CreatedAt))
 
 			return nil
 		},

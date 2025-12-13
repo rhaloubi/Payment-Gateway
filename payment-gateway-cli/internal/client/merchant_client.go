@@ -35,6 +35,15 @@ type Merchant struct {
 	OwnerID      string `json:"owner_id"`
 	MerchantCode string `json:"merchant_code"`
 }
+type Invitation struct {
+	ID              string    `json:"id"`
+	Email           string    `json:"email"`
+	Status          string    `json:"status"`
+	RoleName        string    `json:"role_name"`
+	InvitationToken string    `json:"invitation_token"`
+	ExpiresAt       time.Time `json:"expires_at"`
+	CreatedAt       time.Time `json:"created_at"`
+}
 
 func (c *MerchantClient) Create(BusinessName, LegalName, email, BusinessType string) (*Merchant, error) {
 	payload := map[string]string{
@@ -117,4 +126,36 @@ func (c *MerchantClient) GetMerchant(id string) (*Merchant, error) {
 		OwnerID:      result.Data.Merchant.OwnerID,
 		MerchantCode: result.Data.Merchant.MerchantCode,
 	}, nil
+}
+
+func (c *MerchantClient) InviteUser(merchantID, email, rolename, roleID string) (*Invitation, error) {
+	if config.GetAccessToken() == "" {
+		return nil, fmt.Errorf("access token not set")
+	}
+	payload := map[string]string{
+		"email":     email,
+		"role_name": rolename,
+		"role_id":   roleID,
+	}
+
+	resp, err := c.restClient.Post(c.baseURL+"/api/v1/merchants/"+merchantID+"/team/invite", payload, config.GetAccessToken())
+	if err != nil {
+		return nil, err
+	}
+
+	result := struct {
+		Success bool `json:"success"`
+		Data    struct {
+			Invitation Invitation `json:"invitation"`
+		} `json:"data"`
+	}{}
+
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, fmt.Errorf("failed to parse roles response: %w", err)
+	}
+
+	if !result.Success {
+		return nil, fmt.Errorf("failed to invite user")
+	}
+	return &result.Data.Invitation, nil
 }
