@@ -17,8 +17,8 @@ func NewMerchantCommands() *cobra.Command {
 	}
 
 	cmd.AddCommand(newMerchantCreateCommand())
+	cmd.AddCommand(newMerchantGetCommand())
 	//cmd.AddCommand(newMerchantListCommand())
-	//cmd.AddCommand(newMerchantGetCommand())
 
 	return cmd
 }
@@ -79,12 +79,19 @@ func newMerchantCreateCommand() *cobra.Command {
 				return err
 			}
 
+			if err := config.SetMerchantID(merchant.ID); err != nil {
+				return err
+			}
+
 			ui.Success("✅ Merchant created!")
 			ui.Info(fmt.Sprintf("🆔 ID: %s", merchant.ID))
 			ui.Info(fmt.Sprintf("📧 Email: %s", merchant.Email))
 			ui.Info(fmt.Sprintf("🏪 Business Name: %s", merchant.BusinessName))
-			ui.Info(fmt.Sprintf("👤 Legal Name: %s", merchant.LegalName))
-			ui.Info("\n💡 Next: payment-cli apikey create --merchant-id " + merchant.ID)
+			ui.Info(fmt.Sprintf("🏢 Business Type: %s", merchant.BusinessType))
+			ui.Info(fmt.Sprintf("🔑 Status: %s", merchant.Status))
+			ui.Info(fmt.Sprintf("👤 Owner ID: %s", merchant.OwnerID))
+
+			ui.Info("\n💡 Next: payment-cli apikey create ")
 
 			return nil
 		},
@@ -139,20 +146,32 @@ func newMerchantListCommand() *cobra.Command {
 		},
 	}
 }
+*/
 
 func newMerchantGetCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "get <merchant-id>",
+		Use:   "get",
 		Short: "Get merchant details",
-		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			merchantID := args[0]
+
+			if config.GetAccessToken() == "" {
+				ui.Warning("⚠️  Not logged in")
+				ui.Info("Run: payment-cli auth login")
+				return nil
+			}
+
+			merchantID := config.GetMerchantID()
+			if merchantID == "" {
+				ui.Warning("⚠️  Merchant ID not set")
+				ui.Info("Set it with: payment-cli merchant create")
+				return nil
+			}
 
 			spinner := ui.NewSpinner("Fetching merchant...")
 			spinner.Start()
 
 			merchantClient := client.NewMerchantClient()
-			merchant, err := merchantClient.Get(merchantID)
+			merchant, err := merchantClient.GetMerchant(merchantID)
 
 			spinner.Stop()
 
@@ -161,13 +180,18 @@ func newMerchantGetCommand() *cobra.Command {
 				return err
 			}
 
-			ui.Info(fmt.Sprintf("🏪 Merchant: %s", merchant.Name))
-			ui.Info(fmt.Sprintf("🆔 ID: %s", merchant.ID))
+			ui.Info(fmt.Sprintf("🏪 ID: %s", merchant.ID))
 			ui.Info(fmt.Sprintf("📧 Email: %s", merchant.Email))
-			ui.Info(fmt.Sprintf("📊 Status: %s", merchant.Status))
+			ui.Info(fmt.Sprintf("🏪 Business Name: %s", merchant.BusinessName))
+			ui.Info(fmt.Sprintf("👤 Legal Name: %s", merchant.LegalName))
+			ui.Info(fmt.Sprintf("🏢 Business Type: %s", merchant.BusinessType))
+			ui.Info(fmt.Sprintf("🔑 Status: %s", merchant.Status))
+			ui.Info(fmt.Sprintf("🌍 Country Code: %s", merchant.CountryCode))
+			ui.Info(fmt.Sprintf("💵 Currency Code: %s", merchant.CurrencyCode))
+			ui.Info(fmt.Sprintf("👤 Owner ID: %s", merchant.OwnerID))
+			ui.Info(fmt.Sprintf("🔑 Merchant Code: %s", merchant.MerchantCode))
 
 			return nil
 		},
 	}
 }
-*/

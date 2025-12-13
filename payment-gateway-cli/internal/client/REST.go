@@ -58,7 +58,7 @@ func (c *RESTClient) Post(endpoint string, payload interface{}, token string) ([
 }
 
 func (c *RESTClient) Get(endpoint string, token string) ([]byte, error) {
-	req, err := http.NewRequest("GET", c.baseURL+endpoint, nil)
+	req, err := http.NewRequest("GET" /*c.baseURL+*/, endpoint, nil)
 	if err != nil {
 		return nil, err
 	}

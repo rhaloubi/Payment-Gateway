@@ -30,6 +30,10 @@ type Merchant struct {
 	Email        string `json:"email"`
 	BusinessType string `json:"business_type"`
 	Status       string `json:"status"`
+	CountryCode  string `json:"country_code"`
+	CurrencyCode string `json:"currency_code"`
+	OwnerID      string `json:"owner_id"`
+	MerchantCode string `json:"merchant_code"`
 }
 
 func (c *MerchantClient) Create(BusinessName, LegalName, email, BusinessType string) (*Merchant, error) {
@@ -46,8 +50,10 @@ func (c *MerchantClient) Create(BusinessName, LegalName, email, BusinessType str
 		return nil, err
 	}
 	result := struct {
-		Success  bool     `json:"success"`
-		Merchant Merchant `json:"merchant"`
+		Success bool `json:"success"`
+		Data    struct {
+			Merchant Merchant `json:"merchant"`
+		} `json:"data"`
 	}{}
 
 	if err := json.Unmarshal(resp, &result); err != nil {
@@ -58,32 +64,57 @@ func (c *MerchantClient) Create(BusinessName, LegalName, email, BusinessType str
 		return nil, fmt.Errorf("failed to create merchant")
 	}
 	return &Merchant{
-		ID:           result.Merchant.ID,
-		BusinessName: result.Merchant.BusinessName,
-		LegalName:    result.Merchant.LegalName,
-		Email:        result.Merchant.Email,
-		BusinessType: result.Merchant.BusinessType,
-		Status:       result.Merchant.Status,
+		ID:           result.Data.Merchant.ID,
+		BusinessName: result.Data.Merchant.BusinessName,
+		Email:        result.Data.Merchant.Email,
+		BusinessType: result.Data.Merchant.BusinessType,
+		Status:       result.Data.Merchant.Status,
+		OwnerID:      result.Data.Merchant.OwnerID,
 	}, nil
 }
 
-/*func (c *MerchantClient) List() ([]Merchant, error) {
-	// TODO: Implement HTTP GET to merchant service
-	// For now, return mock data
-	return []Merchant{
-		{ID: "mer_1", Name: "Test Merchant 1", Email: "test1@example.com", Status: "active"},
-		{ID: "mer_2", Name: "Test Merchant 2", Email: "test2@example.com", Status: "active"},
-	}, nil
-}
-
-func (c *MerchantClient) Get(id string) (*Merchant, error) {
-	// TODO: Implement HTTP GET to merchant service
-	// For now, return mock data
-	return &Merchant{
-		ID:     id,
-		Name:   "Test Merchant",
-		Email:  "test@example.com",
-		Status: "active",
-	}, nil
-}
+/*
+	func (c *MerchantClient) List() ([]Merchant, error) {
+		// TODO: Implement HTTP GET to merchant service
+		// For now, return mock data
+		return []Merchant{
+			{ID: "mer_1", Name: "Test Merchant 1", Email: "test1@example.com", Status: "active"},
+			{ID: "mer_2", Name: "Test Merchant 2", Email: "test2@example.com", Status: "active"},
+		}, nil
+	}
 */
+func (c *MerchantClient) GetMerchant(id string) (*Merchant, error) {
+	accessToken := config.GetAccessToken()
+
+	resp, err := c.restClient.Get(c.baseURL+"/api/v1/merchants/"+id, accessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	result := struct {
+		Success bool `json:"success"`
+		Data    struct {
+			Merchant Merchant `json:"merchant"`
+		} `json:"data"`
+	}{}
+
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, fmt.Errorf("failed to parse roles response: %w", err)
+	}
+
+	if !result.Success {
+		return nil, fmt.Errorf("failed to get merchant")
+	}
+	return &Merchant{
+		ID:           result.Data.Merchant.ID,
+		BusinessName: result.Data.Merchant.BusinessName,
+		LegalName:    result.Data.Merchant.LegalName,
+		Email:        result.Data.Merchant.Email,
+		BusinessType: result.Data.Merchant.BusinessType,
+		Status:       result.Data.Merchant.Status,
+		CountryCode:  result.Data.Merchant.CountryCode,
+		CurrencyCode: result.Data.Merchant.CurrencyCode,
+		OwnerID:      result.Data.Merchant.OwnerID,
+		MerchantCode: result.Data.Merchant.MerchantCode,
+	}, nil
+}

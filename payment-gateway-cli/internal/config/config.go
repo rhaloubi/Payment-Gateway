@@ -26,6 +26,7 @@ type Credentials struct {
 	AccessToken  string `yaml:"access_token"`
 	RefreshToken string `yaml:"refresh_token"`
 	UserEmail    string `yaml:"user_email"`
+	MerchantID   string `yaml:"merchant_id"`
 }
 
 type Preferences struct {
@@ -128,6 +129,23 @@ func SaveCredentials(accessToken, refreshToken, email string) error {
 	globalConfig.Credentials.RefreshToken = refreshToken
 	globalConfig.Credentials.UserEmail = email
 
+	return Save()
+}
+
+func GetMerchantID() string {
+	if globalConfig == nil {
+		return ""
+	}
+	return globalConfig.Credentials.MerchantID
+}
+
+func SetMerchantID(id string) error {
+	if globalConfig != nil {
+		if err := Load(""); err != nil {
+			return err
+		}
+	}
+	globalConfig.Credentials.MerchantID = id
 	return Save()
 }
 
