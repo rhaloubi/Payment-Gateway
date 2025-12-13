@@ -1,10 +1,8 @@
 package client
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
@@ -14,12 +12,14 @@ import (
 type AuthClient struct {
 	httpClient *http.Client
 	baseURL    string
+	restClient *RESTClient
 }
 
 func NewAuthClient() *AuthClient {
 	return &AuthClient{
 		httpClient: &http.Client{Timeout: 10 * time.Second},
 		baseURL:    config.GetAPIURL(),
+		restClient: NewHttpClient(),
 	}
 }
 
@@ -43,7 +43,7 @@ func (c *AuthClient) Register(email, name, password string) (*User, error) {
 		"password": password,
 	}
 
-	resp, err := c.post("/api/v1/auth/register", payload, "")
+	resp, err := c.restClient.Post(c.baseURL+"/api/v1/auth/register", payload, "")
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (c *AuthClient) Login(email, password string) (*Tokens, *User, error) {
 		"password": password,
 	}
 
-	resp, err := c.post("/api/v1/auth/login", payload, "")
+	resp, err := c.restClient.Post(c.baseURL+"/api/v1/auth/login", payload, "")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -108,7 +108,7 @@ func (c *AuthClient) Login(email, password string) (*Tokens, *User, error) {
 func (c *AuthClient) GetUserProfile(email string) (*User, error) {
 	accessToken := config.GetAccessToken()
 
-	resp, err := c.get("/api/v1/auth/profile", accessToken)
+	resp, err := c.restClient.Get(c.baseURL+"/api/v1/auth/profile", accessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (c *AuthClient) GetUserProfile(email string) (*User, error) {
 func (c *AuthClient) Logout() error {
 	accessToken := config.GetAccessToken()
 
-	resp, err := c.post("/api/v1/auth/logout", map[string]string{}, accessToken)
+	resp, err := c.restClient.Post(c.baseURL+"/api/v1/auth/logout", map[string]string{}, accessToken)
 	if err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func (c *AuthClient) ChangePassword(email, oldPassword, newPassword string) erro
 		"new_password": newPassword,
 	}
 
-	resp, err := c.post("/api/v1/auth/change-password", payload, accessToken)
+	resp, err := c.restClient.Post(c.baseURL+"/api/v1/auth/change-password", payload, accessToken)
 	if err != nil {
 		return err
 	}
@@ -189,66 +189,6 @@ func (c *AuthClient) ChangePassword(email, oldPassword, newPassword string) erro
 	return nil
 }
 
-func (c *AuthClient) post(endpoint string, payload interface{}, token string) ([]byte, error) {
-	jsonData, err := json.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", c.baseURL+endpoint, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-	}
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
-	}
-
-	return body, nil
-}
-
-func (c *AuthClient) get(endpoint string, token string) ([]byte, error) {
-	req, err := http.NewRequest("GET", c.baseURL+endpoint, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
-	}
-
-	return body, nil
-}
-
 type Role struct {
 	ID          string `json:"ID"`
 	Name        string `json:"Name"`
@@ -258,7 +198,7 @@ type Role struct {
 func (c *AuthClient) GetAllRoles() ([]Role, error) {
 	accessToken := config.GetAccessToken()
 
-	resp, err := c.get("/api/v1/roles", accessToken)
+	resp, err := c.restClient.Get(c.baseURL+"/api/v1/roles", accessToken)
 	if err != nil {
 		return nil, err
 	}

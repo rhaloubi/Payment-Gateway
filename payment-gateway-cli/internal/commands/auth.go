@@ -227,9 +227,9 @@ func newWhoamiCommand() *cobra.Command {
 		Short: "👤 Show current user",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			email := config.GetUserEmail()
-			if email == "" {
+			if email == "" && config.GetAccessToken() == "" {
 				ui.Warning("⚠️  Not logged in")
-				ui.Info("Run: payment-cli login")
+				ui.Info("Run: payment-cli auth login")
 				return nil
 			}
 
@@ -249,7 +249,7 @@ func profileCommand() *cobra.Command {
 		Short: "👤 Show user profile",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			email := config.GetUserEmail()
-			if email == "" {
+			if email == "" && config.GetAccessToken() == "" {
 				ui.Warning("⚠️  Not logged in")
 				ui.Info("Run: payment-cli auth login")
 				return nil
@@ -282,7 +282,7 @@ func changePasswordCommand() *cobra.Command {
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			email := config.GetUserEmail()
-			if email == "" {
+			if email == "" && config.GetAccessToken() == "" {
 				ui.Warning("⚠️  Not logged in")
 				ui.Info("Run: payment-cli auth login")
 				return nil

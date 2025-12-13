@@ -5,6 +5,7 @@ import (
 
 	"github.com/manifoldco/promptui"
 	"github.com/rhaloubi/payment-gateway-cli/internal/client"
+	"github.com/rhaloubi/payment-gateway-cli/internal/config"
 	"github.com/rhaloubi/payment-gateway-cli/internal/ui"
 	"github.com/spf13/cobra"
 )
@@ -16,42 +17,60 @@ func NewMerchantCommands() *cobra.Command {
 	}
 
 	cmd.AddCommand(newMerchantCreateCommand())
-	cmd.AddCommand(newMerchantListCommand())
-	cmd.AddCommand(newMerchantGetCommand())
+	//cmd.AddCommand(newMerchantListCommand())
+	//cmd.AddCommand(newMerchantGetCommand())
 
 	return cmd
 }
 
 func newMerchantCreateCommand() *cobra.Command {
-	var name, email string
+	var BusinessName, email, LegalName, BusinessType string
 
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new merchant",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if name == "" {
-				prompt := promptui.Prompt{Label: "Merchant Name"}
-				result, err := prompt.Run()
-				if err != nil {
-					return err
-				}
-				name = result
+			//check for login
+			if config.GetUserEmail() == "" && config.GetAccessToken() == "" {
+				ui.Warning("⚠️  Not logged in")
+				ui.Info("Run: payment-cli auth login")
+				return nil
 			}
 
-			if email == "" {
-				prompt := promptui.Prompt{Label: "Email"}
+			email = config.GetUserEmail()
+
+			if BusinessName == "" {
+				prompt := promptui.Prompt{Label: "Business Name"}
 				result, err := prompt.Run()
 				if err != nil {
 					return err
 				}
-				email = result
+				BusinessName = result
+			}
+			if LegalName == "" {
+				prompt := promptui.Prompt{Label: "Legal Name"}
+				result, err := prompt.Run()
+				if err != nil {
+					return err
+				}
+				LegalName = result
+			}
+			if BusinessType == "" {
+				ui.Info("all the business types: individual sole_proprietor partnership corporation non_profit ")
+				ui.Info("choose one of them")
+				prompt := promptui.Prompt{Label: "Business Type"}
+				result, err := prompt.Run()
+				if err != nil {
+					return err
+				}
+				BusinessType = result
 			}
 
 			spinner := ui.NewSpinner("Creating merchant...")
 			spinner.Start()
 
 			merchantClient := client.NewMerchantClient()
-			merchant, err := merchantClient.Create(name, email)
+			merchant, err := merchantClient.Create(BusinessName, LegalName, email, BusinessType)
 
 			spinner.Stop()
 
@@ -63,23 +82,34 @@ func newMerchantCreateCommand() *cobra.Command {
 			ui.Success("✅ Merchant created!")
 			ui.Info(fmt.Sprintf("🆔 ID: %s", merchant.ID))
 			ui.Info(fmt.Sprintf("📧 Email: %s", merchant.Email))
+			ui.Info(fmt.Sprintf("🏪 Business Name: %s", merchant.BusinessName))
+			ui.Info(fmt.Sprintf("👤 Legal Name: %s", merchant.LegalName))
 			ui.Info("\n💡 Next: payment-cli apikey create --merchant-id " + merchant.ID)
 
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVar(&name, "name", "", "merchant name")
+	cmd.Flags().StringVar(&BusinessName, "business-name", "", "merchant business name")
+	cmd.Flags().StringVar(&LegalName, "legal-name", "", "merchant legal name")
 	cmd.Flags().StringVar(&email, "email", "", "merchant email")
 
 	return cmd
 }
 
+/*
 func newMerchantListCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
 		Short: "List all merchants",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			email := config.GetUserEmail()
+			if email == "" && config.GetAccessToken() == "" {
+				ui.Warning("⚠️  Not logged in")
+				ui.Info("Run: payment-cli auth login")
+				return nil
+			}
+
 			spinner := ui.NewSpinner("Fetching merchants...")
 			spinner.Start()
 
@@ -140,3 +170,4 @@ func newMerchantGetCommand() *cobra.Command {
 		},
 	}
 }
+*/

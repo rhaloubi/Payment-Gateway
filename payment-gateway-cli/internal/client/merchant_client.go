@@ -1,6 +1,7 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -11,39 +12,62 @@ import (
 type MerchantClient struct {
 	httpClient *http.Client
 	baseURL    string
+	restClient *RESTClient
 }
 
 func NewMerchantClient() *MerchantClient {
 	return &MerchantClient{
 		httpClient: &http.Client{Timeout: 10 * time.Second},
-		baseURL:    config.GetAPIURL(),
+		baseURL:    "http://localhost:8002",
+		restClient: NewHttpClient(),
 	}
 }
 
 type Merchant struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	Email  string `json:"email"`
-	Status string `json:"status"`
+	ID           string `json:"id"`
+	BusinessName string `json:"business_name"`
+	LegalName    string `json:"legal_name"`
+	Email        string `json:"email"`
+	BusinessType string `json:"business_type"`
+	Status       string `json:"status"`
 }
 
-func (c *MerchantClient) Create(name, email string) (*Merchant, error) {
-	/* payload := map[string]string{
-		"name":  name,
-		"email": email,
-	} */
+func (c *MerchantClient) Create(BusinessName, LegalName, email, BusinessType string) (*Merchant, error) {
+	payload := map[string]string{
+		"business_name": BusinessName,
+		"legal_name":    LegalName,
+		"email":         email,
+		"business_type": BusinessType,
+	}
 
 	// TODO: Implement HTTP POST to merchant service
-	// For now, return mock data
+	resp, err := c.restClient.Post(c.baseURL+"/api/v1/merchants", payload, config.GetAccessToken())
+	if err != nil {
+		return nil, err
+	}
+	result := struct {
+		Success  bool     `json:"success"`
+		Merchant Merchant `json:"merchant"`
+	}{}
+
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, fmt.Errorf("failed to parse roles response: %w", err)
+	}
+
+	if !result.Success {
+		return nil, fmt.Errorf("failed to create merchant")
+	}
 	return &Merchant{
-		ID:     "mer_" + fmt.Sprintf("%d", time.Now().Unix()),
-		Name:   name,
-		Email:  email,
-		Status: "active",
+		ID:           result.Merchant.ID,
+		BusinessName: result.Merchant.BusinessName,
+		LegalName:    result.Merchant.LegalName,
+		Email:        result.Merchant.Email,
+		BusinessType: result.Merchant.BusinessType,
+		Status:       result.Merchant.Status,
 	}, nil
 }
 
-func (c *MerchantClient) List() ([]Merchant, error) {
+/*func (c *MerchantClient) List() ([]Merchant, error) {
 	// TODO: Implement HTTP GET to merchant service
 	// For now, return mock data
 	return []Merchant{
@@ -62,3 +86,4 @@ func (c *MerchantClient) Get(id string) (*Merchant, error) {
 		Status: "active",
 	}, nil
 }
+*/
