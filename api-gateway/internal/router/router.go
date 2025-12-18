@@ -29,7 +29,6 @@ func Setup(cfg *config.Config) *gin.Engine {
 	// Initialize services
 	rateLimiter := service.NewRateLimiter(cfg)
 	circuitBreaker := service.NewCircuitBreaker(cfg)
-	authClient := service.NewAuthClient(cfg)
 
 	// Health and metrics endpoints (no auth required)
 	r.GET("/health", handler.HealthCheck(cfg, circuitBreaker))
@@ -59,20 +58,15 @@ func Setup(cfg *config.Config) *gin.Engine {
 
 			auth.POST("/refresh", handler.ProxyRequest(cfg, "auth", circuitBreaker))
 
-			// Protected auth routes
-			authProtected := auth.Group("")
-			authProtected.Use(middleware.AuthenticateJWT(authClient, cfg))
-			{
-				authProtected.GET("/profile", handler.ProxyRequest(cfg, "auth", circuitBreaker))
-				authProtected.POST("/logout", handler.ProxyRequest(cfg, "auth", circuitBreaker))
-				authProtected.POST("/change-password", handler.ProxyRequest(cfg, "auth", circuitBreaker))
-				authProtected.GET("/sessions", handler.ProxyRequest(cfg, "auth", circuitBreaker))
-			}
+			auth.GET("/profile", handler.ProxyRequest(cfg, "auth", circuitBreaker))
+			auth.POST("/logout", handler.ProxyRequest(cfg, "auth", circuitBreaker))
+			auth.POST("/change-password", handler.ProxyRequest(cfg, "auth", circuitBreaker))
+			auth.GET("/sessions", handler.ProxyRequest(cfg, "auth", circuitBreaker))
+
 		}
 
 		// API Keys routes (JWT required)
 		apiKeys := api.Group("/api-keys")
-		apiKeys.Use(middleware.AuthenticateJWT(authClient, cfg))
 		{
 			apiKeys.POST("", handler.ProxyRequest(cfg, "auth", circuitBreaker))
 			apiKeys.GET("/merchant/:merchant_id", handler.ProxyRequest(cfg, "auth", circuitBreaker))
@@ -82,7 +76,6 @@ func Setup(cfg *config.Config) *gin.Engine {
 
 		// Roles routes (JWT required)
 		roles := api.Group("/roles")
-		roles.Use(middleware.AuthenticateJWT(authClient, cfg))
 		{
 			roles.GET("", handler.ProxyRequest(cfg, "auth", circuitBreaker))
 			roles.GET("/:id", handler.ProxyRequest(cfg, "auth", circuitBreaker))
@@ -94,18 +87,45 @@ func Setup(cfg *config.Config) *gin.Engine {
 
 		// Merchant routes (JWT required)
 		merchants := api.Group("/merchants")
-		merchants.Use(middleware.AuthenticateJWT(authClient, cfg))
 		{
 			merchants.POST("", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
 			merchants.GET("", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+
+			// Merchant API Keys
+			merchantApiKeys := merchants.Group("/api-keys")
+			{
+				merchantApiKeys.POST("", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+				merchantApiKeys.GET("/merchant/:merchant_id", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+				merchantApiKeys.PATCH("/:id/deactivate", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+				merchantApiKeys.DELETE("/:id", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+			}
+
 			merchants.GET("/:id", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+			merchants.GET("/:id/details", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+			merchants.GET("/:id/team", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+			merchants.GET("/:id/invitations", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+			merchants.GET("/:id/settings", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+
 			merchants.PUT("/:id", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+			merchants.PATCH("/:id", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+			merchants.PATCH("/:id/settings", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+			merchants.PATCH("/:id/team/:user_id", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+
+			merchants.POST("/:id/team/invite", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+
 			merchants.DELETE("/:id", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+			merchants.DELETE("/:id/team/:user_id", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+
+		}
+		// Invitation routes (JWT required)
+		invitations := api.Group("/invitations")
+		{
+			invitations.POST("/:token/accept", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+			invitations.DELETE("/:id", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
 		}
 
 		// Payment routes (API Key required)
 		payments := api.Group("/payments")
-		payments.Use(middleware.AuthenticateAPIKey(authClient, cfg))
 		payments.Use(middleware.EndpointRateLimit(rateLimiter, "payments", 20, time.Second))
 		{
 			payments.POST("/authorize", handler.ProxyRequest(cfg, "payment", circuitBreaker))
@@ -115,6 +135,11 @@ func Setup(cfg *config.Config) *gin.Engine {
 			payments.POST("/:id/refund", handler.ProxyRequest(cfg, "payment", circuitBreaker))
 			payments.GET("/:id", handler.ProxyRequest(cfg, "payment", circuitBreaker))
 			payments.GET("", handler.ProxyRequest(cfg, "payment", circuitBreaker))
+		}
+		transactions := api.Group("/transactions")
+		{
+			transactions.GET("", handler.ProxyRequest(cfg, "payment", circuitBreaker))
+			transactions.GET("/:id", handler.ProxyRequest(cfg, "payment", circuitBreaker))
 		}
 	}
 
