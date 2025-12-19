@@ -1,0 +1,195 @@
+# Payment Gateway CLI - Makefile
+# Build, test, and install the CLI tool
+
+# Variables
+APP_NAME=payment-cli
+VERSION=1.0.0
+BUILD_DIR=build
+CMD_DIR=cmd
+MAIN_FILE=$(CMD_DIR)/main.go
+
+# Build flags
+LDFLAGS=-ldflags "-X main.version=$(VERSION) -s -w"
+
+# Colors for output
+COLOR_RESET=\033[0m
+COLOR_BOLD=\033[1m
+COLOR_GREEN=\033[32m
+COLOR_YELLOW=\033[33m
+COLOR_BLUE=\033[34m
+
+.PHONY: help
+help: ## Show this help message
+	@echo "$(COLOR_BOLD)Payment Gateway CLI$(COLOR_RESET)"
+	@echo "$(COLOR_BLUE)Version: $(VERSION)$(COLOR_RESET)"
+	@echo ""
+	@echo "$(COLOR_BOLD)Available targets:$(COLOR_RESET)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(COLOR_GREEN)%-15s$(COLOR_RESET) %s\n", $$1, $$2}'
+
+.PHONY: deps
+deps: ## Install dependencies
+	@echo "$(COLOR_BLUE)📦 Installing dependencies...$(COLOR_RESET)"
+	@go mod download
+	@go mod tidy
+	@echo "$(COLOR_GREEN)✅ Dependencies installed$(COLOR_RESET)"
+
+.PHONY: build
+build: deps ## Build CLI for current OS
+	@echo "$(COLOR_BLUE)🔨 Building $(APP_NAME)...$(COLOR_RESET)"
+	@mkdir -p $(BUILD_DIR)
+	@go build $(LDFLAGS) -o $(BUILD_DIR)/$(APP_NAME) $(MAIN_FILE)
+	@echo "$(COLOR_GREEN)✅ Build complete: $(BUILD_DIR)/$(APP_NAME)$(COLOR_RESET)"
+
+.PHONY: build-all
+build-all: deps ## Build CLI for all platforms (Linux, Mac, Windows)
+	@echo "$(COLOR_BLUE)🔨 Building for all platforms...$(COLOR_RESET)"
+	@mkdir -p $(BUILD_DIR)
+	
+	@echo "$(COLOR_YELLOW)Building for Linux (amd64)...$(COLOR_RESET)"
+	@GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(APP_NAME)-linux-amd64 $(MAIN_FILE)
+	
+	@echo "$(COLOR_YELLOW)Building for Linux (arm64)...$(COLOR_RESET)"
+	@GOOS=linux GOARCH=arm64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(APP_NAME)-linux-arm64 $(MAIN_FILE)
+	
+	@echo "$(COLOR_YELLOW)Building for macOS (amd64)...$(COLOR_RESET)"
+	@GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(APP_NAME)-darwin-amd64 $(MAIN_FILE)
+	
+	@echo "$(COLOR_YELLOW)Building for macOS (arm64/M1)...$(COLOR_RESET)"
+	@GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(APP_NAME)-darwin-arm64 $(MAIN_FILE)
+	
+	@echo "$(COLOR_YELLOW)Building for Windows (amd64)...$(COLOR_RESET)"
+	@GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BUILD_DIR)/$(APP_NAME)-windows-amd64.exe $(MAIN_FILE)
+	
+	@echo "$(COLOR_GREEN)✅ All builds complete!$(COLOR_RESET)"
+	@ls -lh $(BUILD_DIR)
+
+.PHONY: install
+install: build ## Install CLI to /usr/local/bin
+	@echo "$(COLOR_BLUE)📥 Installing $(APP_NAME)...$(COLOR_RESET)"
+	@sudo cp $(BUILD_DIR)/$(APP_NAME) /usr/local/bin/$(APP_NAME)
+	@sudo chmod +x /usr/local/bin/$(APP_NAME)
+	@echo "$(COLOR_GREEN)✅ Installed to /usr/local/bin/$(APP_NAME)$(COLOR_RESET)"
+	@echo "$(COLOR_BLUE)Try: $(APP_NAME) --help$(COLOR_RESET)"
+
+.PHONY: uninstall
+uninstall: ## Uninstall CLI from /usr/local/bin
+	@echo "$(COLOR_BLUE)🗑️  Uninstalling $(APP_NAME)...$(COLOR_RESET)"
+	@sudo rm -f /usr/local/bin/$(APP_NAME)
+	@echo "$(COLOR_GREEN)✅ Uninstalled$(COLOR_RESET)"
+
+.PHONY: test
+test: ## Run all tests
+	@echo "$(COLOR_BLUE)🧪 Running tests...$(COLOR_RESET)"
+	@go test -v ./...
+	@echo "$(COLOR_GREEN)✅ Tests passed$(COLOR_RESET)"
+
+.PHONY: test-coverage
+test-coverage: ## Run tests with coverage report
+	@echo "$(COLOR_BLUE)🧪 Running tests with coverage...$(COLOR_RESET)"
+	@go test -v -coverprofile=coverage.out ./...
+	@go tool cover -html=coverage.out -o coverage.html
+	@echo "$(COLOR_GREEN)✅ Coverage report: coverage.html$(COLOR_RESET)"
+
+.PHONY: lint
+lint: ## Run linter (requires golangci-lint)
+	@echo "$(COLOR_BLUE)🔍 Running linter...$(COLOR_RESET)"
+	@if command -v golangci-lint >/dev/null; then \
+		golangci-lint run ./...; \
+		echo "$(COLOR_GREEN)✅ Linting complete$(COLOR_RESET)"; \
+	else \
+		echo "$(COLOR_YELLOW)⚠️  golangci-lint not installed. Install with: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin$(COLOR_RESET)"; \
+	fi
+
+.PHONY: fmt
+fmt: ## Format code
+	@echo "$(COLOR_BLUE)💅 Formatting code...$(COLOR_RESET)"
+	@go fmt ./...
+	@echo "$(COLOR_GREEN)✅ Code formatted$(COLOR_RESET)"
+
+.PHONY: clean
+clean: ## Clean build artifacts
+	@echo "$(COLOR_BLUE)🧹 Cleaning...$(COLOR_RESET)"
+	@rm -rf $(BUILD_DIR)
+	@rm -f coverage.out coverage.html
+	@echo "$(COLOR_GREEN)✅ Cleaned$(COLOR_RESET)"
+
+.PHONY: run
+run: ## Run CLI (development mode)
+	@echo "$(COLOR_BLUE)🚀 Running $(APP_NAME)...$(COLOR_RESET)"
+	@go run $(MAIN_FILE)
+
+.PHONY: run-interactive
+run-interactive: ## Run CLI in interactive mode
+	@echo "$(COLOR_BLUE)🎮 Starting interactive mode...$(COLOR_RESET)"
+	@go run $(MAIN_FILE) interactive
+
+.PHONY: proto-gen
+proto-gen: ## Generate protobuf code (if needed)
+	@echo "$(COLOR_BLUE)📝 Generating protobuf code...$(COLOR_RESET)"
+	@protoc --go_out=. --go_opt=paths=source_relative \
+		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
+		proto/*.proto
+	@echo "$(COLOR_GREEN)✅ Protobuf code generated$(COLOR_RESET)"
+
+.PHONY: docker-build
+docker-build: ## Build Docker image
+	@echo "$(COLOR_BLUE)🐳 Building Docker image...$(COLOR_RESET)"
+	@docker build -t $(APP_NAME):$(VERSION) -t $(APP_NAME):latest .
+	@echo "$(COLOR_GREEN)✅ Docker image built$(COLOR_RESET)"
+
+.PHONY: docker-run
+docker-run: docker-build ## Run CLI in Docker
+	@echo "$(COLOR_BLUE)🐳 Running in Docker...$(COLOR_RESET)"
+	@docker run -it --rm $(APP_NAME):latest
+
+.PHONY: release
+release: clean build-all test ## Create release (build all + test)
+	@echo "$(COLOR_BLUE)📦 Creating release v$(VERSION)...$(COLOR_RESET)"
+	@mkdir -p releases
+	@cd $(BUILD_DIR) && tar -czf ../releases/$(APP_NAME)-$(VERSION)-linux-amd64.tar.gz $(APP_NAME)-linux-amd64
+	@cd $(BUILD_DIR) && tar -czf ../releases/$(APP_NAME)-$(VERSION)-linux-arm64.tar.gz $(APP_NAME)-linux-arm64
+	@cd $(BUILD_DIR) && tar -czf ../releases/$(APP_NAME)-$(VERSION)-darwin-amd64.tar.gz $(APP_NAME)-darwin-amd64
+	@cd $(BUILD_DIR) && tar -czf ../releases/$(APP_NAME)-$(VERSION)-darwin-arm64.tar.gz $(APP_NAME)-darwin-arm64
+	@cd $(BUILD_DIR) && zip -q ../releases/$(APP_NAME)-$(VERSION)-windows-amd64.zip $(APP_NAME)-windows-amd64.exe
+	@echo "$(COLOR_GREEN)✅ Release v$(VERSION) created in releases/$(COLOR_RESET)"
+	@ls -lh releases/
+
+.PHONY: init-dev
+init-dev: deps ## Initialize development environment
+	@echo "$(COLOR_BLUE)🔧 Initializing development environment...$(COLOR_RESET)"
+	@mkdir -p ~/.payment-cli
+	@if [ ! -f ~/.payment-cli/config.yaml ]; then \
+		echo "Creating default config..."; \
+		echo "current_env: development" > ~/.payment-cli/config.yaml; \
+		echo "" >> ~/.payment-cli/config.yaml; \
+		echo "environments:" >> ~/.payment-cli/config.yaml; \
+		echo "  development:" >> ~/.payment-cli/config.yaml; \
+		echo "    api_url: http://localhost:8000" >> ~/.payment-cli/config.yaml; \
+		echo "    auth_url: http://localhost:8001" >> ~/.payment-cli/config.yaml; \
+		echo "    payment_url: http://localhost:8004" >> ~/.payment-cli/config.yaml; \
+		echo "    merchant_url: http://localhost:8002" >> ~/.payment-cli/config.yaml; \
+		echo "" >> ~/.payment-cli/config.yaml; \
+		echo "preferences:" >> ~/.payment-cli/config.yaml; \
+		echo "  output_format: table" >> ~/.payment-cli/config.yaml; \
+		echo "  color_enabled: true" >> ~/.payment-cli/config.yaml; \
+		echo "  debug_mode: false" >> ~/.payment-cli/config.yaml; \
+	fi
+	@echo "$(COLOR_GREEN)✅ Development environment initialized$(COLOR_RESET)"
+	@echo "$(COLOR_BLUE)Config file: ~/.payment-cli/config.yaml$(COLOR_RESET)"
+
+.PHONY: check
+check: ## Check if all tools are installed
+	@echo "$(COLOR_BLUE)🔍 Checking required tools...$(COLOR_RESET)"
+	@command -v go >/dev/null || (echo "$(COLOR_YELLOW)❌ Go not installed$(COLOR_RESET)" && exit 1)
+	@echo "$(COLOR_GREEN)✅ Go: $$(go version)$(COLOR_RESET)"
+	@command -v git >/dev/null || (echo "$(COLOR_YELLOW)⚠️  Git not installed$(COLOR_RESET)")
+	@echo "$(COLOR_GREEN)✅ Git: $$(git --version)$(COLOR_RESET)"
+	@command -v docker >/dev/null || (echo "$(COLOR_YELLOW)⚠️  Docker not installed (optional)$(COLOR_RESET)")
+	@[ -n "$$(command -v docker)" ] && echo "$(COLOR_GREEN)✅ Docker: $$(docker --version)$(COLOR_RESET)" || true
+	@echo "$(COLOR_GREEN)✅ All required tools installed$(COLOR_RESET)"
+
+.PHONY: version
+version: ## Show version
+	@echo "$(COLOR_BOLD)$(APP_NAME) version $(VERSION)$(COLOR_RESET)"
+
+.DEFAULT_GOAL := help
