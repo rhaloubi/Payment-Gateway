@@ -30,8 +30,8 @@ func SetupMerchantRoutes() {
 			{
 				apiKeys.POST("", apiKeyHandler.CreateAPIKey)
 				apiKeys.GET("/merchant/:merchant_id", apiKeyHandler.GetMerchantAPIKeys)
-				apiKeys.PATCH("/:id/deactivate", apiKeyHandler.DeactivateAPIKey)
-				apiKeys.DELETE("/:id", apiKeyHandler.DeleteAPIKey)
+				apiKeys.PATCH("/:merchant_id/:id/deactivate", apiKeyHandler.DeactivateAPIKey)
+				apiKeys.DELETE("/:merchant_id/:id", apiKeyHandler.DeleteAPIKey)
 
 			}
 

@@ -16,10 +16,7 @@ type Config struct {
 }
 
 type Environment struct {
-	APIURL      string `yaml:"api_url"`
-	AuthURL     string `yaml:"auth_url"`
-	PaymentURL  string `yaml:"payment_url"`
-	MerchantURL string `yaml:"merchant_url"`
+	APIURL string `yaml:"api_url"`
 }
 
 type Credentials struct {
@@ -27,6 +24,7 @@ type Credentials struct {
 	RefreshToken string `yaml:"refresh_token"`
 	UserEmail    string `yaml:"user_email"`
 	MerchantID   string `yaml:"merchant_id"`
+	ApiKey       string `yaml:"api_key"`
 }
 
 type Preferences struct {
@@ -51,16 +49,10 @@ func Init() error {
 			CurrentEnv: "development",
 			Environments: map[string]Environment{
 				"development": {
-					APIURL:      "http://localhost:8000",
-					AuthURL:     "http://localhost:8001",
-					PaymentURL:  "http://localhost:8004",
-					MerchantURL: "http://localhost:8002",
+					APIURL: "http://localhost:8080",
 				},
 				"production": {
-					APIURL:      "https://api.example.com",
-					AuthURL:     "https://api.example.com",
-					PaymentURL:  "https://api.example.com",
-					MerchantURL: "https://api.example.com",
+					APIURL: "https://api.example.com",
 				},
 			},
 			Preferences: Preferences{
@@ -132,11 +124,20 @@ func SaveCredentials(accessToken, refreshToken, email string) error {
 	return Save()
 }
 
+// get merchnat id
 func GetMerchantID() string {
 	if globalConfig == nil {
 		return ""
 	}
 	return globalConfig.Credentials.MerchantID
+}
+
+// get api key
+func GetApiKey() string {
+	if globalConfig == nil {
+		return ""
+	}
+	return globalConfig.Credentials.ApiKey
 }
 
 func SetMerchantID(id string) error {
@@ -146,6 +147,16 @@ func SetMerchantID(id string) error {
 		}
 	}
 	globalConfig.Credentials.MerchantID = id
+	return Save()
+}
+
+func SetApiKey(apiKey string) error {
+	if globalConfig != nil {
+		if err := Load(""); err != nil {
+			return err
+		}
+	}
+	globalConfig.Credentials.ApiKey = apiKey
 	return Save()
 }
 
@@ -177,11 +188,11 @@ func GetCurrentEnv() string {
 }
 
 func GetAPIURL() string {
-	if globalConfig == nil {
-		return "http://localhost:8001"
+	if globalConfig != nil {
+		return "http://localhost:8080"
 	}
 	env := globalConfig.Environments[globalConfig.CurrentEnv]
-	return env.AuthURL
+	return env.APIURL
 }
 
 func GetAccessToken() string {

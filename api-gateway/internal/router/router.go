@@ -65,15 +65,6 @@ func Setup(cfg *config.Config) *gin.Engine {
 
 		}
 
-		// API Keys routes (JWT required)
-		apiKeys := api.Group("/api-keys")
-		{
-			apiKeys.POST("", handler.ProxyRequest(cfg, "auth", circuitBreaker))
-			apiKeys.GET("/merchant/:merchant_id", handler.ProxyRequest(cfg, "auth", circuitBreaker))
-			apiKeys.PATCH("/:id/deactivate", handler.ProxyRequest(cfg, "auth", circuitBreaker))
-			apiKeys.DELETE("/:id", handler.ProxyRequest(cfg, "auth", circuitBreaker))
-		}
-
 		// Roles routes (JWT required)
 		roles := api.Group("/roles")
 		{
@@ -96,8 +87,8 @@ func Setup(cfg *config.Config) *gin.Engine {
 			{
 				merchantApiKeys.POST("", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
 				merchantApiKeys.GET("/merchant/:merchant_id", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
-				merchantApiKeys.PATCH("/:id/deactivate", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
-				merchantApiKeys.DELETE("/:id", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+				merchantApiKeys.PATCH("/:merchant_id/:id/deactivate", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
+				merchantApiKeys.DELETE("/:merchant_id/:id", handler.ProxyRequest(cfg, "merchant", circuitBreaker))
 			}
 
 			merchants.GET("/:id", handler.ProxyRequest(cfg, "merchant", circuitBreaker))

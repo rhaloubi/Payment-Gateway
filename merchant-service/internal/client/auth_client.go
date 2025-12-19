@@ -137,12 +137,13 @@ func (c *AuthServiceClient) GetMerchantAPIKeys(merchantID uuid.UUID) (*pb.GetMer
 }
 
 // DeactivateAPIKey calls gRPC to deactivate an API key
-func (c *AuthServiceClient) DeactivateAPIKey(keyID uuid.UUID) error {
+func (c *AuthServiceClient) DeactivateAPIKey(keyID, merchantID uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), c.grpcTimeout)
 	defer cancel()
 
 	req := &pb.DeactivateAPIKeyRequest{
-		Id: keyID.String(),
+		Id:         keyID.String(),
+		MerchantId: merchantID.String(),
 	}
 
 	_, err := c.apiKeyClient.DeactivateAPIKey(ctx, req)
@@ -153,12 +154,13 @@ func (c *AuthServiceClient) DeactivateAPIKey(keyID uuid.UUID) error {
 }
 
 // DeleteAPIKey calls gRPC to delete an API key
-func (c *AuthServiceClient) DeleteAPIKey(keyID uuid.UUID) error {
+func (c *AuthServiceClient) DeleteAPIKey(keyID, merchantID uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), c.grpcTimeout)
 	defer cancel()
 
 	req := &pb.DeleteAPIKeyRequest{
-		Id: keyID.String(),
+		Id:         keyID.String(),
+		MerchantId: merchantID.String(),
 	}
 
 	_, err := c.apiKeyClient.DeleteAPIKey(ctx, req)

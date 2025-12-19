@@ -20,6 +20,7 @@ func NewMerchantCommands() *cobra.Command {
 	cmd.AddCommand(newMerchantGetCommand())
 	//cmd.AddCommand(newMerchantListCommand())
 	cmd.AddCommand(newMerchantInviteCommand())
+	cmd.AddCommand(accessMerchantAccounts())
 
 	return cmd
 }
@@ -104,50 +105,6 @@ func newMerchantCreateCommand() *cobra.Command {
 
 	return cmd
 }
-
-/*
-func newMerchantListCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "list",
-		Short: "List all merchants",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			email := config.GetUserEmail()
-			if email == "" && config.GetAccessToken() == "" {
-				ui.Warning("⚠️  Not logged in")
-				ui.Info("Run: payment-cli auth login")
-				return nil
-			}
-
-			spinner := ui.NewSpinner("Fetching merchants...")
-			spinner.Start()
-
-			merchantClient := client.NewMerchantClient()
-			merchants, err := merchantClient.List()
-
-			spinner.Stop()
-
-			if err != nil {
-				ui.Error(fmt.Sprintf("❌ Failed: %v", err))
-				return err
-			}
-
-			if len(merchants) == 0 {
-				ui.Info("📭 No merchants found")
-				ui.Info("Create one with: payment-cli merchant create")
-				return nil
-			}
-
-			table := ui.NewTable([]string{"ID", "Name", "Email", "Status"})
-			for _, m := range merchants {
-				table.AddRow([]string{m.ID, m.Name, m.Email, m.Status})
-			}
-			table.Render()
-
-			return nil
-		},
-	}
-}
-*/
 
 func newMerchantGetCommand() *cobra.Command {
 	return &cobra.Command{
@@ -264,4 +221,49 @@ func newMerchantInviteCommand() *cobra.Command {
 			return nil
 		},
 	}
+}
+
+func accessMerchantAccounts() *cobra.Command {
+	var MerchantID string
+	cmd := &cobra.Command{
+		Use:   "access-accounts",
+		Short: "access merchant account",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			//check for login
+			if config.GetUserEmail() == "" && config.GetAccessToken() == "" {
+				ui.Warning("⚠️  Not logged in")
+				ui.Info("Run: payment-cli auth login")
+				return nil
+			}
+
+			spinner := ui.NewSpinner("Fetching merchants...")
+			spinner.Start()
+
+			merchantClient := client.NewMerchantClient()
+			merchants, err := merchantClient.List()
+
+			spinner.Stop()
+
+			if err != nil {
+				ui.Error(fmt.Sprintf("❌ Failed: %v", err))
+				return err
+			}
+
+			if len(merchants) == 0 {
+				ui.Info("📭 No merchants found")
+				ui.Info("Create one with: payment-cli merchant create")
+				return nil
+			}
+			MerchantID = merchants[0].ID
+			if err := config.SetMerchantID(MerchantID); err != nil {
+				return err
+			}
+			ui.Success("✅ Merchant account access granted!")
+
+			return nil
+		},
+	}
+	cmd.Flags().StringVarP(&MerchantID, "merchant-id", "m", "", "Merchant ID")
+
+	return cmd
 }

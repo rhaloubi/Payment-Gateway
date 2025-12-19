@@ -11,14 +11,12 @@ import (
 
 type MerchantClient struct {
 	httpClient *http.Client
-	baseURL    string
 	restClient *RESTClient
 }
 
 func NewMerchantClient() *MerchantClient {
 	return &MerchantClient{
 		httpClient: &http.Client{Timeout: 10 * time.Second},
-		baseURL:    "http://localhost:8002",
 		restClient: NewHttpClient(),
 	}
 }
@@ -45,6 +43,17 @@ type Invitation struct {
 	CreatedAt       time.Time `json:"created_at"`
 }
 
+type APIKey struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	KeyPrefix string    `json:"key_prefix"`
+	CreatedAt time.Time `json:"created_at"`
+}
+type Data struct {
+	APIKey   APIKey `json:"api_key"`
+	PlainKey string `json:"plain_key"`
+}
+
 func (c *MerchantClient) Create(BusinessName, LegalName, email, BusinessType string) (*Merchant, error) {
 	payload := map[string]string{
 		"business_name": BusinessName,
@@ -54,7 +63,7 @@ func (c *MerchantClient) Create(BusinessName, LegalName, email, BusinessType str
 	}
 
 	// TODO: Implement HTTP POST to merchant service
-	resp, err := c.restClient.Post(c.baseURL+"/api/v1/merchants", payload, config.GetAccessToken())
+	resp, err := c.restClient.Post("/api/v1/merchants", payload, config.GetAccessToken())
 	if err != nil {
 		return nil, err
 	}
@@ -82,20 +91,10 @@ func (c *MerchantClient) Create(BusinessName, LegalName, email, BusinessType str
 	}, nil
 }
 
-/*
-	func (c *MerchantClient) List() ([]Merchant, error) {
-		// TODO: Implement HTTP GET to merchant service
-		// For now, return mock data
-		return []Merchant{
-			{ID: "mer_1", Name: "Test Merchant 1", Email: "test1@example.com", Status: "active"},
-			{ID: "mer_2", Name: "Test Merchant 2", Email: "test2@example.com", Status: "active"},
-		}, nil
-	}
-*/
 func (c *MerchantClient) GetMerchant(id string) (*Merchant, error) {
 	accessToken := config.GetAccessToken()
 
-	resp, err := c.restClient.Get(c.baseURL+"/api/v1/merchants/"+id, accessToken)
+	resp, err := c.restClient.Get("/api/v1/merchants/"+id, accessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -128,6 +127,33 @@ func (c *MerchantClient) GetMerchant(id string) (*Merchant, error) {
 	}, nil
 }
 
+func (c *MerchantClient) List() ([]Merchant, error) {
+	if config.GetAccessToken() == "" {
+		return nil, fmt.Errorf("access token not set")
+	}
+
+	resp, err := c.restClient.Get("/api/v1/merchants", config.GetAccessToken())
+	if err != nil {
+		return nil, err
+	}
+
+	result := struct {
+		Success bool `json:"success"`
+		Data    struct {
+			Merchants []Merchant `json:"merchants"`
+		} `json:"data"`
+	}{}
+
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, fmt.Errorf("failed to parse roles response: %w", err)
+	}
+
+	if !result.Success {
+		return nil, fmt.Errorf("failed to list merchants")
+	}
+	return result.Data.Merchants, nil
+}
+
 func (c *MerchantClient) InviteUser(merchantID, email, rolename, roleID string) (*Invitation, error) {
 	if config.GetAccessToken() == "" {
 		return nil, fmt.Errorf("access token not set")
@@ -138,7 +164,7 @@ func (c *MerchantClient) InviteUser(merchantID, email, rolename, roleID string) 
 		"role_id":   roleID,
 	}
 
-	resp, err := c.restClient.Post(c.baseURL+"/api/v1/merchants/"+merchantID+"/team/invite", payload, config.GetAccessToken())
+	resp, err := c.restClient.Post("/api/v1/merchants/"+merchantID+"/team/invite", payload, config.GetAccessToken())
 	if err != nil {
 		return nil, err
 	}
@@ -158,4 +184,33 @@ func (c *MerchantClient) InviteUser(merchantID, email, rolename, roleID string) 
 		return nil, fmt.Errorf("failed to invite user")
 	}
 	return &result.Data.Invitation, nil
+}
+
+func (c *MerchantClient) CreateAPIKey(merchantID, name string) (*Data, error) {
+	if config.GetAccessToken() == "" {
+		return nil, fmt.Errorf("access token not set")
+	}
+	payload := map[string]string{
+		"merchant_id": merchantID,
+		"name":        name,
+	}
+
+	resp, err := c.restClient.Post("/api/v1/merchants/api-keys", payload, config.GetAccessToken())
+	if err != nil {
+		return nil, err
+	}
+
+	result := struct {
+		Success bool `json:"success"`
+		Data    Data `json:"data"`
+	}{}
+
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, fmt.Errorf("failed to parse roles response: %w", err)
+	}
+
+	if !result.Success {
+		return nil, fmt.Errorf("failed to create api key")
+	}
+	return &result.Data, nil
 }

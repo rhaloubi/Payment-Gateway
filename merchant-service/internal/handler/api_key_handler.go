@@ -173,7 +173,7 @@ func (h *APIKeyHandler) DeactivateAPIKey(c *gin.Context) {
 		return
 	}
 
-	err = h.authClient.DeactivateAPIKey(keyID)
+	err = h.authClient.DeactivateAPIKey(keyID, merchantID)
 	if err != nil {
 		st := status.Convert(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": st.Message()})
@@ -218,7 +218,7 @@ func (h *APIKeyHandler) DeleteAPIKey(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"success": false, "error": "forbidden"})
 		return
 	}
-	err = h.authClient.DeleteAPIKey(keyID)
+	err = h.authClient.DeleteAPIKey(keyID, merchantID)
 	if err != nil {
 		st := status.Convert(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": st.Message()})

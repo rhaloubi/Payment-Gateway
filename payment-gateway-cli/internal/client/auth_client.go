@@ -11,14 +11,12 @@ import (
 
 type AuthClient struct {
 	httpClient *http.Client
-	baseURL    string
 	restClient *RESTClient
 }
 
 func NewAuthClient() *AuthClient {
 	return &AuthClient{
 		httpClient: &http.Client{Timeout: 10 * time.Second},
-		baseURL:    config.GetAPIURL(),
 		restClient: NewHttpClient(),
 	}
 }
@@ -43,7 +41,7 @@ func (c *AuthClient) Register(email, name, password string) (*User, error) {
 		"password": password,
 	}
 
-	resp, err := c.restClient.Post(c.baseURL+"/api/v1/auth/register", payload, "")
+	resp, err := c.restClient.Post("/api/v1/auth/register", payload, "")
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +71,7 @@ func (c *AuthClient) Login(email, password string) (*Tokens, *User, error) {
 		"password": password,
 	}
 
-	resp, err := c.restClient.Post(c.baseURL+"/api/v1/auth/login", payload, "")
+	resp, err := c.restClient.Post("/api/v1/auth/login", payload, "")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -108,7 +106,7 @@ func (c *AuthClient) Login(email, password string) (*Tokens, *User, error) {
 func (c *AuthClient) GetUserProfile(email string) (*User, error) {
 	accessToken := config.GetAccessToken()
 
-	resp, err := c.restClient.Get(c.baseURL+"/api/v1/auth/profile", accessToken)
+	resp, err := c.restClient.Get("/api/v1/auth/profile", accessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +136,7 @@ func (c *AuthClient) GetUserProfile(email string) (*User, error) {
 func (c *AuthClient) Logout() error {
 	accessToken := config.GetAccessToken()
 
-	resp, err := c.restClient.Post(c.baseURL+"/api/v1/auth/logout", map[string]string{}, accessToken)
+	resp, err := c.restClient.Post("/api/v1/auth/logout", map[string]string{}, accessToken)
 	if err != nil {
 		return err
 	}
@@ -169,7 +167,7 @@ func (c *AuthClient) ChangePassword(email, oldPassword, newPassword string) erro
 		"new_password": newPassword,
 	}
 
-	resp, err := c.restClient.Post(c.baseURL+"/api/v1/auth/change-password", payload, accessToken)
+	resp, err := c.restClient.Post("/api/v1/auth/change-password", payload, accessToken)
 	if err != nil {
 		return err
 	}
@@ -198,7 +196,7 @@ type Role struct {
 func (c *AuthClient) GetAllRoles() ([]Role, error) {
 	accessToken := config.GetAccessToken()
 
-	resp, err := c.restClient.Get(c.baseURL+"/api/v1/roles", accessToken)
+	resp, err := c.restClient.Get("/api/v1/roles", accessToken)
 	if err != nil {
 		return nil, err
 	}

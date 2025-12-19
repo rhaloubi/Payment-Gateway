@@ -20,6 +20,9 @@ func NewConfigCommands() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ui.Info(fmt.Sprintf("🌍 Environment: %s", config.GetCurrentEnv()))
 			ui.Info(fmt.Sprintf("🔗 API URL: %s", config.GetAPIURL()))
+			ui.Info(fmt.Sprintf("🔗 Auth URL: %s", config.GetAccessToken()))
+			ui.Info(fmt.Sprintf("🔑 API Key: %s", config.GetApiKey()))
+			ui.Info(fmt.Sprintf("🔑 Merchant ID: %s", config.GetMerchantID()))
 			ui.Info(fmt.Sprintf("📁 Config file: %s", config.GetConfigPath()))
 			return nil
 		},

@@ -56,15 +56,6 @@ circuit_breaker:
     timeout: 15s
     success_threshold: 3
 
-authentication:
-  jwt:
-    enabled: true
-    secret: "${JWT_SECRET}"
-    issuer: "payment-gateway"
-    
-  api_key:
-    enabled: true
-
 
 logging:
   level: "info"
