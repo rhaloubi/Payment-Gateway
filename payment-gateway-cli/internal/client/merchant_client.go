@@ -17,7 +17,7 @@ type MerchantClient struct {
 func NewMerchantClient() *MerchantClient {
 	return &MerchantClient{
 		httpClient: &http.Client{Timeout: 10 * time.Second},
-		restClient: NewHttpClient(),
+		restClient: NewRESTClient(),
 	}
 }
 
@@ -112,7 +112,7 @@ func (c *MerchantClient) Create(BusinessName, LegalName, email, BusinessType str
 	}
 
 	// TODO: Implement HTTP POST to merchant service
-	resp, err := c.restClient.Post("/api/v1/merchants", payload, config.GetAccessToken())
+	resp, err := c.restClient.Post("/api/v1/merchants", payload, &AuthOptions{BearerToken: config.GetAccessToken()})
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func (c *MerchantClient) Create(BusinessName, LegalName, email, BusinessType str
 func (c *MerchantClient) GetMerchant(id string) (*Merchant, error) {
 	accessToken := config.GetAccessToken()
 
-	resp, err := c.restClient.Get("/api/v1/merchants/"+id, accessToken)
+	resp, err := c.restClient.Get("/api/v1/merchants/"+id, &AuthOptions{BearerToken: accessToken})
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ func (c *MerchantClient) List() ([]Merchant, error) {
 		return nil, fmt.Errorf("access token not set")
 	}
 
-	resp, err := c.restClient.Get("/api/v1/merchants", config.GetAccessToken())
+	resp, err := c.restClient.Get("/api/v1/merchants", &AuthOptions{BearerToken: config.GetAccessToken()})
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func (c *MerchantClient) InviteUser(merchantID, email, rolename, roleID string) 
 		"role_id":   roleID,
 	}
 
-	resp, err := c.restClient.Post("/api/v1/merchants/"+merchantID+"/team/invite", payload, config.GetAccessToken())
+	resp, err := c.restClient.Post("/api/v1/merchants/"+merchantID+"/team/invite", payload, &AuthOptions{BearerToken: config.GetAccessToken()})
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +244,7 @@ func (c *MerchantClient) CreateAPIKey(merchantID, name string) (*Data, error) {
 		"name":        name,
 	}
 
-	resp, err := c.restClient.Post("/api/v1/merchants/api-keys", payload, config.GetAccessToken())
+	resp, err := c.restClient.Post("/api/v1/merchants/api-keys", payload, &AuthOptions{BearerToken: config.GetAccessToken()})
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +269,7 @@ func (c *MerchantClient) ListTeamMembers(merchantID string) ([]TeamMember, error
 		return nil, fmt.Errorf("access token not set")
 	}
 
-	resp, err := c.restClient.Get("/api/v1/merchants/"+merchantID+"/team", config.GetAccessToken())
+	resp, err := c.restClient.Get("/api/v1/merchants/"+merchantID+"/team", &AuthOptions{BearerToken: config.GetAccessToken()})
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +297,7 @@ func (c *MerchantClient) ListInvitations(merchantID string) ([]InvitationRespons
 		return nil, fmt.Errorf("access token not set")
 	}
 
-	resp, err := c.restClient.Get("/api/v1/merchants/"+merchantID+"/invitations", config.GetAccessToken())
+	resp, err := c.restClient.Get("/api/v1/merchants/"+merchantID+"/invitations", &AuthOptions{BearerToken: config.GetAccessToken()})
 	if err != nil {
 		return nil, err
 	}
@@ -325,7 +325,7 @@ func (c *MerchantClient) GetSettings(merchantID string) (*Settings, error) {
 		return nil, fmt.Errorf("access token not set")
 	}
 
-	resp, err := c.restClient.Get("/api/v1/merchants/"+merchantID+"/settings", config.GetAccessToken())
+	resp, err := c.restClient.Get("/api/v1/merchants/"+merchantID+"/settings", &AuthOptions{BearerToken: config.GetAccessToken()})
 	if err != nil {
 		return nil, err
 	}

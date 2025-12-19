@@ -17,7 +17,7 @@ type AuthClient struct {
 func NewAuthClient() *AuthClient {
 	return &AuthClient{
 		httpClient: &http.Client{Timeout: 10 * time.Second},
-		restClient: NewHttpClient(),
+		restClient: NewRESTClient(),
 	}
 }
 
@@ -32,6 +32,11 @@ type Tokens struct {
 	RefreshToken string `json:"refresh_token"`
 	ExpiresAt    string `json:"expires_at"`
 }
+type Role struct {
+	ID          string `json:"ID"`
+	Name        string `json:"Name"`
+	Description string `json:"Description"`
+}
 
 // Register registers a new user with the provided email, name, and password.
 func (c *AuthClient) Register(email, name, password string) (*User, error) {
@@ -41,7 +46,7 @@ func (c *AuthClient) Register(email, name, password string) (*User, error) {
 		"password": password,
 	}
 
-	resp, err := c.restClient.Post("/api/v1/auth/register", payload, "")
+	resp, err := c.restClient.Post("/api/v1/auth/register", payload, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +76,7 @@ func (c *AuthClient) Login(email, password string) (*Tokens, *User, error) {
 		"password": password,
 	}
 
-	resp, err := c.restClient.Post("/api/v1/auth/login", payload, "")
+	resp, err := c.restClient.Post("/api/v1/auth/login", payload, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -106,7 +111,7 @@ func (c *AuthClient) Login(email, password string) (*Tokens, *User, error) {
 func (c *AuthClient) GetUserProfile(email string) (*User, error) {
 	accessToken := config.GetAccessToken()
 
-	resp, err := c.restClient.Get("/api/v1/auth/profile", accessToken)
+	resp, err := c.restClient.Get("/api/v1/auth/profile", &AuthOptions{BearerToken: accessToken})
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +141,7 @@ func (c *AuthClient) GetUserProfile(email string) (*User, error) {
 func (c *AuthClient) Logout() error {
 	accessToken := config.GetAccessToken()
 
-	resp, err := c.restClient.Post("/api/v1/auth/logout", map[string]string{}, accessToken)
+	resp, err := c.restClient.Post("/api/v1/auth/logout", map[string]string{}, &AuthOptions{BearerToken: accessToken})
 	if err != nil {
 		return err
 	}
@@ -167,7 +172,7 @@ func (c *AuthClient) ChangePassword(email, oldPassword, newPassword string) erro
 		"new_password": newPassword,
 	}
 
-	resp, err := c.restClient.Post("/api/v1/auth/change-password", payload, accessToken)
+	resp, err := c.restClient.Post("/api/v1/auth/change-password", payload, &AuthOptions{BearerToken: accessToken})
 	if err != nil {
 		return err
 	}
@@ -187,16 +192,10 @@ func (c *AuthClient) ChangePassword(email, oldPassword, newPassword string) erro
 	return nil
 }
 
-type Role struct {
-	ID          string `json:"ID"`
-	Name        string `json:"Name"`
-	Description string `json:"Description"`
-}
-
 func (c *AuthClient) GetAllRoles() ([]Role, error) {
 	accessToken := config.GetAccessToken()
 
-	resp, err := c.restClient.Get("/api/v1/roles", accessToken)
+	resp, err := c.restClient.Get("/api/v1/roles", &AuthOptions{BearerToken: accessToken})
 	if err != nil {
 		return nil, err
 	}

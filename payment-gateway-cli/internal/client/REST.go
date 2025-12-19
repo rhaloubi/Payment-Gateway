@@ -11,33 +11,69 @@ import (
 	"github.com/rhaloubi/payment-gateway-cli/internal/config"
 )
 
+type AuthOptions struct {
+	BearerToken string
+	APIKey      string
+}
 type RESTClient struct {
 	httpClient *http.Client
 	baseURL    string
 }
 
-func NewHttpClient() *RESTClient {
+func NewRESTClient() *RESTClient {
 	return &RESTClient{
-		httpClient: &http.Client{Timeout: 10 * time.Second},
-		baseURL:    config.GetAPIURL(),
+		httpClient: &http.Client{
+			Timeout: 10 * time.Second,
+		},
+		baseURL: config.GetAPIURL(),
 	}
 }
 
-func (c *RESTClient) Post(endpoint string, payload interface{}, token string) ([]byte, error) {
-	jsonData, err := json.Marshal(payload)
-	if err != nil {
-		return nil, err
+func applyAuthHeaders(req *http.Request, auth *AuthOptions) {
+	if auth == nil {
+		return
 	}
 
-	req, err := http.NewRequest("POST", c.baseURL+endpoint, bytes.NewBuffer(jsonData))
+	if auth.BearerToken != "" {
+		req.Header.Set("Authorization", "Bearer "+auth.BearerToken)
+	}
+
+	if auth.APIKey != "" {
+		req.Header.Set("X-API-Key", auth.APIKey)
+	}
+}
+
+/*
+doRequest is the internal request handler used by all HTTP methods.
+*/
+func (c *RESTClient) doRequest(
+	method string,
+	endpoint string,
+	payload interface{},
+	auth *AuthOptions,
+) ([]byte, error) {
+
+	var body io.Reader
+
+	if payload != nil {
+		jsonData, err := json.Marshal(payload)
+		if err != nil {
+			return nil, err
+		}
+		body = bytes.NewBuffer(jsonData)
+	}
+
+	req, err := http.NewRequest(
+		method,
+		c.baseURL+endpoint,
+		body,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-	}
+	applyAuthHeaders(req, auth)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -45,40 +81,39 @@ func (c *RESTClient) Post(endpoint string, payload interface{}, token string) ([
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf(
+			"HTTP %d: %s",
+			resp.StatusCode,
+			string(respBody),
+		)
 	}
 
-	return body, nil
+	return respBody, nil
 }
 
-func (c *RESTClient) Get(endpoint string, token string) ([]byte, error) {
-	req, err := http.NewRequest("GET", c.baseURL+endpoint, nil)
-	if err != nil {
-		return nil, err
-	}
+/*
+Post sends a POST request with an optional payload and authentication.
+*/
+func (c *RESTClient) Post(
+	endpoint string,
+	payload interface{},
+	auth *AuthOptions,
+) ([]byte, error) {
+	return c.doRequest(http.MethodPost, endpoint, payload, auth)
+}
 
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
-	}
-
-	return body, nil
+/*
+Get sends a GET request with optional authentication.
+*/
+func (c *RESTClient) Get(
+	endpoint string,
+	auth *AuthOptions,
+) ([]byte, error) {
+	return c.doRequest(http.MethodGet, endpoint, nil, auth)
 }
