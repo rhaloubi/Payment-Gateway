@@ -21,6 +21,9 @@ func NewMerchantCommands() *cobra.Command {
 	//cmd.AddCommand(newMerchantListCommand())
 	cmd.AddCommand(newMerchantInviteCommand())
 	cmd.AddCommand(accessMerchantAccounts())
+	cmd.AddCommand(GetTeamCommands())
+	cmd.AddCommand(GetInviteCommands())
+	cmd.AddCommand(GetSettingCommands())
 
 	return cmd
 }
@@ -264,6 +267,149 @@ func accessMerchantAccounts() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVarP(&MerchantID, "merchant-id", "m", "", "Merchant ID")
+
+	return cmd
+}
+
+func GetTeamCommands() *cobra.Command {
+	var MerchantID string
+	cmd := &cobra.Command{
+		Use:   "team",
+		Short: "List team members",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if config.GetAccessToken() == "" {
+				ui.Warning("⚠️  Not logged in")
+				ui.Info("Run: payment-cli auth login")
+				return nil
+			}
+			MerchantID = config.GetMerchantID()
+			if MerchantID == "" {
+				ui.Warning("⚠️  Merchant ID not set")
+				ui.Info("Set it with: payment-cli merchant create")
+				return nil
+			}
+			spinner := ui.NewSpinner("Fetching team members...")
+			spinner.Start()
+
+			merchantClient := client.NewMerchantClient()
+			teamMembers, err := merchantClient.ListTeamMembers(MerchantID)
+
+			spinner.Stop()
+
+			if err != nil {
+				ui.Error(fmt.Sprintf("❌ Failed: %v", err))
+				return err
+			}
+
+			if len(teamMembers) == 0 {
+				ui.Info("📭 No team members found")
+				return nil
+			}
+
+			for _, member := range teamMembers {
+				ui.Info(fmt.Sprintf("👤 ID: %s", member.UserID))
+				ui.Info(fmt.Sprintf("🏪 Role Name: %s", member.RoleName))
+				ui.Info(fmt.Sprintf("🔑 Status: %s", member.Status))
+				ui.Info(fmt.Sprintf("🕒 Joined At: %s", member.JoinedAt.Time))
+				ui.Info("------------------------------")
+			}
+
+			return nil
+		},
+	}
+
+	return cmd
+}
+
+func GetInviteCommands() *cobra.Command {
+	var MerchantID string
+	cmd := &cobra.Command{
+		Use:   "invitations",
+		Short: "List invitations",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if config.GetAccessToken() == "" {
+				ui.Warning("⚠️  Not logged in")
+				ui.Info("Run: payment-cli auth login")
+				return nil
+			}
+			MerchantID = config.GetMerchantID()
+			if MerchantID == "" {
+				ui.Warning("⚠️  Merchant ID not set")
+				ui.Info("Set it with: payment-cli merchant create")
+				return nil
+			}
+			spinner := ui.NewSpinner("Fetching invitations...")
+			spinner.Start()
+
+			merchantClient := client.NewMerchantClient()
+			invitations, err := merchantClient.ListInvitations(MerchantID)
+
+			spinner.Stop()
+
+			if err != nil {
+				ui.Error(fmt.Sprintf("❌ Failed: %v", err))
+				return err
+			}
+
+			if len(invitations) == 0 {
+				ui.Info("� No invitations found")
+				return nil
+			}
+
+			for _, inv := range invitations {
+				ui.Info(fmt.Sprintf("📧 Email: %s", inv.Email))
+				ui.Info(fmt.Sprintf("🏪 Role Name: %s", inv.RoleName))
+				ui.Info(fmt.Sprintf("🔑 Status: %s", inv.Status))
+				ui.Info(fmt.Sprintf("🕒 Expires At: %s", inv.ExpiresAt))
+				ui.Info(fmt.Sprintf("🔑 Token: %s", inv.InvitationToken))
+				ui.Info("------------------------------")
+			}
+			return nil
+		},
+	}
+	return cmd
+}
+
+func GetSettingCommands() *cobra.Command {
+	var MerchantID string
+	cmd := &cobra.Command{
+		Use:   "setting",
+		Short: "Manage merchant settings",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if config.GetAccessToken() == "" {
+				ui.Warning("⚠️  Not logged in")
+				ui.Info("Run: payment-cli auth login")
+				return nil
+			}
+			MerchantID = config.GetMerchantID()
+			if MerchantID == "" {
+				ui.Warning("⚠️  Merchant ID not set")
+				ui.Info("Set it with: payment-cli merchant create")
+				return nil
+			}
+			spinner := ui.NewSpinner("Fetching settings...")
+			spinner.Start()
+
+			merchantClient := client.NewMerchantClient()
+			settings, err := merchantClient.GetSettings(MerchantID)
+
+			spinner.Stop()
+
+			if err != nil {
+				ui.Error(fmt.Sprintf("❌ Failed: %v", err))
+				return err
+			}
+
+			ui.Info(fmt.Sprintf("💵 Default Currency: %s", settings.DefaultCurrency))
+			ui.Info(fmt.Sprintf("📝 Statement Descriptor: %s", settings.StatementDescriptor.String))
+			ui.Info(fmt.Sprintf("📧 Notification Email: %s", settings.NotificationEmail.String))
+			ui.Info(fmt.Sprintf("📨 Send Email Receipts: %v", settings.SendEmailReceipts))
+			ui.Info(fmt.Sprintf("💰 Auto Settle: %v", settings.AutoSettle))
+			ui.Info(fmt.Sprintf("📅 Settle Schedule: %s", settings.SettleSchedule))
+
+			return nil
+		},
+	}
 
 	return cmd
 }

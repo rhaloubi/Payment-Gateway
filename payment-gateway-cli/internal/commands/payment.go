@@ -23,3 +23,22 @@ func NewPaymentCommands() *cobra.Command {
 
 	return cmd
 }
+
+func NewAuthorizePaymentCommands() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "authorize",
+		Short: "Authorize a payment",
+	}
+
+	cmd.AddCommand(&cobra.Command{
+		Use:   "authorize",
+		Short: "Authorize a payment",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ui.Info("💳 Payment authorize command")
+			ui.Warning("⚠️  Coming soon!")
+			return nil
+		},
+	})
+
+	return cmd
+}

@@ -54,6 +54,55 @@ type Data struct {
 	PlainKey string `json:"plain_key"`
 }
 
+type TeamMember struct {
+	ID        string `json:"ID"`
+	UserID    string `json:"UserID"`
+	RoleName  string `json:"RoleName"`
+	Status    string `json:"Status"`
+	InvitedAt string `json:"InvitedAt"`
+	JoinedAt  struct {
+		Time  string `json:"Time"`
+		Valid bool   `json:"Valid"`
+	} `json:"JoinedAt"`
+}
+
+type Settings struct {
+	ID                  string `json:"ID"`
+	DefaultCurrency     string `json:"DefaultCurrency"`
+	StatementDescriptor struct {
+		String string `json:"String"`
+		Valid  bool   `json:"Valid"`
+	} `json:"StatementDescriptor"`
+	WebhookURL struct {
+		String string `json:"String"`
+		Valid  bool   `json:"Valid"`
+	} `json:"WebhookURL"`
+	WebhookSecret struct {
+		String string `json:"String"`
+		Valid  bool   `json:"Valid"`
+	} `json:"WebhookSecret"`
+	NotificationEmail struct {
+		String string `json:"String"`
+		Valid  bool   `json:"Valid"`
+	} `json:"NotificationEmail"`
+	SendEmailReceipts bool   `json:"SendEmailReceipts"`
+	AutoSettle        bool   `json:"AutoSettle"`
+	SettleSchedule    string `json:"SettleSchedule"`
+}
+
+type InvitationResponse struct {
+	ID              string `json:"ID"`
+	Email           string `json:"Email"`
+	RoleName        string `json:"RoleName"`
+	InvitationToken string `json:"InvitationToken"`
+	Status          string `json:"Status"`
+	ExpiresAt       string `json:"ExpiresAt"`
+	AcceptedAt      struct {
+		Time  string `json:"Time"`
+		Valid bool   `json:"Valid"`
+	} `json:"AcceptedAt"`
+}
+
 func (c *MerchantClient) Create(BusinessName, LegalName, email, BusinessType string) (*Merchant, error) {
 	payload := map[string]string{
 		"business_name": BusinessName,
@@ -213,4 +262,87 @@ func (c *MerchantClient) CreateAPIKey(merchantID, name string) (*Data, error) {
 		return nil, fmt.Errorf("failed to create api key")
 	}
 	return &result.Data, nil
+}
+
+func (c *MerchantClient) ListTeamMembers(merchantID string) ([]TeamMember, error) {
+	if config.GetAccessToken() == "" {
+		return nil, fmt.Errorf("access token not set")
+	}
+
+	resp, err := c.restClient.Get("/api/v1/merchants/"+merchantID+"/team", config.GetAccessToken())
+	if err != nil {
+		return nil, err
+	}
+
+	result := struct {
+		Success bool `json:"success"`
+		Data    struct {
+			TeamMembers []TeamMember `json:"team_members"`
+			Count       int          `json:"count"`
+		} `json:"data"`
+	}{}
+
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, fmt.Errorf("failed to parse team response: %w", err)
+	}
+
+	if !result.Success {
+		return nil, fmt.Errorf("failed to list team members")
+	}
+	return result.Data.TeamMembers, nil
+}
+
+func (c *MerchantClient) ListInvitations(merchantID string) ([]InvitationResponse, error) {
+	if config.GetAccessToken() == "" {
+		return nil, fmt.Errorf("access token not set")
+	}
+
+	resp, err := c.restClient.Get("/api/v1/merchants/"+merchantID+"/invitations", config.GetAccessToken())
+	if err != nil {
+		return nil, err
+	}
+
+	result := struct {
+		Success bool `json:"success"`
+		Data    struct {
+			Invitations []InvitationResponse `json:"invitations"`
+			Count       int                  `json:"count"`
+		} `json:"data"`
+	}{}
+
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, fmt.Errorf("failed to parse invitations response: %w", err)
+	}
+
+	if !result.Success {
+		return nil, fmt.Errorf("failed to list invitations")
+	}
+	return result.Data.Invitations, nil
+}
+
+func (c *MerchantClient) GetSettings(merchantID string) (*Settings, error) {
+	if config.GetAccessToken() == "" {
+		return nil, fmt.Errorf("access token not set")
+	}
+
+	resp, err := c.restClient.Get("/api/v1/merchants/"+merchantID+"/settings", config.GetAccessToken())
+	if err != nil {
+		return nil, err
+	}
+
+	result := struct {
+		Success bool `json:"success"`
+		Data    struct {
+			Settings Settings `json:"settings"`
+		} `json:"data"`
+	}{}
+
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, fmt.Errorf("failed to parse settings response: %w", err)
+	}
+
+	if !result.Success {
+		return nil, fmt.Errorf("failed to get settings")
+	}
+	return &result.Data.Settings, nil
 }

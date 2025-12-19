@@ -81,7 +81,7 @@ func DeactivateAPIKeyCommands() *cobra.Command {
 		Short: "Deactivate API key",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ui.Info("🔑 API key deactivate command")
-			ui.Warning("⚠️  Coming soon!")
+			ui.Warning("⚠️  Pleace go to the Payment Gateway Dashboard to deactivate the API key!")
 			return nil
 		},
 	})
@@ -91,8 +91,8 @@ func DeactivateAPIKeyCommands() *cobra.Command {
 
 func DeleteAPIKeyCommands() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "apikey",
-		Short: "🔑 API key management",
+		Use:   "delete",
+		Short: "🔑 Delete API key",
 	}
 
 	cmd.AddCommand(&cobra.Command{
@@ -100,7 +100,7 @@ func DeleteAPIKeyCommands() *cobra.Command {
 		Short: "Delete API key",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ui.Info("🔑 API key delete command")
-			ui.Warning("⚠️  Coming soon!")
+			ui.Warning("⚠️  Pleace go to the Payment Gateway Dashboard to delete the API key!")
 			return nil
 		},
 	})
