@@ -6,17 +6,28 @@ import (
 	"github.com/rhaloubi/payment-gateway-cli/internal/client"
 	"github.com/rhaloubi/payment-gateway-cli/internal/config"
 	"github.com/rhaloubi/payment-gateway-cli/internal/ui"
-	"github.com/rhaloubi/payment-gateway-cli/validation"
+	"github.com/rhaloubi/payment-gateway-cli/internal/validation"
 	"github.com/spf13/cobra"
 )
+
+type TransactionFilters struct {
+	Limit  *int
+	Offset *int
+	Status *string
+}
 
 func NewPaymentCommands() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "payment",
 		Short: "💳 Payment operations",
-		Long:  "Manage payments, including authorization and settlement",
+		Long:  "Manage payments, including authorization ",
 	}
 	cmd.AddCommand(NewAuthorizePaymentCommands())
+	cmd.AddCommand(NewCapturePaymentCommands())
+	cmd.AddCommand(NewVoidPaymentCommands())
+	cmd.AddCommand(NewRefundPaymentCommands())
+	cmd.AddCommand(NewTransactionCommands())
+
 	return cmd
 }
 
@@ -108,5 +119,106 @@ func NewAuthorizePaymentCommands() *cobra.Command {
 		},
 	}
 
+	return cmd
+}
+
+func NewCapturePaymentCommands() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "capture",
+		Short: "Capture a payment",
+		Long:  "Capture a payment using the payment gateway",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ui.Info("💳 Payment Capture")
+			ui.Warning("⚠️  Pleace go to the Payment Gateway Dashboard to capture the payment!")
+			return nil
+		},
+	}
+	return cmd
+}
+
+func NewVoidPaymentCommands() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "void",
+		Short: "Void a payment",
+		Long:  "Void a payment using the payment gateway",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ui.Info("💳 Payment Void")
+			ui.Warning("⚠️  Pleace go to the Payment Gateway Dashboard to void the payment!")
+			return nil
+		},
+	}
+	return cmd
+}
+
+func NewRefundPaymentCommands() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "refund",
+		Short: "Refund a payment",
+		Long:  "Refund a payment using the payment gateway",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ui.Info("💳 Payment Refund")
+			ui.Warning("⚠️  Pleace go to the Payment Gateway Dashboard to refund the payment!")
+			return nil
+		},
+	}
+	return cmd
+}
+
+func NewTransactionCommands() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "transactions",
+		Short: "List transactions",
+		Long:  "List transactions using the payment gateway",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c := validation.NewCardValidator()
+
+			ApiKey := config.GetApiKey()
+			if ApiKey == "" {
+				ui.Warning("⚠️  API key not set")
+				ui.Info("Set it with: payment-cli apikey create")
+				return nil
+			}
+			filters := TransactionFilters{}
+
+			limit, err := c.PromptOptionalLimit()
+			if err != nil {
+				return err
+			}
+			filters.Limit = limit
+			offset, err := c.PromptOptionalOffset()
+			if err != nil {
+				return err
+			}
+			filters.Offset = offset
+			status, err := c.PromptOptionalStatus()
+			if err != nil {
+				return err
+			}
+			filters.Status = status
+
+			paymentClient := client.NewPaymentClient()
+			transactions, err := paymentClient.ListTransactions(
+				ApiKey,
+				&validation.TransactionFilters{
+					Limit:  filters.Limit,
+					Offset: filters.Offset,
+					Status: filters.Status,
+				},
+			)
+			if err != nil {
+				return err
+			}
+			for _, transaction := range transactions {
+				ui.Info(fmt.Sprintf("Transaction ID: %s", transaction.ID))
+				ui.Info(fmt.Sprintf("Status: %s", transaction.Status))
+				ui.Info(fmt.Sprintf("Amount: %d %s", transaction.Amount/100, transaction.Currency))
+				ui.Info(fmt.Sprintf("Card Brand: %s", transaction.CardBrand))
+				ui.Info(fmt.Sprintf("Card Last 4: •••• %s", transaction.CardLast4))
+
+				ui.Info("-----------------------")
+			}
+			return nil
+		},
+	}
 	return cmd
 }

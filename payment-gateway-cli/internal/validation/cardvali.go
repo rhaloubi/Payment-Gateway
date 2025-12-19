@@ -35,6 +35,12 @@ type Customer struct {
 	Email string `json:"email"`
 }
 
+type TransactionFilters struct {
+	Limit  *int
+	Offset *int
+	Status *string
+}
+
 func (*CardValidator) PromptAmount() (int64, error) {
 	prompt := promptui.Prompt{
 		Label: "Amount (in cents)",
@@ -168,44 +174,91 @@ func (*CardValidator) PromptEmail() (string, error) {
 
 	return prompt.Run()
 }
+func (*CardValidator) PromptOptionalLimit() (*int, error) {
+	prompt := promptui.Prompt{
+		Label: "Limit (press enter for default)",
+		Validate: func(input string) error {
+			if input == "" {
+				return nil
+			}
+			val, err := strconv.Atoi(input)
+			if err != nil || val < 1 || val > 10 {
+				return errors.New("enter a number between 1 and 10")
+			}
+			return nil
+		},
+	}
 
-/*
-func (c *CardValidator) runAuthorizePayment(cmd *cobra.Command, args []string) error {
-	ui.Info("💳 Payment Authorization")
-	ui.Info("-----------------------")
-
-	amount, err := c.promptAmount()
+	result, err := prompt.Run()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	currency, _ := c.promptCurrency()
-	cardNumber, _ := c.promptCardNumber()
-	cardholder, _ := c.promptCardholderName()
-	expMonth, _ := c.promptExpMonth()
-	expYear, _ := c.promptExpYear()
-	cvv, _ := c.promptCVV()
-	email, _ := c.promptEmail()
-
-	req := AuthorizeRequest{
-		Amount:   amount,
-		Currency: currency,
-		Card: Card{
-			Number:         cardNumber,
-			CardholderName: cardholder,
-			ExpMonth:       expMonth,
-			ExpYear:        expYear,
-			CVV:            cvv,
-		},
-		Customer: Customer{
-			Email: email,
-		},
+	if result == "" {
+		return nil, nil
 	}
 
-	ui.Success("🧾 Payment details collected successfully")
-	ui.Info(fmt.Sprintf("Card: •••• %s", cardNumber[len(cardNumber)-4:]))
-
-	// NEXT STEP: send req to simulator
-	return nil
+	val, _ := strconv.Atoi(result)
+	return &val, nil
 }
-*/
+func (*CardValidator) PromptOptionalOffset() (*int, error) {
+	prompt := promptui.Prompt{
+		Label: "Offset (press enter for default)",
+		Validate: func(input string) error {
+			if input == "" {
+				return nil
+			}
+			val, err := strconv.Atoi(input)
+			if err != nil || val < 0 {
+				return errors.New("offset must be 0 or greater")
+			}
+			return nil
+		},
+	}
+
+	result, err := prompt.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	if result == "" {
+		return nil, nil
+	}
+
+	val, _ := strconv.Atoi(result)
+	return &val, nil
+}
+func (*CardValidator) PromptOptionalStatus() (*string, error) {
+	items := []string{
+		"All (default)",
+		"Authorized",
+		"Voided",
+		"Captured",
+		"Refunded",
+	}
+
+	selectPrompt := promptui.Select{
+		Label: "Filter by status",
+		Items: items,
+	}
+
+	index, _, err := selectPrompt.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	if index == 0 {
+		return nil, nil
+	}
+
+	statuses := []string{
+		"",
+		"authorized",
+		"voided",
+		"captured",
+		"refunded",
+	}
+
+	status := statuses[index]
+	return &status, nil
+}
