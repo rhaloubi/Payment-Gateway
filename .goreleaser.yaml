@@ -39,7 +39,8 @@ changelog:
 release:
   github:
     owner: rhaloubi
-    name: payment-gateway-cli
+    name: Payment-Gateway
+
   # optional footer in release notes
   footer: |
     ---
