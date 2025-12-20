@@ -52,6 +52,8 @@ brews:
     commit_author:
       name: "Reda Haloubi"
       email: "redahaloubi8@gmail.com"
+    install: |
+      bin.install "payment-cli"
 
 
 
