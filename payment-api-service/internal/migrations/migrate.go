@@ -35,6 +35,7 @@ func RunMerchantMigrations() error {
 		&model.Payment{},
 		&model.PaymentEvent{},
 		&model.WebhookDelivery{},
+		&model.PaymentIntent{}, // NEW
 	}
 
 	for _, m := range models {
@@ -42,6 +43,13 @@ func RunMerchantMigrations() error {
 			logger.Log.Error("failed to migrate %T:", zap.Error(err))
 		}
 	}
+
+	// Create indexes for payment intents
+	db.Exec("CREATE INDEX IF NOT EXISTS idx_payment_intents_merchant_id ON payment_intents(merchant_id);")
+	db.Exec("CREATE INDEX IF NOT EXISTS idx_payment_intents_status ON payment_intents(status);")
+	db.Exec("CREATE INDEX IF NOT EXISTS idx_payment_intents_expires_at ON payment_intents(expires_at);")
+	db.Exec("CREATE INDEX IF NOT EXISTS idx_payment_intents_order_id ON payment_intents(order_id);")
+	db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_intents_client_secret ON payment_intents(client_secret);")
 
 	return nil
 }

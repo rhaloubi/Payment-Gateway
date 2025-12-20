@@ -132,6 +132,20 @@ func Setup(cfg *config.Config) *gin.Engine {
 			transactions.GET("", handler.ProxyRequest(cfg, "payment", circuitBreaker))
 			transactions.GET("/:id", handler.ProxyRequest(cfg, "payment", circuitBreaker))
 		}
+		paymentIntents := api.Group("/payment-intents")
+		{
+			paymentIntents.POST("", handler.ProxyRequest(cfg, "payment", circuitBreaker))
+			paymentIntents.POST("/:id/cancel", handler.ProxyRequest(cfg, "payment", circuitBreaker))
+		}
+
+	}
+	public := r.Group("/api/public")
+	{
+		intents := public.Group("/payment-intents")
+		{
+			intents.GET("/:id", handler.ProxyRequest(cfg, "payment", circuitBreaker))
+			intents.GET("/:id/confirm", handler.ProxyRequest(cfg, "payment", circuitBreaker))
+		}
 	}
 
 	return r
