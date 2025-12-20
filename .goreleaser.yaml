@@ -49,13 +49,9 @@ brews:
   - name: payment-cli
     description: "CLI for interacting with the payment gateway"
     homepage: "https://github.com/rhaloubi/Payment-Gateway"
-    repository:
-      owner: "rhaloubi"
-      name: "Payment-Gateway"
     commit_author:
       name: "Reda Haloubi"
       email: "redahaloubi8@gmail.com"
-
 
 
 
