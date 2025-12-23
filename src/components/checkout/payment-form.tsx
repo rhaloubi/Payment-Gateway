@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
@@ -15,8 +15,25 @@ import {
   formatExpiryDate,
   parseExpiryDate,
 } from "~/lib/utils/card-validation";
-import { CreditCard, Lock, AlertCircle } from "lucide-react";
+import { CreditCard, Lock, AlertCircle, Loader2 } from "lucide-react";
 import type { CardData, CardFormData } from "~/types";
+
+export const VisaIcon = () => (
+  <img src="/images/visa.svg" alt="Visa" className="w-5 h-5" />
+);
+
+export const MastercardIcon = () => (
+  <img src="/images/mastercard.svg" alt="Mastercard" className="w-5 h-5" />
+);
+
+const CardDetection = ({ cardNumber }: { cardNumber: string }) => {
+  const brand = detectCardBrand(cardNumber);
+  
+  if (brand === 'visa') return <VisaIcon />;
+  if (brand === 'mastercard') return <MastercardIcon />;
+  
+  return <CreditCard className="h-6 w-6 text-muted-foreground" />;
+};
 
 interface PaymentFormProps {
   onSubmit: (cardData: CardData) => Promise<void>;
@@ -142,127 +159,116 @@ export function PaymentForm({ onSubmit, isSubmitting, error }: PaymentFormProps)
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5" />
-          Payment Details
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Error Alert */}
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="destructive" className="animate-in slide-in-from-top-2 fade-in duration-300">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-          {/* Card Number */}
+      {/* Payment Information */}
+      <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-xl">Payment Information</CardTitle>
+          <CardDescription>Your payment details are secure and encrypted</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="cardNumber">Card Number</Label>
-            <Input
-              id="cardNumber"
-              name="cardNumber"
-              type="text"
-              inputMode="numeric"
-              placeholder="1234 5678 9012 3456"
-              value={formData.cardNumber}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              disabled={isSubmitting}
-              maxLength={19}
-              className={touched.cardNumber && errors.cardNumber ? "border-red-500" : ""}
-            />
+            <div className="relative">
+              <Input
+                id="cardNumber"
+                name="cardNumber"
+                placeholder="1234 5678 9012 3456"
+                value={formData.cardNumber}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                required
+                className={`bg-background/50 border-border/60 font-mono text-base tracking-wide pr-12 ${touched.cardNumber && errors.cardNumber ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <CardDetection cardNumber={formData.cardNumber} />
+              </div>
+            </div>
             {touched.cardNumber && errors.cardNumber && (
-              <p className="text-sm text-red-500">{errors.cardNumber}</p>
+              <p className="text-sm text-red-500 animate-in slide-in-from-left-1 fade-in">{errors.cardNumber}</p>
             )}
           </div>
 
-          {/* Cardholder Name */}
           <div className="space-y-2">
             <Label htmlFor="cardholderName">Cardholder Name</Label>
-            <Input
-              id="cardholderName"
-              name="cardholderName"
-              type="text"
-              placeholder="JOHN DOE"
-              value={formData.cardholderName}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              disabled={isSubmitting}
-              className={touched.cardholderName && errors.cardholderName ? "border-red-500" : ""}
-            />
-            {touched.cardholderName && errors.cardholderName && (
-              <p className="text-sm text-red-500">{errors.cardholderName}</p>
-            )}
+             <Input
+                id="cardholderName"
+                name="cardholderName"
+                placeholder="JOHN DOE"
+                value={formData.cardholderName}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                required
+                className={`bg-background/50 border-border/60 font-mono text-base ${touched.cardholderName && errors.cardholderName ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+              />
+               {touched.cardholderName && errors.cardholderName && (
+                  <p className="text-sm text-red-500 animate-in slide-in-from-left-1 fade-in">{errors.cardholderName}</p>
+               )}
           </div>
 
-          {/* Expiry & CVV */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="expiryDate">Expiry Date</Label>
+              <Label htmlFor="expiry">Expiry Date</Label>
               <Input
-                id="expiryDate"
+                id="expiry"
                 name="expiryDate"
-                type="text"
-                inputMode="numeric"
                 placeholder="MM/YY"
                 value={formData.expiryDate}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                disabled={isSubmitting}
-                maxLength={5}
-                className={touched.expiryDate && errors.expiryDate ? "border-red-500" : ""}
+                required
+                className={`bg-background/50 border-border/60 font-mono text-base ${touched.expiryDate && errors.expiryDate ? "border-red-500 focus-visible:ring-red-500" : ""}`}
               />
               {touched.expiryDate && errors.expiryDate && (
-                <p className="text-sm text-red-500">{errors.expiryDate}</p>
+                <p className="text-sm text-red-500 animate-in slide-in-from-left-1 fade-in">{errors.expiryDate}</p>
               )}
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="cvv">CVV</Label>
+              <Label htmlFor="cvc">CVC</Label>
               <Input
-                id="cvv"
+                id="cvc"
                 name="cvv"
-                type="text"
-                inputMode="numeric"
                 placeholder={cardBrand === "amex" ? "1234" : "123"}
                 value={formData.cvv}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                disabled={isSubmitting}
-                maxLength={cardBrand === "amex" ? 4 : 3}
-                className={touched.cvv && errors.cvv ? "border-red-500" : ""}
+                required
+                className={`bg-background/50 border-border/60 font-mono text-base ${touched.cvv && errors.cvv ? "border-red-500 focus-visible:ring-red-500" : ""}`}
               />
               {touched.cvv && errors.cvv && (
-                <p className="text-sm text-red-500">{errors.cvv}</p>
+                <p className="text-sm text-red-500 animate-in slide-in-from-left-1 fade-in">{errors.cvv}</p>
               )}
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Submit Button */}
-          <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+      <Button 
+            type="submit" 
+            className="w-full relative overflow-hidden transition-all duration-300" 
+            size="lg" 
+            disabled={isSubmitting}
+          >
             {isSubmitting ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                Processing...
-              </>
+              <div className="flex items-center justify-center gap-2 animate-in fade-in duration-300">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                <span>Processing Payment...</span>
+              </div>
             ) : (
-              <>
-                <Lock className="h-4 w-4 mr-2" />
-                Pay Now
-              </>
+              <div className="flex items-center justify-center gap-2 animate-in fade-in duration-300">
+                <Lock className="h-4 w-4" />
+                <span>Pay Now</span>
+              </div>
             )}
           </Button>
-
-          {/* Security Notice */}
-          <p className="text-xs text-center text-muted-foreground">
-            Your payment information is encrypted and secure
-          </p>
-        </form>
-      </CardContent>
-    </Card>
+    </form>
   );
 }

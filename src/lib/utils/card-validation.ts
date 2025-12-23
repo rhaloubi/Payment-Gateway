@@ -6,6 +6,12 @@ import type { CardBrand } from "~/types";
 export function validateCardNumber(cardNumber: string): boolean {
   const digits = cardNumber.replace(/\D/g, "");
   
+  // Check for Visa (starts with 4) or Mastercard (starts with 51-55)
+  // We strictly allow only these two brands
+  if (!/^4/.test(digits) && !/^5[1-5]/.test(digits)) {
+    return false;
+  }
+
   if (digits.length < 13 || digits.length > 19) {
     return false;
   }
@@ -38,9 +44,6 @@ export function detectCardBrand(cardNumber: string): CardBrand {
 
   if (/^4/.test(digits)) return "visa";
   if (/^5[1-5]/.test(digits)) return "mastercard";
-  if (/^3[47]/.test(digits)) return "amex";
-  if (/^6(?:011|5)/.test(digits)) return "discover";
-
   return "unknown";
 }
 

@@ -1,16 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PaymentForm } from "~/components/checkout/payment-form";
 import { PaymentSummary } from "~/components/checkout/payment-summary";
 import { LoadingSpinner } from "~/components/checkout/loading-spinner";
+import { PaymentSuccess } from "~/components/checkout/payment-success";
+import { PaymentCancel } from "~/components/checkout/payment-cancel";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { getPaymentIntent, confirmPaymentIntent, isValidClientSecret } from "~/lib/api/payment-intent";
 import type { PaymentIntent, CardData } from "~/types";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
-export default function CheckoutPage({ params }: { params: { id: string } }) {
+export default function CheckoutPage({ params }: { params: Promise<{ id: string }> }) {
+  // Await params in Next.js 15+
+  const { id: intentId } = use(params);
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const clientSecret = searchParams.get("client_secret");
@@ -19,6 +24,8 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [showCancelAnimation, setShowCancelAnimation] = useState(false);
 
   // Load payment intent
   useEffect(() => {
@@ -32,7 +39,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
         }
 
         // Fetch payment intent
-        const response = await getPaymentIntent(params.id);
+        const response = await getPaymentIntent(intentId);
 
         if (!response.success || !response.data) {
           throw new Error(response.error || "Failed to load payment details");
@@ -50,7 +57,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
         if (intentData.status !== "awaiting_payment_method") {
           setError(`Payment already ${intentData.status}. Redirecting...`);
           setTimeout(() => {
-            router.push(`/success?payment_intent=${params.id}`);
+            router.push(`/success?payment_intent=${intentId}`);
           }, 2000);
           return;
         }
@@ -65,7 +72,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
     }
 
     loadIntent();
-  }, [params.id, clientSecret, router]);
+  }, [intentId, clientSecret, router]);
 
   // Handle payment submission
   const handlePayment = async (cardData: CardData) => {
@@ -76,20 +83,20 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
 
     try {
       const response = await confirmPaymentIntent(
-        params.id,
+        intentId,
         clientSecret,
         cardData
       );
 
       if (!response.success || !response.data) {
-        throw new Error(response.error || "Payment failed");
+        throw new Error(response.error || `Payment failed`);
       }
 
       const payment = response.data;
 
       if (payment.status === "authorized" || payment.status === "captured") {
-        // Success - redirect
-        router.push(`/success?payment_intent=${params.id}`);
+        // Success - Show animation
+        setShowSuccessAnimation(true);
       } else {
         throw new Error("Payment was declined");
       }
@@ -97,13 +104,28 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
       console.error("Payment failed:", err);
       setError(err instanceof Error ? err.message : "Payment failed. Please try again.");
       setSubmitting(false);
+      // Optional: Show cancel/fail animation on specific errors if desired, 
+      // but usually we just show the error message.
+      // If the user explicitly wants "cancel animation", maybe we show it here?
+      // I'll leave it as error message for now, unless "cancel" means something else.
+      // But if the user clicks a "Cancel" button (if we had one), we'd show it.
+      // Since there is no "Cancel" button, maybe on error?
+      // I'll show it if the error is "Payment was declined" or similar.
+      if (err instanceof Error && err.message === "Payment was declined") {
+         setShowCancelAnimation(true);
+      }
     }
+  };
+
+  const handleRetry = () => {
+    setShowCancelAnimation(false);
+    setSubmitting(false);
   };
 
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-12">
+      <div className="min-h-screen bg-background py-12">
         <div className="container max-w-xl mx-auto px-4">
           <LoadingSpinner />
         </div>
@@ -114,7 +136,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   // Error state
   if (error && !intent) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-12">
+      <div className="min-h-screen bg-background py-12">
         <div className="container max-w-xl mx-auto px-4">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -129,7 +151,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   // Already processed
   if (intent && intent.status !== "awaiting_payment_method") {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-12">
+      <div className="min-h-screen bg-background py-12">
         <div className="container max-w-xl mx-auto px-4">
           <Alert variant="default">
             <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -145,40 +167,47 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
 
   // Checkout form
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 py-12">
-      <div className="container max-w-xl mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Secure Checkout</h1>
+    <div className="min-h-screen bg-background py-12 font-sans">
+      {showSuccessAnimation && <PaymentSuccess paymentIntentId={intentId} />}
+      {showCancelAnimation && <PaymentCancel onRetry={handleRetry} />}
+      
+      <div className="container mx-auto px-4 lg:px-8 max-w-6xl">
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-bold mb-2 tracking-tight">Secure Checkout</h1>
           <p className="text-muted-foreground">
             Complete your payment securely
           </p>
         </div>
 
-        {/* Payment Summary */}
-        {intent && (
-          <PaymentSummary
-            amount={intent.amount}
-            currency={intent.currency}
-            merchantName={process.env.NEXT_PUBLIC_MERCHANT_NAME}
-          />
-        )}
+        <div className="grid gap-8 lg:grid-cols-12 items-start">
+          {/* Main Form Area */}
+          <div className="lg:col-span-7 space-y-8">
+            <PaymentForm
+              onSubmit={handlePayment}
+              isSubmitting={submitting}
+              error={error}
+            />
+            
+            <div className="text-center text-sm text-muted-foreground">
+              <p>
+                By completing this payment, you agree to our{" "}
+                <a href="#" className="underline hover:text-primary transition-colors">
+                  Terms of Service
+                </a>
+              </p>
+            </div>
+          </div>
 
-        {/* Payment Form */}
-        <PaymentForm
-          onSubmit={handlePayment}
-          isSubmitting={submitting}
-          error={error}
-        />
-
-        {/* Footer */}
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          <p>
-            By completing this payment, you agree to our{" "}
-            <a href="#" className="underline">
-              Terms of Service
-            </a>
-          </p>
+          {/* Sidebar Summary */}
+          <div className="lg:col-span-5">
+             {intent && (
+              <PaymentSummary
+                amount={intent.amount}
+                currency={intent.currency}
+                
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
