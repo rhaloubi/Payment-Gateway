@@ -187,7 +187,30 @@ func (h *PaymentIntentHandler) ConfirmPaymentIntent(c *gin.Context) {
 	}
 
 	response, err := h.intentService.ConfirmPaymentIntent(c.Request.Context(), serviceReq)
+
 	if err != nil {
+		// Check if it's a PaymentIntentError
+		if piErr, ok := err.(*service.PaymentIntentError); ok {
+			statusCode := getStatusCodeFromError(piErr.Code)
+
+			errorResponse := gin.H{
+				"success": false,
+				"error": gin.H{
+					"code":    piErr.Code,
+					"message": piErr.Message,
+				},
+			}
+
+			// Add remaining tries if available
+			if piErr.RemainingTries > 0 {
+				errorResponse["error"].(gin.H)["remaining_attempts"] = piErr.RemainingTries
+			}
+
+			c.JSON(statusCode, errorResponse)
+			return
+		}
+
+		// Generic error
 		logger.Log.Error("Failed to confirm payment intent",
 			zap.Error(err),
 			zap.String("intent_id", intentID),
@@ -235,4 +258,17 @@ func (h *PaymentIntentHandler) CancelPaymentIntent(c *gin.Context) {
 		"success": true,
 		"message": "payment intent canceled",
 	})
+}
+
+func getStatusCodeFromError(errorCode string) int {
+	switch errorCode {
+	case "INVALID_CLIENT_SECRET", "INVALID_INTENT_ID":
+		return http.StatusUnauthorized
+	case "INTENT_EXPIRED", "MAX_ATTEMPTS_REACHED":
+		return http.StatusGone
+	case "PAYMENT_FAILED", "PAYMENT_DECLINED":
+		return http.StatusPaymentRequired
+	default:
+		return http.StatusBadRequest
+	}
 }

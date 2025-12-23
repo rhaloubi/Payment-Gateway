@@ -70,6 +70,15 @@ type ConfirmPaymentIntentRequest struct {
 	IPAddress       string
 	UserAgent       string
 }
+type PaymentIntentError struct {
+	Code           string
+	Message        string
+	RemainingTries int
+}
+
+func (e *PaymentIntentError) Error() string {
+	return e.Message
+}
 
 // =========================================================================
 // Create Payment Intent
@@ -104,7 +113,7 @@ func (s *PaymentIntentService) CreatePaymentIntent(ctx context.Context, req *Cre
 		return nil, fmt.Errorf("failed to generate client secret: %w", err)
 	}
 
-	// Create payment intent
+	// Create payment intent with 1-hour expiration
 	intent := &model.PaymentIntent{
 		MerchantID:    req.MerchantID,
 		Amount:        req.Amount,
@@ -114,7 +123,9 @@ func (s *PaymentIntentService) CreatePaymentIntent(ctx context.Context, req *Cre
 		SuccessURL:    req.SuccessURL,
 		CancelURL:     req.CancelURL,
 		ClientSecret:  clientSecret,
-		ExpiresAt:     time.Now().Add(24 * time.Hour), // 24 hour expiration
+		MaxAttempts:   7,
+		AttemptCount:  0,
+		ExpiresAt:     time.Now().Add(1 * time.Hour), // 1 HOUR EXPIRATION
 	}
 
 	if req.OrderID != "" {
@@ -133,6 +144,7 @@ func (s *PaymentIntentService) CreatePaymentIntent(ctx context.Context, req *Cre
 
 	logger.Log.Info("Payment intent created",
 		zap.String("intent_id", intent.ID.String()),
+		zap.Time("expires_at", intent.ExpiresAt),
 	)
 
 	return &PaymentIntentResponse{
@@ -186,32 +198,82 @@ func (s *PaymentIntentService) ConfirmPaymentIntent(ctx context.Context, req *Co
 	// Parse intent ID
 	intentID, err := uuid.Parse(req.PaymentIntentID)
 	if err != nil {
-		return nil, errors.New("invalid payment_intent_id")
+		return nil, &PaymentIntentError{
+			Code:    "INVALID_INTENT_ID",
+			Message: "Invalid payment intent ID",
+		}
 	}
 
 	// Verify client secret
 	intent, err := s.intentRepo.FindByClientSecret(req.ClientSecret)
 	if err != nil || intent.ID != intentID {
-		return nil, errors.New("invalid client_secret")
+		return nil, &PaymentIntentError{
+			Code:    "INVALID_CLIENT_SECRET",
+			Message: "Invalid client secret",
+		}
+	}
+
+	// ===================================================================
+	// VALIDATION CHECKS
+	// ===================================================================
+
+	// Check if expired
+	if intent.IsExpired() {
+		s.intentRepo.UpdateStatus(intentID, model.PaymentIntentStatusExpired)
+		return nil, &PaymentIntentError{
+			Code:    "INTENT_EXPIRED",
+			Message: fmt.Sprintf("Payment intent expired at %s. Please create a new payment.", intent.ExpiresAt.Format("15:04:05")),
+		}
+	}
+
+	// Check if max attempts reached
+	if intent.AttemptCount >= intent.MaxAttempts {
+		s.intentRepo.UpdateStatus(intentID, model.PaymentIntentStatusFailed)
+		return nil, &PaymentIntentError{
+			Code:    "MAX_ATTEMPTS_REACHED",
+			Message: fmt.Sprintf("Maximum payment attempts (%d) reached. Please create a new payment intent.", intent.MaxAttempts),
+		}
 	}
 
 	// Check if can confirm
 	if !intent.CanConfirm() {
-		return nil, fmt.Errorf("payment intent cannot be confirmed (status: %s)", intent.Status)
+		return nil, &PaymentIntentError{
+			Code:           "CANNOT_CONFIRM",
+			Message:        fmt.Sprintf("Payment intent cannot be confirmed (status: %s)", intent.Status),
+			RemainingTries: intent.GetRemainingAttempts(),
+		}
 	}
 
-	// Build authorize request using intent's amount/currency
+	// ===================================================================
+	// INCREMENT ATTEMPT COUNTER
+	// ===================================================================
+	if err = s.intentRepo.IncrementAttemptCount(intentID); err != nil {
+		logger.Log.Error("Failed to increment attempt count", zap.Error(err))
+	}
+
+	// Refresh intent to get updated attempt count
+	intent, _ = s.intentRepo.FindByID(intentID)
+
+	logger.Log.Info("Processing payment attempt",
+		zap.String("intent_id", intentID.String()),
+		zap.Int("attempt", intent.AttemptCount),
+		zap.Int("remaining", intent.GetRemainingAttempts()),
+	)
+
+	// ===================================================================
+	// BUILD PAYMENT REQUEST
+	// ===================================================================
 	authReq := &AuthorizePaymentRequest{
 		MerchantID:     intent.MerchantID,
-		Amount:         intent.Amount,      // FROM INTENT (server-set)
-		Currency:       intent.Currency,    // FROM INTENT (server-set)
-		CardNumber:     req.CardNumber,     // FROM BROWSER
-		CardholderName: req.CardholderName, // FROM BROWSER
-		ExpMonth:       req.ExpMonth,       // FROM BROWSER
-		ExpYear:        req.ExpYear,        // FROM BROWSER
-		CVV:            req.CVV,            // FROM BROWSER
-		CustomerEmail:  req.CustomerEmail,  // FROM BROWSER
-		IdempotencyKey: req.IdempotencyKey, // FROM BROWSER
+		Amount:         intent.Amount,
+		Currency:       intent.Currency,
+		CardNumber:     req.CardNumber,
+		CardholderName: req.CardholderName,
+		ExpMonth:       req.ExpMonth,
+		ExpYear:        req.ExpYear,
+		CVV:            req.CVV,
+		CustomerEmail:  req.CustomerEmail,
+		IdempotencyKey: req.IdempotencyKey,
 		IPAddress:      req.IPAddress,
 		UserAgent:      req.UserAgent,
 	}
@@ -228,45 +290,77 @@ func (s *PaymentIntentService) ConfirmPaymentIntent(ctx context.Context, req *Co
 		authReq.Description = intent.Description.String
 	}
 
-	// Process payment authorization
+	// ===================================================================
+	// PROCESS PAYMENT
+	// ===================================================================
 	var paymentResp *PaymentResponse
 	if intent.CaptureMethod == model.CaptureMethodAutomatic {
-		// Sale (authorize + capture)
 		paymentResp, err = s.paymentService.SalePayment(ctx, authReq)
 	} else {
-		// Authorize only
 		paymentResp, err = s.paymentService.AuthorizePayment(ctx, authReq)
 	}
 
+	// ===================================================================
+	// HANDLE PAYMENT RESULT
+	// ===================================================================
 	if err != nil {
-		// Mark intent as failed
-		intent.Status = model.PaymentIntentStatusFailed
-		s.intentRepo.Update(intent)
-
-		logger.Log.Error("Payment authorization failed",
+		logger.Log.Warn("Payment authorization failed",
 			zap.Error(err),
 			zap.String("intent_id", intentID.String()),
+			zap.Int("attempt", intent.AttemptCount),
+			zap.Int("remaining", intent.GetRemainingAttempts()),
 		)
-		return nil, fmt.Errorf("payment failed: %w", err)
+
+		// Check if this was the last attempt
+		if intent.GetRemainingAttempts() == 0 {
+			s.intentRepo.UpdateStatus(intentID, model.PaymentIntentStatusFailed)
+			return nil, &PaymentIntentError{
+				Code:           "MAX_ATTEMPTS_REACHED",
+				Message:        "Payment failed. Maximum attempts reached. Please create a new payment intent.",
+				RemainingTries: 0,
+			}
+		}
+
+		// Return error with remaining attempts
+		return nil, &PaymentIntentError{
+			Code:           "PAYMENT_FAILED",
+			Message:        fmt.Sprintf("Payment failed: %s", err.Error()),
+			RemainingTries: intent.GetRemainingAttempts(),
+		}
 	}
+
+	// ===================================================================
+	// PAYMENT SUCCESSFUL
+	// ===================================================================
 	logger.Log.Info("Payment authorization successful",
 		zap.String("intent_id", intentID.String()),
 		zap.String("payment_id", paymentResp.ID.String()),
 		zap.String("status", string(paymentResp.Status)),
 	)
-	// Update intent with payment reference
+
+	// Update intent status based on payment result
 	if paymentResp.Status == model.PaymentStatusAuthorized ||
 		paymentResp.Status == model.PaymentStatusCaptured {
+
+		// Mark as confirmed and reset attempts
 		s.intentRepo.MarkConfirmed(intentID, paymentResp.ID)
+		s.intentRepo.ResetAttempts(intentID)
 
 		logger.Log.Info("Payment intent confirmed",
 			zap.String("intent_id", intentID.String()),
 			zap.String("payment_id", paymentResp.ID.String()),
 		)
 	} else {
-		// Mark as failed
-		intent.Status = model.PaymentIntentStatusFailed
-		s.intentRepo.Update(intent)
+		// Payment was processed but not successful (declined by bank)
+		if intent.GetRemainingAttempts() == 0 {
+			s.intentRepo.UpdateStatus(intentID, model.PaymentIntentStatusFailed)
+		}
+
+		return nil, &PaymentIntentError{
+			Code:           "PAYMENT_DECLINED",
+			Message:        paymentResp.ResponseMsg,
+			RemainingTries: intent.GetRemainingAttempts(),
+		}
 	}
 
 	return paymentResp, nil

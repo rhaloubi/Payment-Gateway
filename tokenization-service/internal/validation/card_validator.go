@@ -71,6 +71,30 @@ func (cv *CardValidator) ValidateCard(req CardValidationRequest) error {
 	return nil
 }
 
+// isValidLuhn checks if a card number is valid using the Luhn algorithm
+func (cv *CardValidator) isValidLuhn(cardNumber string) bool {
+	sum := 0
+	isSecond := false
+
+	// Process digits from right to left
+	for i := len(cardNumber) - 1; i >= 0; i-- {
+		digit := int(cardNumber[i] - '0')
+
+		if isSecond {
+			digit *= 2
+			if digit > 9 {
+				digit -= 9
+			}
+		}
+
+		sum += digit
+		isSecond = !isSecond
+	}
+
+	// Valid if sum is divisible by 10
+	return sum%10 == 0
+}
+
 func (cv *CardValidator) ValidateCardNumber(cardNumber string) error {
 	sanitized := cv.SanitizeCardNumber(cardNumber)
 
@@ -80,6 +104,11 @@ func (cv *CardValidator) ValidateCardNumber(cardNumber string) error {
 
 	if len(sanitized) < 13 || len(sanitized) > 19 {
 		return errors.New("card number must be between 13 and 19 digits")
+	}
+
+	// Validate using Luhn algorithm
+	if !cv.isValidLuhn(sanitized) {
+		return errors.New("invalid card number (Luhn check failed)")
 	}
 
 	cardBrand := cv.DetectCardBrand(sanitized)

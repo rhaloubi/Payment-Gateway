@@ -177,3 +177,31 @@ func (r *PaymentIntentRepository) CountByMerchant(merchantID uuid.UUID) (int64, 
 	}
 	return count, nil
 }
+
+// IncrementAttemptCount increments the attempt counter
+func (r *PaymentIntentRepository) IncrementAttemptCount(id uuid.UUID) error {
+	now := time.Now()
+	if err := r.db.Model(&model.PaymentIntent{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"attempt_count":   gorm.Expr("attempt_count + 1"),
+			"last_attempt_at": now,
+			"updated_at":      now,
+		}).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+// ResetAttempts resets the attempt counter (for successful payment)
+func (r *PaymentIntentRepository) ResetAttempts(id uuid.UUID) error {
+	if err := r.db.Model(&model.PaymentIntent{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"attempt_count": 0,
+			"updated_at":    time.Now(),
+		}).Error; err != nil {
+		return err
+	}
+	return nil
+}

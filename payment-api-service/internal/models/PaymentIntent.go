@@ -59,6 +59,11 @@ type PaymentIntent struct {
 	// Security
 	ClientSecret string `gorm:"type:varchar(255);uniqueIndex" json:"client_secret"` // For checkout UI auth
 
+	AttemptCount  int          `gorm:"default:0" json:"attempt_count"`
+	MaxAttempts   int          `gorm:"default:7" json:"max_attempts"`
+	LastAttemptAt sql.NullTime `json:"last_attempt_at,omitempty"`
+	BlockedUntil  sql.NullTime `json:"blocked_until,omitempty"`
+
 	// Expiration
 	ExpiresAt time.Time `gorm:"not null;index" json:"expires_at"`
 
@@ -77,16 +82,32 @@ func (PaymentIntent) TableName() string {
 func (pi *PaymentIntent) IsExpired() bool {
 	return time.Now().After(pi.ExpiresAt)
 }
-
-// CanConfirm checks if the payment intent can be confirmed
-func (pi *PaymentIntent) CanConfirm() bool {
-	return pi.Status == PaymentIntentStatusAwaitingPayment && !pi.IsExpired()
-}
-
-// CanCancel checks if the payment intent can be canceled
 func (pi *PaymentIntent) CanCancel() bool {
 	return pi.Status == PaymentIntentStatusAwaitingPayment ||
 		pi.Status == PaymentIntentStatusAuthorized
+}
+func (pi *PaymentIntent) CanConfirm() bool {
+	// Check if expired
+	if pi.IsExpired() {
+		return false
+	}
+
+	// Check if max attempts reached
+	if pi.AttemptCount >= pi.MaxAttempts {
+		return false
+	}
+
+	// Check status
+	return pi.Status == PaymentIntentStatusAwaitingPayment
+}
+
+// GetRemainingAttempts returns how many attempts are left
+func (pi *PaymentIntent) GetRemainingAttempts() int {
+	remaining := pi.MaxAttempts - pi.AttemptCount
+	if remaining < 0 {
+		return 0
+	}
+	return remaining
 }
 
 // GetCheckoutURL returns the hosted checkout URL
