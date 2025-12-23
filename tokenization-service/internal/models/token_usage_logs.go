@@ -23,7 +23,7 @@ type TokenUsageLog struct {
 	UserAgent sql.NullString `gorm:"type:text"`
 
 	Success   bool           `gorm:"type:boolean;not null"`
-	ErrorCode sql.NullString `gorm:"type:varchar(50)"`
+	ErrorCode sql.NullString `gorm:"type:text"`
 
 	Token *CardVault `gorm:"foreignKey:TokenID"`
 

@@ -66,6 +66,7 @@ type ConfirmPaymentIntentRequest struct {
 	ExpYear         int
 	CVV             string
 	CustomerEmail   string // Can override
+	IdempotencyKey  string // Optional
 	IPAddress       string
 	UserAgent       string
 }
@@ -209,6 +210,8 @@ func (s *PaymentIntentService) ConfirmPaymentIntent(ctx context.Context, req *Co
 		ExpMonth:       req.ExpMonth,       // FROM BROWSER
 		ExpYear:        req.ExpYear,        // FROM BROWSER
 		CVV:            req.CVV,            // FROM BROWSER
+		CustomerEmail:  req.CustomerEmail,  // FROM BROWSER
+		IdempotencyKey: req.IdempotencyKey, // FROM BROWSER
 		IPAddress:      req.IPAddress,
 		UserAgent:      req.UserAgent,
 	}
@@ -246,7 +249,11 @@ func (s *PaymentIntentService) ConfirmPaymentIntent(ctx context.Context, req *Co
 		)
 		return nil, fmt.Errorf("payment failed: %w", err)
 	}
-
+	logger.Log.Info("Payment authorization successful",
+		zap.String("intent_id", intentID.String()),
+		zap.String("payment_id", paymentResp.ID.String()),
+		zap.String("status", string(paymentResp.Status)),
+	)
 	// Update intent with payment reference
 	if paymentResp.Status == model.PaymentStatusAuthorized ||
 		paymentResp.Status == model.PaymentStatusCaptured {

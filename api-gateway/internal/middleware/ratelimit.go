@@ -23,7 +23,7 @@ func RateLimiter(limiter *service.RateLimiter, cfg *config.Config) gin.HandlerFu
 			c.JSON(http.StatusTooManyRequests, gin.H{
 				"success":     false,
 				"error":       "rate limit exceeded",
-				"retry_after": resetTime.Sub(time.Now()).Seconds(),
+				"retry_after": time.Until(resetTime).Seconds(),
 			})
 			c.Abort()
 			return
@@ -50,7 +50,7 @@ func EndpointRateLimit(limiter *service.RateLimiter, endpoint string, limit int,
 			c.JSON(http.StatusTooManyRequests, gin.H{
 				"success":     false,
 				"error":       fmt.Sprintf("rate limit exceeded for %s", endpoint),
-				"retry_after": resetTime.Sub(time.Now()).Seconds(),
+				"retry_after": time.Until(resetTime).Seconds(),
 			})
 			c.Abort()
 			return

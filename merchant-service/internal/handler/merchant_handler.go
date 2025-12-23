@@ -62,7 +62,6 @@ func (h *MerchantHandler) CreateMerchant(c *gin.Context) {
 		})
 		return
 	}
-
 	userUUID, err := uuid.Parse(userID.(string))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -72,6 +71,23 @@ func (h *MerchantHandler) CreateMerchant(c *gin.Context) {
 		return
 	}
 
+	// Check if user has a merchant
+	hasMerchant, err := h.merchantService.CheckUserHasMerchant(userUUID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	if hasMerchant {
+		c.JSON(http.StatusConflict, gin.H{
+			"success": false,
+			"error":   "user already has a merchant",
+		})
+		return
+	}
 	// Create merchant
 	merchant, err := h.merchantService.CreateMerchant(&service.CreateMerchantRequest{
 		OwnerID:      userUUID,

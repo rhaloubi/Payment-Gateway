@@ -292,6 +292,16 @@ func (s *MerchantService) createDefaultVerification(merchantID uuid.UUID) error 
 	return s.verificationRepo.Create(verification)
 }
 
+// check if user has a merchant
+func (s *MerchantService) CheckUserHasMerchant(userID uuid.UUID) (bool, error) {
+	merchants, err := s.merchantRepo.FindByOwnerID(userID)
+	if err != nil {
+		return false, err
+	}
+
+	return len(merchants) > 0, nil
+}
+
 // logActivity logs merchant activity
 func (s *MerchantService) logActivity(merchantID, userID uuid.UUID, action, resourceType string, resourceID uuid.UUID, changes map[string]interface{}) {
 	log := &model.MerchantActivityLog{
