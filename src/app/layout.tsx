@@ -15,7 +15,6 @@ export const metadata: Metadata = {
       {
         rel: "icon",
         url: "/icon.svg",
-        type: "image/svg+xml",
       },
     ],
   },

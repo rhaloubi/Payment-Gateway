@@ -9,6 +9,8 @@ export type PaymentIntentStatus =
   | "expired";
 
 export interface PaymentIntent {
+  success_url: string;
+  cancel_url:string;
   id: string;
   status: PaymentIntentStatus;
   amount: number;
@@ -44,7 +46,7 @@ export type CardBrand = "visa" | "mastercard" | "amex" | "discover" | "unknown";
 // Payment Response
 export interface PaymentResponse {
   id: string;
-  status: "authorized" | "captured" | "failed";
+  status: "authorized" | "captured" | "failed" | "canceled" | "voided" | "refunded";
   amount: number;
   currency: string;
   card_brand: string;

@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation"
 
 interface PaymentSuccessProps {
   cardType?: string
-  paymentIntentId: string
+  successURL: string
 }
 
-export function PaymentSuccess({ cardType, paymentIntentId }: PaymentSuccessProps) {
+export function PaymentSuccess({ cardType, successURL }: PaymentSuccessProps) {
   const [showConfetti, setShowConfetti] = useState(false)
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number }>>([])
   const [showCheck, setShowCheck] = useState(false)
@@ -44,11 +44,11 @@ export function PaymentSuccess({ cardType, paymentIntentId }: PaymentSuccessProp
     setShowCheck(true)
 
     const timer = setTimeout(() => {
-      router.push(`/success?payment_intent=${paymentIntentId}`)
-    }, 2500)
+        window.location.href = successURL || '';
+    }, 2000)
 
     return () => clearTimeout(timer)
-  }, [router, paymentIntentId])
+  }, [router, successURL])
 
   useEffect(() => {
     setShowConfetti(true)

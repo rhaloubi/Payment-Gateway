@@ -6,14 +6,12 @@ import { PaymentForm } from "~/components/checkout/payment-form";
 import { PaymentSummary } from "~/components/checkout/payment-summary";
 import { LoadingSpinner } from "~/components/checkout/loading-spinner";
 import { PaymentSuccess } from "~/components/checkout/payment-success";
-import { PaymentCancel } from "~/components/checkout/payment-cancel";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { getPaymentIntent, confirmPaymentIntent, isValidClientSecret } from "~/lib/api/payment-intent";
 import type { PaymentIntent, CardData } from "~/types";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 export default function CheckoutPage({ params }: { params: Promise<{ id: string }> }) {
-  // Await params in Next.js 15+
   const { id: intentId } = use(params);
   
   const router = useRouter();
@@ -25,7 +23,6 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
-  const [showCancelAnimation, setShowCancelAnimation] = useState(false);
 
   // Load payment intent
   useEffect(() => {
@@ -50,15 +47,23 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
         // Check status
         if (intentData.status === "expired") {
           setError("This payment session has expired. Please create a new payment.");
+           window.location.href = intentData.cancel_url || '';
           setLoading(false);
           return;
         }
 
-        if (intentData.status !== "awaiting_payment_method") {
+        if (intentData.status === "authorized" || intentData.status === "captured") {
           setError(`Payment already ${intentData.status}. Redirecting...`);
           setTimeout(() => {
-            router.push(`/success?payment_intent=${intentId}`);
-          }, 2000);
+            window.location.href = intentData.success_url || '';
+          }, 1500);
+          return;
+        }
+
+        if (intentData.status === "failed" || intentData.status === "canceled") {
+          setError(`This payment has ${intentData.status}. Please create a new payment.`);
+          window.location.href = intentData.cancel_url || '';
+          setLoading(false);
           return;
         }
 
@@ -72,7 +77,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
     }
 
     loadIntent();
-  }, [intentId, clientSecret, router]);
+  }, [intentId, clientSecret, router, ]);
 
   // Handle payment submission
   const handlePayment = async (cardData: CardData) => {
@@ -104,22 +109,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
       console.error("Payment failed:", err);
       setError(err instanceof Error ? err.message : "Payment failed. Please try again.");
       setSubmitting(false);
-      // Optional: Show cancel/fail animation on specific errors if desired, 
-      // but usually we just show the error message.
-      // If the user explicitly wants "cancel animation", maybe we show it here?
-      // I'll leave it as error message for now, unless "cancel" means something else.
-      // But if the user clicks a "Cancel" button (if we had one), we'd show it.
-      // Since there is no "Cancel" button, maybe on error?
-      // I'll show it if the error is "Payment was declined" or similar.
-      if (err instanceof Error && err.message === "Payment was declined") {
-         setShowCancelAnimation(true);
-      }
     }
-  };
-
-  const handleRetry = () => {
-    setShowCancelAnimation(false);
-    setSubmitting(false);
   };
 
   // Loading state
@@ -168,8 +158,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
   // Checkout form
   return (
     <div className="min-h-screen bg-background py-12 font-sans">
-      {showSuccessAnimation && <PaymentSuccess paymentIntentId={intentId} />}
-      {showCancelAnimation && <PaymentCancel onRetry={handleRetry} />}
+      {showSuccessAnimation && <PaymentSuccess successURL={intent?.success_url || ''} />}
       
       <div className="container mx-auto px-4 lg:px-8 max-w-6xl">
         <div className="text-center mb-12">
