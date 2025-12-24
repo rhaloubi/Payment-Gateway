@@ -52,6 +52,8 @@ type PaymentIntentResponse struct {
 	Status       model.PaymentIntentStatus `json:"status"`
 	Amount       int64                     `json:"amount"`
 	Currency     string                    `json:"currency"`
+	SuccessURL   string                    `json:"success_url"`
+	CancelURL    string                    `json:"cancel_url"`
 	CheckoutURL  string                    `json:"checkout_url"`
 	ExpiresAt    time.Time                 `json:"expires_at"`
 	CreatedAt    time.Time                 `json:"created_at"`
@@ -177,12 +179,14 @@ func (s *PaymentIntentService) GetPaymentIntent(ctx context.Context, intentID uu
 
 	// Return safe data (no client_secret)
 	return &PaymentIntentResponse{
-		ID:        intent.ID,
-		Status:    intent.Status,
-		Amount:    intent.Amount,
-		Currency:  intent.Currency,
-		ExpiresAt: intent.ExpiresAt,
-		CreatedAt: intent.CreatedAt,
+		ID:         intent.ID,
+		Status:     intent.Status,
+		Amount:     intent.Amount,
+		Currency:   intent.Currency,
+		SuccessURL: intent.SuccessURL,
+		CancelURL:  intent.CancelURL,
+		ExpiresAt:  intent.ExpiresAt,
+		CreatedAt:  intent.CreatedAt,
 	}, nil
 }
 

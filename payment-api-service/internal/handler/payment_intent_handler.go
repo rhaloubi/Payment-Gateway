@@ -133,11 +133,13 @@ func (h *PaymentIntentHandler) GetPaymentIntent(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data": gin.H{
-			"id":         response.ID,
-			"status":     response.Status,
-			"amount":     response.Amount,
-			"currency":   response.Currency,
-			"expires_at": response.ExpiresAt,
+			"id":          response.ID,
+			"status":      response.Status,
+			"amount":      response.Amount,
+			"currency":    response.Currency,
+			"success_url": response.SuccessURL,
+			"cancel_url":  response.CancelURL,
+			"expires_at":  response.ExpiresAt,
 		},
 	})
 }
