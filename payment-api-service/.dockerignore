@@ -1,11 +1,49 @@
+ Git
+.git
+.gitignore
+
+# Documentation
+*.md
+README.md
+docs/
+
+# Tests
+*_test.go
+test/
+tests/
+
+# Build artifacts
 *.exe
-*.bin
-.env
-config.local.yaml
-*.log
+*.dll
+*.so
+*.dylib
+bin/
+build/
+dist/
+
+# IDEs
 .vscode/
 .idea/
-*.sublime-project
-*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# OS
 .DS_Store
-/tmp/
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies (will be downloaded in Docker)
+vendor/
+
+# Temporary files
+tmp/
+temp/

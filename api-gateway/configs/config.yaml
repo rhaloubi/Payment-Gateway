@@ -20,7 +20,6 @@ services:
 rate_limiting:
   enabled: true
   storage: "memory"  # or "redis"
-  redis_url: "redis://localhost:6379/6"
   
   global:
     requests_per_hour: 1000

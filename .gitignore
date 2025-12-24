@@ -2,3 +2,4 @@ claudeexp.txt
 .DS_Store
 /payment-gateway-cli
 /payment-checkout
+docker-compose.yml
