@@ -1,0 +1,30 @@
+FROM golang:1.21-alpine AS builder
+
+WORKDIR /app
+
+# Install git only if needed for private modules
+RUN apk add --no-cache git
+
+# Dependency caching
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source
+COPY . .
+
+# Build static binary
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -ldflags="-w -s" \
+    -o payment-api-service cmd/main.go
+
+# -------- Runtime stage --------
+FROM scratch
+
+# Copy binary
+COPY --from=builder /app/payment-api-service /payment-api-service
+
+# Document port
+EXPOSE 8004
+
+# Run service
+ENTRYPOINT ["/payment-api-service"]

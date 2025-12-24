@@ -1,0 +1,25 @@
+FROM golang:1.21-alpine AS builder
+
+WORKDIR /app
+
+RUN apk add --no-cache git
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -ldflags="-w -s" \
+    -o gateway cmd/main.go
+
+FROM scratch
+
+# Copy binary
+COPY --from=builder /app/gateway /gateway
+
+# Expose port (documentation only)
+EXPOSE 8080
+
+# Run
+ENTRYPOINT ["/gateway"]
