@@ -12,7 +12,9 @@ import (
 )
 
 func init() {
-	inits.InitDotEnv()
+	if os.Getenv("APP_MODE") == "" {
+		inits.InitDotEnv()
+	}
 	inits.InitDB()
 	inits.InitRedis()
 	logger.Init()

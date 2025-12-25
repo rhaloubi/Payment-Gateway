@@ -1,4 +1,4 @@
-package main
+package migrations
 
 import (
 	"fmt"
@@ -10,20 +10,6 @@ import (
 	"gorm.io/gorm"
 	//"gorm.io/gorm"
 )
-
-func init() {
-	inits.InitDotEnv()
-	logger.Init()
-	inits.InitDB()
-}
-func main() {
-	// Run migrations
-	if err := RunAuthMigrations(); err != nil {
-		logger.Log.Error("Migration failed", zap.Error(err))
-	}
-
-	logger.Log.Info("✅ Migrations completed successfully!")
-}
 
 func RunAuthMigrations() error {
 	// Enable UUID extension

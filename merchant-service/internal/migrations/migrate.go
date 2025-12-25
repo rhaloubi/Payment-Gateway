@@ -1,4 +1,4 @@
-package main
+package migrations
 
 import (
 	"github.com/rhaloubi/payment-gateway/merchant-service/inits"
@@ -6,21 +6,6 @@ import (
 	model "github.com/rhaloubi/payment-gateway/merchant-service/internal/models"
 	"go.uber.org/zap"
 )
-
-func init() {
-	inits.InitDotEnv()
-	logger.Init()
-	inits.InitDB()
-}
-
-func main() {
-	// Run migrations
-	if err := RunMerchantMigrations(); err != nil {
-		logger.Log.Error("Migration failed", zap.Error(err))
-	}
-
-	logger.Log.Info("✅ Migrations completed successfully!")
-}
 
 func RunMerchantMigrations() error {
 	db := inits.DB

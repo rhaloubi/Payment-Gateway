@@ -13,9 +13,14 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build -ldflags="-w -s" \
     -o transaction-service ./cmd
 
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -ldflags="-w -s" -o transaction-migrate cmd/migrate/main.go
+
 FROM scratch
 
 COPY --from=builder /app/transaction-service /transaction-service
+COPY --from=builder /app/transaction-migrate /transaction-migrate
 
 EXPOSE 50053
 

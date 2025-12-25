@@ -1,4 +1,4 @@
-package main
+package migrations
 
 import (
 	"github.com/rhaloubi/payment-gateway/payment-api-service/inits"
@@ -7,22 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func init() {
-	inits.InitDotEnv()
-	logger.Init()
-	inits.InitDB()
-}
-
-func main() {
-	// Run migrations
-	if err := RunMerchantMigrations(); err != nil {
-		logger.Log.Error("Migration failed", zap.Error(err))
-	}
-
-	logger.Log.Info("✅ Migrations completed successfully!")
-}
-
-func RunMerchantMigrations() error {
+func RunPaymentApiMigrations() error {
 	db := inits.DB
 
 	// Enable UUID extension (if not already enabled)
@@ -54,8 +39,8 @@ func RunMerchantMigrations() error {
 	return nil
 }
 
-// RollbackMerchantMigrations rolls back all merchant service migrations
-func RollbackMerchantMigrations() error {
+// RollbackPaymentApiMigrations rolls back all payment api service migrations
+func RollbackPaymentApiMigrations() error {
 	db := inits.DB
 
 	// Drop tables in reverse order

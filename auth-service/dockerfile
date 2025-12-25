@@ -9,14 +9,16 @@ RUN go mod download
 COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-    go build -ldflags="-w -s" \
-    -o auth-service cmd/main.go
+    go build -ldflags="-w -s" -o auth-service cmd/main.go
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -ldflags="-w -s" -o auth-migrate cmd/migrate/main.go
 
 FROM scratch
 
 COPY --from=builder /app/auth-service /auth-service
+COPY --from=builder /app/auth-migrate /auth-migrate
 
-# Document both ports
 EXPOSE 8001
 EXPOSE 50051
 

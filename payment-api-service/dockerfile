@@ -17,11 +17,14 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build -ldflags="-w -s" \
     -o payment-api-service cmd/main.go
 
-# -------- Runtime stage --------
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -ldflags="-w -s" -o payment-api-migrate cmd/migrate/main.go
+
 FROM scratch
 
-# Copy binary
 COPY --from=builder /app/payment-api-service /payment-api-service
+COPY --from=builder /app/payment-api-migrate /payment-api-migrate
 
 # Document port
 EXPOSE 8004

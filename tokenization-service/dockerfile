@@ -17,11 +17,13 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build -ldflags="-w -s" \
     -o tokenization-service cmd/main.go
 
-# -------- Runtime stage --------
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -ldflags="-w -s" -o tokenization-migrate cmd/migrate/main.go
+
 FROM scratch
 
-# Copy binary
 COPY --from=builder /app/tokenization-service /tokenization-service
+COPY --from=builder /app/tokenization-migrate /tokenization-migrate
 
 # Document port
 EXPOSE 50052
