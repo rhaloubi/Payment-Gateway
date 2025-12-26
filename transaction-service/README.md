@@ -207,7 +207,7 @@ psql -U postgres -c "CREATE DATABASE transaction_db;"
 
 # 2. Run migrations
 cd transaction-service
-go run cmd/migrate/migrate.go
+go run cmd/migrate up
 
 # 3. Generate gRPC code (if proto modified)
 protoc \

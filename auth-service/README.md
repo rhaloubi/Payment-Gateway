@@ -157,11 +157,15 @@ docker-compose up -d postgres redis
 #### 3. Run Migrations
 
 ```bash
-go run internal/migrations/migrate.go
-# Migrations run automatically on startup
-```
+go run cmd/migrate up
 
-# ✅ Migrations completed
+```
+### rollback 
+
+```bash
+go run cmd/migrate down
+
+```
 
 #### 4. Start Server
 

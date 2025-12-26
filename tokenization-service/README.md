@@ -516,7 +516,7 @@ cp .env.example .env
 psql -U postgres -c "CREATE DATABASE tokenization_db;"
 
 # 5. Run migrations
-go run cmd/migrate/migrate.go
+go run cmd/migrate up
 
 # 6. Generate gRPC code (if modified proto files)
 protoc \

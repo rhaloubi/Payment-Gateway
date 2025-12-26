@@ -7,8 +7,6 @@ RUN apk add --no-cache git
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY config.yaml /configs/config.yaml
-
 COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
@@ -19,6 +17,7 @@ FROM scratch
 
 # Copy binary
 COPY --from=builder /app/gateway /gateway
+COPY --from=builder /app/configs /configs
 
 # Expose port (documentation only)
 EXPOSE 8080

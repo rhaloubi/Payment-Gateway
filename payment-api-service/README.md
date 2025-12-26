@@ -38,12 +38,15 @@ The Payment API Service is the main entry point for merchants to process payment
 - ✅ **Webhooks** - Async notifications with retry logic
 - ✅ **Audit Logging** - Complete payment activity tracking
 - ✅ **Multi-Currency** - USD and EUR and MAD supported
+- ✅ **Payment Intents** - Hosted checkout with redirect URLs and client secrets
+- ✅ **Payment Attempt Tracking** - Track and limit payment attempts per intent
+- ✅ **Automatic Expiration** - Intents expire after 1 hour for security
 
 ### Integration
 - ✅ **REST API** - Simple HTTP/JSON interface
 - ✅ **API Key Authentication** - Secure merchant authentication
 - ✅ **Service Orchestration** - Coordinates tokenization, fraud, and transaction services
-
+- ✅ **Hosted Checkout** - Browser-friendly checkout flow for merchants
 ---
 
 ## 🏗️ Architecture
@@ -339,6 +342,151 @@ Use these test card numbers for different scenarios:
 - Auth Service (running on port 8001)
 - Tokenization Service (running on port 8003)
 
+## Payment Intents API
+
+The Payment Intents API provides a hosted checkout solution for merchants, allowing them to create payment sessions that customers can complete in a browser environment.
+
+### Authentication
+
+**Server-to-Server (Merchant API):**
+```
+Authorization: Bearer <API_KEY>
+```
+
+**Browser (Customer Checkout):**
+```
+X-Client-Secret: <CLIENT_SECRET>
+# or
+?client_secret=<CLIENT_SECRET>
+```
+
+### Endpoints
+
+#### Create Payment Intent (Server-to-Server)
+```
+POST /v1/payment-intents
+```
+
+**Request Body:**
+```json
+{
+  "merchant_id": "uuid",
+  "amount": 1000,
+  "currency": "USD",
+  "success_url": "https://merchant.com/success",
+  "cancel_url": "https://merchant.com/cancel",
+  "description": "Order #123",
+  "metadata": {
+    "order_id": "123"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "pi_123",
+    "client_secret": "pi_123_secret_abc",
+    "amount": 1000,
+    "currency": "USD",
+    "status": "created",
+    "success_url": "https://merchant.com/success",
+    "cancel_url": "https://merchant.com/cancel",
+    "expires_at": "2024-01-01T00:00:00Z",
+    "created_at": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+#### Get Payment Intent (Browser)
+```
+GET /payment-intents/:id
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "pi_123",
+    "amount": 1000,
+    "currency": "USD",
+    "status": "awaiting_payment_method",
+    "success_url": "https://merchant.com/success",
+    "cancel_url": "https://merchant.com/cancel",
+    "expires_at": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+#### Confirm Payment Intent (Browser)
+```
+POST /payment-intents/:id/confirm
+```
+
+**Request Body:**
+```json
+{
+  "payment_method": {
+    "type": "card",
+    "card": {
+      "number": "4242424242424242",
+      "exp_month": 12,
+      "exp_year": 2025,
+      "cvc": "123"
+    }
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "pi_123",
+    "status": "authorized",
+    "payment_id": "pay_123",
+    "redirect_url": "https://merchant.com/success?payment_intent=pi_123"
+  }
+}
+```
+
+#### Cancel Payment Intent (Server-to-Server)
+```
+POST /v1/payment-intents/:id/cancel
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "pi_123",
+    "status": "canceled",
+    "cancelled_at": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+### Status Flow
+
+1. **created** → Intent created, awaiting payment method
+2. **awaiting_payment_method** → Ready for customer payment
+3. **authorized** → Payment authorized, awaiting capture
+4. **captured** → Payment captured and completed
+5. **failed** → Payment failed (declined, expired, etc.)
+6. **canceled** → Merchant canceled the intent
+
+### Security Features
+
+- **Client Secrets**: Browser authentication without exposing API keys
+- **Expiration**: Intents automatically expire after 1 hour
+- **Attempt Limits**: Maximum 5 payment attempts per intent
+- **Redirect Validation**: Only allows HTTPS URLs for success/cancel redirects
+
 ### Setup
 
 ```bash
@@ -356,7 +504,7 @@ cp .env.example .env
 psql -U postgres -c "CREATE DATABASE payment_api_db;"
 
 # 5. Run migrations
-go run cmd/migrate/migrate.go
+go run cmd/migrate up
 
 # 6. Start service
 go run cmd/main.go
