@@ -107,15 +107,17 @@ jobs:
             image: payment-gateway-transaction
             changed_output: ${{ needs.detect-changes.outputs.transaction-service }}
 
-    # Condition at the matrix job level
-    if: |
-      (github.event_name == 'workflow_dispatch' && 
-       (github.event.inputs.service == 'all' || github.event.inputs.service == matrix.service)) ||
-      (github.event_name != 'workflow_dispatch' && matrix.changed_output == 'true')
+    # Always run the job, but use step-level conditions for filtering
+    if: ${{ always() }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        # Skip this job if not needed (manual trigger or no changes)
+        if: |
+          (github.event_name == 'workflow_dispatch' && 
+           (github.event.inputs.service == 'all' || github.event.inputs.service == matrix.service)) ||
+          (github.event_name != 'workflow_dispatch' && matrix.changed_output == 'true')
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -213,4 +215,3 @@ jobs:
       - name: Success notification
         run: |
           echo "✅ All Docker images built and pushed successfully!"
-          echo "Images are available at: https://hub.docker.com/u/rhaloubi8"
