@@ -77,32 +77,32 @@ jobs:
       matrix:
         include:
           - service: api-gateway
-            context: ./api-gateway
+            context: .
             dockerfile: ./api-gateway/dockerfile
             image: payment-gateway-api
             changed_output: ${{ needs.detect-changes.outputs.api-gateway }}
           - service: auth-service
-            context: ./auth-service
+            context: .
             dockerfile: ./auth-service/dockerfile
             image: payment-gateway-auth
             changed_output: ${{ needs.detect-changes.outputs.auth-service }}
           - service: merchant-service
-            context: ./merchant-service
+            context: .
             dockerfile: ./merchant-service/dockerfile
             image: payment-gateway-merchant
             changed_output: ${{ needs.detect-changes.outputs.merchant-service }}
           - service: payment-api-service
-            context: ./payment-api-service
+            context: .
             dockerfile: ./payment-api-service/dockerfile
             image: payment-gateway-payment-api
             changed_output: ${{ needs.detect-changes.outputs.payment-api-service }}
           - service: tokenization-service
-            context: ./tokenization-service
+            context: .
             dockerfile: ./tokenization-service/dockerfile
             image: payment-gateway-tokenization
             changed_output: ${{ needs.detect-changes.outputs.tokenization-service }}
           - service: transaction-service
-            context: ./transaction-service
+            context: .
             dockerfile: ./transaction-service/dockerfile
             image: payment-gateway-transaction
             changed_output: ${{ needs.detect-changes.outputs.transaction-service }}
@@ -150,6 +150,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            BUILDKIT_CONTEXT_KEEP_GIT_DIR=1
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.16.1
@@ -161,7 +163,7 @@ jobs:
           exit-code: '0'  # Don't fail build, just report
 
       - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: 'trivy-results-${{ matrix.service }}.sarif'
