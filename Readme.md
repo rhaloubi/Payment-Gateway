@@ -783,6 +783,6 @@ Built with:
 - [Tokenization Service →](./tokenization-service/README.md)
 - [Payment API Service →](./payment-api-service/README.md)
 - [Transaction Service →](./transaction-service/README.md)
-- [CLI Tool →](./README.md)
+- [API Gateway →](./api-gateway/README.md)
 
 **Happy Building! 🚀**
