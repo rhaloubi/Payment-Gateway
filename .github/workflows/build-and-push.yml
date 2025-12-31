@@ -77,33 +77,33 @@ jobs:
       matrix:
         include:
           - service: api-gateway
-            context: .
-            dockerfile: ./api-gateway/dockerfile
+            context: ./api-gateway
+            dockerfile: dockerfile
             image: payment-gateway-api
             changed_output: ${{ needs.detect-changes.outputs.api-gateway }}
           - service: auth-service
-            context: .
-            dockerfile: ./auth-service/dockerfile
+            context: ./auth-service
+            dockerfile: dockerfile
             image: payment-gateway-auth
             changed_output: ${{ needs.detect-changes.outputs.auth-service }}
           - service: merchant-service
-            context: .
-            dockerfile: ./merchant-service/dockerfile
+            context: ./merchant-service
+            dockerfile: dockerfile
             image: payment-gateway-merchant
             changed_output: ${{ needs.detect-changes.outputs.merchant-service }}
           - service: payment-api-service
-            context: .
-            dockerfile: ./payment-api-service/dockerfile
+            context: ./payment-api-service
+            dockerfile: dockerfile
             image: payment-gateway-payment-api
             changed_output: ${{ needs.detect-changes.outputs.payment-api-service }}
           - service: tokenization-service
-            context: .
-            dockerfile: ./tokenization-service/dockerfile
+            context: ./tokenization-service
+            dockerfile: dockerfile
             image: payment-gateway-tokenization
             changed_output: ${{ needs.detect-changes.outputs.tokenization-service }}
           - service: transaction-service
-            context: .
-            dockerfile: ./transaction-service/dockerfile
+            context: ./transaction-service
+            dockerfile: dockerfile
             image: payment-gateway-transaction
             changed_output: ${{ needs.detect-changes.outputs.transaction-service }}
 
