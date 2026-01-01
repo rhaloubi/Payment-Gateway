@@ -3,3 +3,17 @@ claudeexp.txt
 /payment-gateway-cli
 /payment-checkout
 docker-compose.yml
+
+
+# Kubernetes secrets (NEVER commit!)
+k8s/secrets/secrets.yaml
+k8s/secrets/*-actual.yaml
+
+# Terraform
+terraform/*.tfstate
+terraform/.terraform/
+
+# Backups
+backups/
+EOF
+k8s
