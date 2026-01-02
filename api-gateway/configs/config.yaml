@@ -14,7 +14,7 @@ services:
     timeout: 10s
     
   payment:
-    url: "http://payment-service.services:8004"
+    url: "http://payment-api-service.services:8004"
     timeout: 30s
 
 rate_limiting:
