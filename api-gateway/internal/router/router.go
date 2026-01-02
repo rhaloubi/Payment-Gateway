@@ -11,6 +11,8 @@ import (
 )
 
 func Setup(cfg *config.Config) *gin.Engine {
+	// Initialize services
+
 	// Set mode
 	if cfg.Logging.Level == "debug" {
 		gin.SetMode(gin.DebugMode)
@@ -19,19 +21,17 @@ func Setup(cfg *config.Config) *gin.Engine {
 	}
 
 	r := gin.New()
+	rateLimiter := service.NewRateLimiter(cfg)
+	circuitBreaker := service.NewCircuitBreaker(cfg)
 
+	r.GET("/health", handler.HealthCheck(cfg, circuitBreaker))
 	// Global middleware
 	r.Use(middleware.Logger(cfg))
 	r.Use(middleware.Recovery())
 	r.Use(middleware.CORS())
 	r.Use(middleware.RequestID())
 
-	// Initialize services
-	rateLimiter := service.NewRateLimiter(cfg)
-	circuitBreaker := service.NewCircuitBreaker(cfg)
-
 	// Health and metrics endpoints (no auth required)
-	r.GET("/health", handler.HealthCheck(cfg, circuitBreaker))
 	r.GET("/metrics", handler.Metrics())
 
 	// API routes with full middleware stack

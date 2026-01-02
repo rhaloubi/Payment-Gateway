@@ -27,11 +27,12 @@ func SetupRoutes(router *gin.Engine) {
 		logger.Log.Fatal("Failed to initialize transaction handler", zap.Error(err))
 	}
 
+	router.GET("/health", healthHandler.HealthCheck)
+
 	router.Use(middleware.ErrorHandlerMiddleware())
 	router.Use(middleware.CORSMiddleware())
 	router.Use(middleware.RequestLoggerMiddleware())
 
-	router.GET("/health", healthHandler.HealthCheck)
 	router.GET("/ready", healthHandler.ReadinessCheck)
 
 	// =========================================================================
