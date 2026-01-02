@@ -6,15 +6,15 @@ server:
 
 services:
   auth:
-    url: "http://auth-service.services.svc.cluster.local:8001"
+    url: "http://auth-service.services:8001"
     timeout: 5s
     
   merchant:
-    url: "http://merchant-service.services.svc.cluster.local:8002"
+    url: "http://merchant-service.services:8002"
     timeout: 10s
     
   payment:
-    url: "http://payment-service.services.svc.cluster.local:8004"
+    url: "http://payment-service.services:8004"
     timeout: 30s
 
 rate_limiting:
