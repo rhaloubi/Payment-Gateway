@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-bootstrap
+  namespace: databases
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: bootstrap
+        image: postgres:15-alpine
+        command:
+          - sh
+          - -c
+          - |
+            psql "$DATABASE_DSN" <<EOF
+            CREATE DATABASE micro_auth;
+            CREATE DATABASE micro_merchant;
+            CREATE DATABASE micro_payment;
+            CREATE DATABASE micro_tokenization;
+            CREATE DATABASE micro_transaction;
+            EOF
+        env:
+        - name: DATABASE_DSN
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: admin-dsn

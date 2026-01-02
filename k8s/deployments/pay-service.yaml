@@ -1,0 +1,83 @@
+# -------------------------
+# Payment API Service
+# -------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-api-service
+  namespace: services
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payment-api-service
+  template:
+    metadata:
+      labels:
+        app: payment-api-service
+    spec:
+      containers:
+      - name: payment-api-service
+        image: rhaloubi8/payment-gateway-payment-api:latest
+        ports:
+        - containerPort: 8004
+        env:
+        - name: PORT
+          value: "8004"
+        - name: APP_MODE
+          value: "production"
+        - name: DATABASE_DSN
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: payment-api-dsn
+        - name: REDIS_DSN
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: redis-dsn
+        - name: AUTH_SERVICE_URL
+          value: "http://auth-service.services.svc.cluster.local:8001"
+        - name: TOKENIZATION_SERVICE_GRPC
+          value: "tokenization-service.internal.svc.cluster.local:50052"
+        - name: TRANSACTION_SERVICE_GRPC
+          value: "transaction-service.internal.svc.cluster.local:50053"
+        - name: GIN_MODE
+          value: "release"
+        - name: CHECKOUT_URL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: checkout-url
+        resources:
+          requests:
+            cpu: 150m
+            memory: 128Mi
+          limits:
+            cpu: 300m
+            memory: 256Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8004
+          initialDelaySeconds: 40
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8004
+          initialDelaySeconds: 20
+          periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-api-service
+  namespace: services
+spec:
+  type: ClusterIP
+  selector:
+    app: payment-api-service
+  ports:
+  - port: 8004
+    targetPort: 8004

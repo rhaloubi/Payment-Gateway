@@ -1,0 +1,140 @@
+
+---
+# Auth Service Migration
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: auth-migrate
+  namespace: services
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: auth-migrate
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: migrate
+        image: rhaloubi8/payment-gateway-auth:latest  
+        command: ["/auth-migrate", "up"]
+        env:
+        - name: APP_MODE
+          value: "production"
+        - name: DATABASE_DSN
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: auth-dsn
+
+---
+# Merchant Service Migration
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: merchant-migrate
+  namespace: services
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: merchant-migrate
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: migrate
+        image: rhaloubi8/payment-gateway-merchant:latest
+        command: ["/merchant-migrate", "up"]
+        env:
+        - name: APP_MODE
+          value: "production"
+        - name: DATABASE_DSN
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: merchant-dsn
+
+---
+# Payment API Service Migration
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: payment-api-migrate
+  namespace: services
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: payment-api-migrate
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: migrate
+        image: rhaloubi8/payment-gateway-payment-api:latest
+        command: ["/payment-api-migrate", "up"]
+        env:
+        - name: APP_MODE
+          value: "production"
+        - name: DATABASE_DSN
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: payment-api-dsn
+
+---
+# Tokenization Service Migration
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tokenization-migrate
+  namespace: internal
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: tokenization-migrate
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: migrate
+        image: rhaloubi8/payment-gateway-tokenization:latest
+        command: ["/tokenization-migrate", "up"]
+        env:
+        - name: APP_MODE
+          value: "production"
+        - name: DATABASE_DSN
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: tokenization-dsn
+
+---
+# Transaction Service Migration
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: transaction-migrate
+  namespace: internal
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: transaction-migrate
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: migrate
+        image: rhaloubi8/payment-gateway-transaction:latest
+        command: ["/transaction-migrate", "up"]
+        env:
+        - name: APP_MODE
+          value: "production"
+        - name: DATABASE_DSN
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: transaction-dsn

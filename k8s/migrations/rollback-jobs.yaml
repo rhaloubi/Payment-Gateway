@@ -1,0 +1,129 @@
+---
+# Auth Service Rollback
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: auth-rollback
+  namespace: services
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: auth-rollback
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: rollback
+        image: rhaloubi8/payment-gateway-auth:latest
+        command: ["/auth-migrate", "down"]
+        env:
+        - name: DATABASE_DSN
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: auth-dsn
+
+---
+# Merchant Service Rollback
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: merchant-rollback
+  namespace: services
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: merchant-rollback
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: rollback
+        image: rhaloubi8/payment-gateway-merchant:latest
+        command: ["/merchant-migrate", "down"]
+        env:
+        - name: DATABASE_DSN
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: merchant-dsn
+
+---
+# Payment API Service Rollback
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: payment-api-rollback
+  namespace: services
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: payment-api-rollback
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: rollback
+        image: rhaloubi8/payment-gateway-payment-api:latest
+        command: ["/payment-api-migrate", "down"]
+        env:
+        - name: DATABASE_DSN
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: payment-api-dsn
+
+---
+# Tokenization Service Rollback
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tokenization-rollback
+  namespace: internal
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: tokenization-rollback
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: rollback
+        image: rhaloubi8/payment-gateway-tokenization:latest
+        command: ["/tokenization-migrate", "down"]
+        env:
+        - name: DATABASE_DSN
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: tokenization-dsn
+
+---
+# Transaction Service Rollback
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: transaction-rollback
+  namespace: internal
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: transaction-rollback
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: rollback
+        image: rhaloubi8/payment-gateway-transaction:latest
+        command: ["/transaction-migrate", "down"]
+        env:
+        - name: DATABASE_DSN
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: transaction-dsn

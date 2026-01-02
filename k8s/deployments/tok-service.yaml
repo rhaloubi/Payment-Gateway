@@ -1,0 +1,62 @@
+# -------------------------
+# Tokenization Service
+# -------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tokenization-service
+  namespace: internal
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tokenization-service
+  template:
+    metadata:
+      labels:
+        app: tokenization-service
+    spec:
+      containers:
+      - name: tokenization-service
+        image: rhaloubi8/payment-gateway-tokenization:latest
+        ports:
+        - containerPort: 50052
+        env:
+        - name: GRPC_PORT
+          value: "50052"
+        - name: APP_MODE
+          value: "production"
+        - name: DATABASE_DSN
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: tokenization-dsn
+        - name: REDIS_DSN
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: redis-dsn
+        - name: GIN_MODE
+          value: "release"
+        - name: AUTH_SERVICE_URL
+          value: "http://auth-service.services.svc.cluster.local:8001"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tokenization-service
+  namespace: internal
+spec:
+  type: ClusterIP
+  selector:
+    app: tokenization-service
+  ports:
+  - port: 50052
+    targetPort: 50052
