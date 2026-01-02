@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/rhaloubi/payment-gateway/merchant-service/inits"
 	"github.com/rhaloubi/payment-gateway/merchant-service/internal/client"
 	"github.com/rhaloubi/payment-gateway/merchant-service/internal/handler"
@@ -16,6 +17,12 @@ func SetupMerchantRoutes() {
 	teamHandler := handler.NewTeamHandler()
 	settingsHandler := handler.NewSettingsHandler()
 	apiKeyHandler := handler.NewAPIKeyHandler(authClient, service.NewTeamService())
+
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "health check",
+		})
+	})
 
 	v1 := router.Group("/api/v1")
 	v1.Use(middleware.AuthMiddleware())
