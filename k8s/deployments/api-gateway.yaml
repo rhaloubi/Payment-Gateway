@@ -23,11 +23,11 @@ spec:
         - name: PORT
           value: "8080"
         - name: AUTH_SERVICE_URL
-          value: "http://auth-service.services.svc.cluster.local:8001"
+          value: "http://auth-service.services:8001"
         - name: MERCHANT_SERVICE_URL
-          value: "http://merchant-service.services.svc.cluster.local:8002"
+          value: "http://merchant-service.services:8002"
         - name: PAYMENT_SERVICE_URL
-          value: "http://payment-api-service.services.svc.cluster.local:8004"
+          value: "http://payment-api-service.services:8004"
         resources:
           requests:
             cpu: 100m

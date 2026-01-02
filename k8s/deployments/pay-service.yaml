@@ -37,11 +37,13 @@ spec:
               name: database-secrets
               key: redis-dsn
         - name: AUTH_SERVICE_URL
-          value: "http://auth-service.services.svc.cluster.local:8001"
-        - name: TOKENIZATION_SERVICE_GRPC
-          value: "tokenization-service.internal.svc.cluster.local:50052"
-        - name: TRANSACTION_SERVICE_GRPC
-          value: "transaction-service.internal.svc.cluster.local:50053"
+          value: "http://auth-service.services:8001"
+        - name: TOKENIZATION_SERVICE_GRPC_URL
+          value: "tokenization-service.internal:50052"
+        - name: TRANSACTION_SERVICE_GRPC_URL
+          value: "transaction-service.internal:50053"
+        - name: AUTH_SERVICE_GRPC_URL
+          value: "auth-service.services:50051"
         - name: GIN_MODE
           value: "release"
         - name: CHECKOUT_URL

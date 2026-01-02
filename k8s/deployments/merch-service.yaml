@@ -37,9 +37,9 @@ spec:
               name: database-secrets
               key: redis-dsn
         - name: AUTH_SERVICE_URL
-          value: "http://auth-service.services.svc.cluster.local:8001"
+          value: "http://auth-service.services:8001"
         - name: AUTH_SERVICE_GRPC_URL
-          value: "auth-service.services.svc.cluster.local:50051"
+          value: "auth-service.services:50051"
         - name: JWT_SECRET_KEY
           valueFrom:
             secretKeyRef:

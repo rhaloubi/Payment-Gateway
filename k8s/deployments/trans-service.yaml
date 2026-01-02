@@ -37,7 +37,7 @@ spec:
               name: database-secrets
               key: redis-dsn
         - name: TOKENIZATION_SERVICE_GRPC
-          value: "tokenization-service.internal.svc.cluster.local:50052"
+          value: "tokenization-service.internal:50052"
         - name: GIN_MODE
           value: "release"
         resources:
