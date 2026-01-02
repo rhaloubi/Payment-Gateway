@@ -29,8 +29,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./api-gateway
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/payment-gateway-api:cache
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/payment-gateway-api:cache,mode=max  
           file: ./api-gateway/dockerfile
-          platforms: linux/amd64,linux/arm64   
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: |
             ${{ env.DOCKERHUB_USERNAME }}/payment-gateway-api:latest
@@ -56,6 +58,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./auth-service
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/payment-gateway-auth:cache
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/payment-gateway-auth:cache,mode=max  
           file: ./auth-service/dockerfile
           platforms: linux/amd64,linux/arm64   
           push: true
@@ -83,6 +87,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./merchant-service
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/payment-gateway-merchant:cache
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/payment-gateway-merchant:cache,mode=max  
           file: ./merchant-service/dockerfile
           platforms: linux/amd64,linux/arm64   
           push: true
@@ -110,8 +116,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./payment-api-service
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/payment-gateway-payment-api:cache
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/payment-gateway-payment-api:cache,mode=max  
           file: ./payment-api-service/dockerfile
-          platforms: linux/amd64,linux/arm64   
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: |
             ${{ env.DOCKERHUB_USERNAME }}/payment-gateway-payment-api:latest
@@ -137,6 +145,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./tokenization-service
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/payment-gateway-tokenization:cache
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/payment-gateway-tokenization:cache,mode=max  
           file: ./tokenization-service/dockerfile
           platforms: linux/amd64,linux/arm64   
           push: true
@@ -164,6 +174,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./transaction-service
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/payment-gateway-transaction:cache
+          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/payment-gateway-transaction:cache,mode=max  
           file: ./transaction-service/dockerfile
           platforms: linux/amd64,linux/arm64   
           push: true
