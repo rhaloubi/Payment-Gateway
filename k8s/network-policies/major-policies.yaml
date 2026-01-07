@@ -124,11 +124,11 @@ spec:
       port: 53
 
 # ============================================
-# STEP 3: API Gateway Policies
+# Gateway Namespace Network Policies (UPDATED)
 # ============================================
 
 ---
-# API Gateway: Allow ingress from LoadBalancer
+# API Gateway: Allow ingress from NGINX Ingress Controller
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -141,8 +141,20 @@ spec:
   policyTypes:
   - Ingress
   ingress:
+  # From NGINX Ingress Controller
   - from:
-    - podSelector: {}  # Allow from same namespace (for health checks)
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8080
+  # From same namespace (for health checks)
+  - from:
+    - podSelector: {}
     ports:
     - protocol: TCP
       port: 8080
@@ -173,4 +185,4 @@ spec:
       port: 8002  # Merchant
     - protocol: TCP
       port: 8004  # Payment API
-  # DNS already allowed above
+  # DNS already allowed in major-policies.yaml

@@ -1,0 +1,91 @@
+# ============================================
+# NGINX Ingress Controller Network Policies
+# ============================================
+
+---
+# Deny all ingress to ingress-nginx namespace by default
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-ingress
+  namespace: ingress-nginx
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+
+---
+# Allow DNS queries from ingress-nginx
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: ingress-nginx
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# NGINX Ingress Controller: Allow ingress from anywhere (external traffic)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-nginx-controller-ingress
+  namespace: ingress-nginx
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ingress-nginx
+      app.kubernetes.io/component: controller
+  policyTypes:
+  - Ingress
+  ingress:
+  # Allow all traffic (from outside cluster)
+  - ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 8443  # Webhook
+    - protocol: TCP
+      port: 10254  # Health check
+
+---
+# NGINX Ingress Controller: Allow egress to gateway namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-nginx-controller-egress
+  namespace: ingress-nginx
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ingress-nginx
+      app.kubernetes.io/component: controller
+  policyTypes:
+  - Egress
+  egress:
+  # To API Gateway
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: gateway
+      podSelector:
+        matchLabels:
+          app: api-gateway
+    ports:
+    - protocol: TCP
+      port: 8080
