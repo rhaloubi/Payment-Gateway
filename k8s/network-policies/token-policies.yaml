@@ -1,0 +1,81 @@
+
+# ============================================
+# STEP 7: Tokenization Service Policies
+# ============================================
+
+---
+# Tokenization: Allow ingress from payment-api and transaction
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tokenization-service-ingress
+  namespace: internal
+spec:
+  podSelector:
+    matchLabels:
+      app: tokenization-service
+  policyTypes:
+  - Ingress
+  ingress:
+  # From services namespace (payment-api)
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: services
+      podSelector:
+        matchLabels:
+          app: payment-api-service
+    ports:
+    - protocol: TCP
+      port: 50052
+  # From same namespace (transaction service)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: transaction-service
+    ports:
+    - protocol: TCP
+      port: 50052
+  # From same namespace for health checks
+  - from:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 50052
+
+---
+# Tokenization: Allow egress to databases and auth
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tokenization-service-egress
+  namespace: internal
+spec:
+  podSelector:
+    matchLabels:
+      app: tokenization-service
+  policyTypes:
+  - Egress
+  egress:
+  # To databases
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: databases
+    ports:
+    - protocol: TCP
+      port: 5432
+    - protocol: TCP
+      port: 6379
+  # To auth service (for validation)
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: services
+      podSelector:
+        matchLabels:
+          app: auth-service
+    ports:
+    - protocol: TCP
+      port: 8001
+  # DNS already allowed above

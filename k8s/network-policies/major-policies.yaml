@@ -1,0 +1,176 @@
+# ============================================
+# STEP 1: Deny All Traffic by Default
+# ============================================
+
+---
+# Deny all ingress to gateway namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-ingress
+  namespace: gateway
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+
+---
+# Deny all ingress to services namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-ingress
+  namespace: services
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+
+---
+# Deny all ingress to internal namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-ingress
+  namespace: internal
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+
+---
+# Deny all ingress to databases namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-ingress
+  namespace: databases
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+
+# ============================================
+# STEP 2: Allow DNS for All Pods
+# ============================================
+
+---
+# Allow DNS queries from gateway
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: gateway
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# Allow DNS queries from services
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: services
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# Allow DNS queries from internal
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: internal
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+
+# ============================================
+# STEP 3: API Gateway Policies
+# ============================================
+
+---
+# API Gateway: Allow ingress from LoadBalancer
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-gateway-ingress
+  namespace: gateway
+spec:
+  podSelector:
+    matchLabels:
+      app: api-gateway
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector: {}  # Allow from same namespace (for health checks)
+    ports:
+    - protocol: TCP
+      port: 8080
+
+---
+# API Gateway: Allow egress to services
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-gateway-egress
+  namespace: gateway
+spec:
+  podSelector:
+    matchLabels:
+      app: api-gateway
+  policyTypes:
+  - Egress
+  egress:
+  # Allow to services namespace
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: services
+    ports:
+    - protocol: TCP
+      port: 8001  # Auth
+    - protocol: TCP
+      port: 8002  # Merchant
+    - protocol: TCP
+      port: 8004  # Payment API
+  # DNS already allowed above

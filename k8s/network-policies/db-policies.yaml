@@ -1,0 +1,78 @@
+
+# ============================================
+# STEP 9: Database Policies
+# ============================================
+
+---
+# PostgreSQL: Allow ingress from services and internal
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-ingress
+  namespace: databases
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+  - Ingress
+  ingress:
+  # From services namespace
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: services
+    ports:
+    - protocol: TCP
+      port: 5432
+  # From internal namespace
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: internal
+    ports:
+    - protocol: TCP
+      port: 5432
+  # From same namespace (for backups/management)
+  - from:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 5432
+
+---
+# Redis: Allow ingress from services and internal
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-ingress
+  namespace: databases
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+  ingress:
+  # From services namespace
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: services
+    ports:
+    - protocol: TCP
+      port: 6379
+  # From internal namespace
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: internal
+    ports:
+    - protocol: TCP
+      port: 6379
+  # From same namespace (for backups/management)
+  - from:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 6379

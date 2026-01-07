@@ -1,0 +1,80 @@
+
+# ============================================
+# STEP 6: Payment API Service Policies
+# ============================================
+
+---
+# Payment API: Allow ingress from gateway
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: payment-api-service-ingress
+  namespace: services
+spec:
+  podSelector:
+    matchLabels:
+      app: payment-api-service
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: gateway
+      podSelector:
+        matchLabels:
+          app: api-gateway
+    ports:
+    - protocol: TCP
+      port: 8004
+  - from:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 8004
+
+---
+# Payment API: Allow egress to auth, internal services, and databases
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: payment-api-service-egress
+  namespace: services
+spec:
+  podSelector:
+    matchLabels:
+      app: payment-api-service
+  policyTypes:
+  - Egress
+  egress:
+  # To auth service
+  - to:
+    - podSelector:
+        matchLabels:
+          app: auth-service
+    ports:
+    - protocol: TCP
+      port: 8001
+    - protocol: TCP
+      port: 50051
+  # To internal services (gRPC)
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: internal
+    ports:
+    - protocol: TCP
+      port: 50052  # Tokenization
+    - protocol: TCP
+      port: 50053  # Transaction
+  # To databases
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: databases
+    ports:
+    - protocol: TCP
+      port: 5432
+    - protocol: TCP
+      port: 6379
+  # DNS already allowed above

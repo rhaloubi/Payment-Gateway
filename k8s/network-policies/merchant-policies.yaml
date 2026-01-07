@@ -1,0 +1,71 @@
+
+# ============================================
+# STEP 5: Merchant Service Policies
+# ============================================
+
+---
+# Merchant Service: Allow ingress from gateway
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: merchant-service-ingress
+  namespace: services
+spec:
+  podSelector:
+    matchLabels:
+      app: merchant-service
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: gateway
+      podSelector:
+        matchLabels:
+          app: api-gateway
+    ports:
+    - protocol: TCP
+      port: 8002
+  # From same namespace for health checks
+  - from:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 8002
+
+---
+# Merchant Service: Allow egress to auth and databases
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: merchant-service-egress
+  namespace: services
+spec:
+  podSelector:
+    matchLabels:
+      app: merchant-service
+  policyTypes:
+  - Egress
+  egress:
+  # To auth service (gRPC)
+  - to:
+    - podSelector:
+        matchLabels:
+          app: auth-service
+    ports:
+    - protocol: TCP
+      port: 8001
+    - protocol: TCP
+      port: 50051
+  # To databases
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: databases
+    ports:
+    - protocol: TCP
+      port: 5432
+    - protocol: TCP
+      port: 6379
+  # DNS already allowed above
