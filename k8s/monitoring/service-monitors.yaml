@@ -1,0 +1,107 @@
+---
+# API Gateway ServiceMonitor
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: api-gateway
+  namespace: gateway
+  labels:
+    app: api-gateway
+spec:
+  selector:
+    matchLabels:
+      app: api-gateway
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+
+---
+# Auth Service ServiceMonitor
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: auth-service
+  namespace: services
+  labels:
+    app: auth-service
+spec:
+  selector:
+    matchLabels:
+      app: auth-service
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+
+---
+# Merchant Service ServiceMonitor
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: merchant-service
+  namespace: services
+  labels:
+    app: merchant-service
+spec:
+  selector:
+    matchLabels:
+      app: merchant-service
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+
+---
+# Payment API Service ServiceMonitor
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: payment-api-service
+  namespace: services
+  labels:
+    app: payment-api-service
+spec:
+  selector:
+    matchLabels:
+      app: payment-api-service
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+
+---
+# Tokenization Service ServiceMonitor
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: tokenization-service
+  namespace: internal
+  labels:
+    app: tokenization-service
+spec:
+  selector:
+    matchLabels:
+      app: tokenization-service
+  endpoints:
+  - port: grpc
+    path: /metrics
+    interval: 30s
+
+---
+# Transaction Service ServiceMonitor
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: transaction-service
+  namespace: internal
+  labels:
+    app: transaction-service
+spec:
+  selector:
+    matchLabels:
+      app: transaction-service
+  endpoints:
+  - port: grpc
+    path: /metrics
+    interval: 30s
