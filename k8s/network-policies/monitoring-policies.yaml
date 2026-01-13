@@ -1,5 +1,5 @@
 # ============================================
-# Monitoring Namespace Network Policies
+# Monitoring Namespace Network Policies (FIXED)
 # ============================================
 
 ---
@@ -24,6 +24,76 @@ spec:
     ports:
     - protocol: UDP
       port: 53
+
+---
+# Allow all monitoring components to access Kubernetes API
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-access
+  namespace: monitoring
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  # Allow access to Kubernetes API server
+  - to:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          component: apiserver
+    ports:
+    - protocol: TCP
+      port: 443
+  # Also allow by IP (for kube-apiserver service)
+  - to:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+  # Allow to kube-system namespace for API access
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: TCP
+      port: 443
+
+---
+# Prometheus Operator: Allow full egress (needs to watch all namespaces)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: prometheus-operator-egress
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus-operator
+  policyTypes:
+  - Egress
+  egress:
+  # Allow all egress for operator (it needs to watch resources across namespaces)
+  - {}
+
+---
+# Kube State Metrics: Allow egress to API server and all namespaces
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kube-state-metrics-egress
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: kube-state-metrics
+  policyTypes:
+  - Egress
+  egress:
+  # Allow all egress (needs to query all Kubernetes resources)
+  - {}
 
 ---
 # Prometheus: Allow egress to scrape all services
@@ -79,7 +149,7 @@ spec:
       port: 5432
     - protocol: TCP
       port: 6379
-  # To kube-system (for cluster metrics)
+  # To kube-system (for cluster metrics and API access)
   - to:
     - namespaceSelector:
         matchLabels:
@@ -87,6 +157,12 @@ spec:
   # To own namespace (for Grafana, etc)
   - to:
     - podSelector: {}
+  # Allow API server access
+  - to:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
 
 ---
 # Grafana: Allow egress to Prometheus

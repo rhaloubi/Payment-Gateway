@@ -1,7 +1,6 @@
 # ============================================
-# NGINX Ingress Controller Network Policies
+# NGINX Ingress Controller Network Policies (Production - FIXED)
 # ============================================
-
 ---
 # Deny all ingress to ingress-nginx namespace by default
 apiVersion: networking.k8s.io/v1
@@ -36,9 +35,39 @@ spec:
     ports:
     - protocol: UDP
       port: 53
+    - protocol: TCP
+      port: 53
 
 ---
-# NGINX Ingress Controller: Allow ingress from anywhere (external traffic)
+# Allow Ingress Controller to access Kubernetes API
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-nginx-api-access
+  namespace: ingress-nginx
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ingress-nginx
+      app.kubernetes.io/component: controller
+  policyTypes:
+  - Egress
+  egress:
+  # Access to Kubernetes API server
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: TCP
+      port: 443
+  # Access to API server service (10.43.0.1)
+  - ports:
+    - protocol: TCP
+      port: 443
+
+---
+# NGINX Ingress Controller: Allow ingress from anywhere (Cloudflare Tunnel)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -52,19 +81,29 @@ spec:
   policyTypes:
   - Ingress
   ingress:
-  # Allow all traffic (from outside cluster)
+  # Allow all external traffic (Cloudflare acts as firewall)
   - ports:
     - protocol: TCP
       port: 80
     - protocol: TCP
       port: 443
+  # Allow Prometheus scraping from monitoring namespace
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+    ports:
     - protocol: TCP
-      port: 8443  # Webhook
+      port: 10254
+  # Allow internal health checks
+  - from:
+    - podSelector: {}
+    ports:
     - protocol: TCP
-      port: 10254  # Health check
+      port: 10254
 
 ---
-# NGINX Ingress Controller: Allow egress to gateway namespace
+# NGINX Ingress Controller: Allow egress to backend services
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -78,7 +117,7 @@ spec:
   policyTypes:
   - Egress
   egress:
-  # To API Gateway
+  # To API Gateway in gateway namespace
   - to:
     - namespaceSelector:
         matchLabels:
@@ -89,3 +128,8 @@ spec:
     ports:
     - protocol: TCP
       port: 8080
+  # To own namespace (for leader election and coordination)
+  - to:
+    - podSelector: {}
+    ports:
+    - protocol: TCP

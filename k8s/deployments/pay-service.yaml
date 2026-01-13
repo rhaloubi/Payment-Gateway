@@ -15,7 +15,28 @@ spec:
     metadata:
       labels:
         app: payment-api-service
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "payment-api-service"
+        vault.hashicorp.com/agent-inject-env: "VAULT_ADDR"
+
+        vault.hashicorp.com/agent-inject-secret-payment-api-dsn: "secret/data/database/payment-api-dsn"
+        vault.hashicorp.com/agent-inject-template-payment-api-dsn: |
+          {{- with secret "secret/data/database/payment-api-dsn" -}}
+          {{ .Data.data.value }}
+          {{- end }}
+        vault.hashicorp.com/agent-inject-secret-redis-dsn: "secret/data/database/redis-dsn"
+        vault.hashicorp.com/agent-inject-template-redis-dsn: |
+          {{- with secret "secret/data/database/redis-dsn" -}}
+          {{ .Data.data.value }}
+          {{- end }}
+        vault.hashicorp.com/agent-inject-secret-checkout-url: "secret/data/app/checkout-url"
+        vault.hashicorp.com/agent-inject-template-checkout-url: |
+          {{- with secret "secret/data/app/checkout-url" -}}
+          {{ .Data.data.value }}
+          {{- end }}
     spec:
+      serviceAccountName: payment-api-service
       containers:
       - name: payment-api-service
         image: rhaloubi8/payment-gateway-payment-api:latest
@@ -27,15 +48,9 @@ spec:
         - name: APP_MODE
           value: "production"
         - name: DATABASE_DSN
-          valueFrom:
-            secretKeyRef:
-              name: database-secrets
-              key: payment-api-dsn
+          value: "file:///vault/secrets/payment-api-dsn"
         - name: REDIS_DSN
-          valueFrom:
-            secretKeyRef:
-              name: database-secrets
-              key: redis-dsn
+          value: "file:///vault/secrets/redis-dsn"
         - name: AUTH_SERVICE_URL
           value: "http://auth-service.services:8001"
         - name: TOKENIZATION_SERVICE_GRPC_URL
@@ -47,10 +62,9 @@ spec:
         - name: GIN_MODE
           value: "release"
         - name: CHECKOUT_URL
-          valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: checkout-url
+          value: "file:///vault/secrets/checkout-url"
+        - name: VAULT_ADDR
+          value: "http://vault.vault.svc.cluster.local:8200"
         resources:
           requests:
             cpu: 150m

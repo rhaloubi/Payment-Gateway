@@ -5,6 +5,15 @@ kind: Job
 metadata:
   name: auth-rollback
   namespace: services
+  annotations:
+    vault.hashicorp.com/agent-inject: "true"
+    vault.hashicorp.com/role: "database-service"
+    vault.hashicorp.com/agent-inject-env: "VAULT_ADDR"
+    vault.hashicorp.com/agent-inject-secret-auth-dsn: "secret/data/database/auth-dsn"
+    vault.hashicorp.com/agent-inject-template-auth-dsn: |
+      {{- with secret "secret/data/database/auth-dsn" -}}
+      {{ .Data.data.value }}
+      {{- end }}
 spec:
   backoffLimit: 1
   template:
@@ -12,6 +21,7 @@ spec:
       labels:
         app: auth-rollback
     spec:
+      serviceAccountName: database-service  
       restartPolicy: Never
       containers:
       - name: rollback
@@ -19,10 +29,9 @@ spec:
         command: ["/auth-migrate", "down"]
         env:
         - name: DATABASE_DSN
-          valueFrom:
-            secretKeyRef:
-              name: database-secrets
-              key: auth-dsn
+          value: "file:///vault/secrets/auth-dsn"
+        - name: VAULT_ADDR
+          value: "http://vault.vault.svc.cluster.local:8200"  
 
 ---
 # Merchant Service Rollback
@@ -31,6 +40,15 @@ kind: Job
 metadata:
   name: merchant-rollback
   namespace: services
+  annotations:
+    vault.hashicorp.com/agent-inject: "true"
+    vault.hashicorp.com/role: "database-service"
+    vault.hashicorp.com/agent-inject-env: "VAULT_ADDR"
+    vault.hashicorp.com/agent-inject-secret-merchant-dsn: "secret/data/database/merchant-dsn"
+    vault.hashicorp.com/agent-inject-template-merchant-dsn: |
+      {{- with secret "secret/data/database/merchant-dsn" -}}
+      {{ .Data.data.value }}
+      {{- end }}
 spec:
   backoffLimit: 1
   template:
@@ -38,6 +56,7 @@ spec:
       labels:
         app: merchant-rollback
     spec:
+      serviceAccountName: database-service  
       restartPolicy: Never
       containers:
       - name: rollback
@@ -45,10 +64,9 @@ spec:
         command: ["/merchant-migrate", "down"]
         env:
         - name: DATABASE_DSN
-          valueFrom:
-            secretKeyRef:
-              name: database-secrets
-              key: merchant-dsn
+          value: "file:///vault/secrets/merchant-dsn"
+        - name: VAULT_ADDR
+          value: "http://vault.vault.svc.cluster.local:8200"  
 
 ---
 # Payment API Service Rollback
@@ -57,6 +75,15 @@ kind: Job
 metadata:
   name: payment-api-rollback
   namespace: services
+  annotations:
+    vault.hashicorp.com/agent-inject: "true"
+    vault.hashicorp.com/role: "database-service"
+    vault.hashicorp.com/agent-inject-env: "VAULT_ADDR"
+    vault.hashicorp.com/agent-inject-secret-payment-api-dsn: "secret/data/database/payment-api-dsn"
+    vault.hashicorp.com/agent-inject-template-payment-api-dsn: |
+      {{- with secret "secret/data/database/payment-api-dsn" -}}
+      {{ .Data.data.value }}
+      {{- end }}
 spec:
   backoffLimit: 1
   template:
@@ -64,6 +91,7 @@ spec:
       labels:
         app: payment-api-rollback
     spec:
+      serviceAccountName: database-service  
       restartPolicy: Never
       containers:
       - name: rollback
@@ -71,10 +99,9 @@ spec:
         command: ["/payment-api-migrate", "down"]
         env:
         - name: DATABASE_DSN
-          valueFrom:
-            secretKeyRef:
-              name: database-secrets
-              key: payment-api-dsn
+          value: "file:///vault/secrets/payment-api-dsn"
+        - name: VAULT_ADDR
+          value: "http://vault.vault.svc.cluster.local:8200"  
 
 ---
 # Tokenization Service Rollback
@@ -83,6 +110,15 @@ kind: Job
 metadata:
   name: tokenization-rollback
   namespace: internal
+  annotations:
+    vault.hashicorp.com/agent-inject: "true"
+    vault.hashicorp.com/role: "database-service"
+    vault.hashicorp.com/agent-inject-env: "VAULT_ADDR"
+    vault.hashicorp.com/agent-inject-secret-tokenization-dsn: "secret/data/database/tokenization-dsn"
+    vault.hashicorp.com/agent-inject-template-tokenization-dsn: |
+      {{- with secret "secret/data/database/tokenization-dsn" -}}
+      {{ .Data.data.value }}
+      {{- end }}
 spec:
   backoffLimit: 1
   template:
@@ -90,6 +126,7 @@ spec:
       labels:
         app: tokenization-rollback
     spec:
+      serviceAccountName: database-service  
       restartPolicy: Never
       containers:
       - name: rollback
@@ -97,10 +134,9 @@ spec:
         command: ["/tokenization-migrate", "down"]
         env:
         - name: DATABASE_DSN
-          valueFrom:
-            secretKeyRef:
-              name: database-secrets
-              key: tokenization-dsn
+          value: "file:///vault/secrets/tokenization-dsn"
+        - name: VAULT_ADDR
+          value: "http://vault.vault.svc.cluster.local:8200"  
 
 ---
 # Transaction Service Rollback
@@ -109,6 +145,15 @@ kind: Job
 metadata:
   name: transaction-rollback
   namespace: internal
+  annotations:
+    vault.hashicorp.com/agent-inject: "true"
+    vault.hashicorp.com/role: "database-service"
+    vault.hashicorp.com/agent-inject-env: "VAULT_ADDR"
+    vault.hashicorp.com/agent-inject-secret-transaction-dsn: "secret/data/database/transaction-dsn"
+    vault.hashicorp.com/agent-inject-template-transaction-dsn: |
+      {{- with secret "secret/data/database/transaction-dsn" -}}
+      {{ .Data.data.value }}
+      {{- end }}
 spec:
   backoffLimit: 1
   template:
@@ -116,6 +161,7 @@ spec:
       labels:
         app: transaction-rollback
     spec:
+      serviceAccountName: database-service  
       restartPolicy: Never
       containers:
       - name: rollback
@@ -123,7 +169,6 @@ spec:
         command: ["/transaction-migrate", "down"]
         env:
         - name: DATABASE_DSN
-          valueFrom:
-            secretKeyRef:
-              name: database-secrets
-              key: transaction-dsn
+          value: "file:///vault/secrets/transaction-dsn"
+        - name: VAULT_ADDR
+          value: "http://vault.vault.svc.cluster.local:8200"  

@@ -23,11 +23,15 @@ metadata:
   name: ingress-nginx-controller
   namespace: ingress-nginx
 data:
-  allow-snippet-annotations: "true"
+  # Trust Cloudflare proxy headers
   use-forwarded-headers: "true"
   compute-full-forwarded-for: "true"
-  # For local development
   use-proxy-protocol: "false"
+  # Security settings
+  allow-snippet-annotations: "false"
+  # Performance tuning
+  worker-processes: "2"
+  max-worker-connections: "16384"
 
 ---
 # ClusterRole for NGINX Ingress Controller
@@ -57,9 +61,9 @@ rules:
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses/status"]
     verbs: ["update"]
-  - apiGroups: ["networking.k8s.io"]
-    resources: ["ingressclasses"]
-    verbs: ["get", "list", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["list", "watch", "get"]
 
 ---
 # ClusterRoleBinding for NGINX Ingress Controller
@@ -77,36 +81,37 @@ subjects:
     namespace: ingress-nginx
 
 ---
-# ClusterRole for NGINX Ingress Controller
+# Role for NGINX Ingress Controller (namespace-specific)
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   name: ingress-nginx
+  namespace: ingress-nginx
 rules:
   - apiGroups: [""]
-    resources: ["configmaps", "endpoints", "nodes", "pods", "secrets", "namespaces"]
-    verbs: ["list", "watch"]
-  - apiGroups: ["coordination.k8s.io"]
-    resources: ["leases"]
-    verbs: ["list", "watch"]
-  - apiGroups: [""]
-    resources: ["nodes"]
+    resources: ["namespaces"]
     verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["configmaps", "pods", "secrets", "endpoints"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["services"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["networking.k8s.io"]
-    resources: ["ingresses", "ingressclasses"]
+    resources: ["ingresses"]
     verbs: ["get", "list", "watch"]
-  - apiGroups: [""]
-    resources: ["events"]
-    verbs: ["create", "patch"]
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses/status"]
     verbs: ["update"]
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingressclasses"]
     verbs: ["get", "list", "watch"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
   - apiGroups: ["discovery.k8s.io"]
     resources: ["endpointslices"]
     verbs: ["list", "watch", "get"]
@@ -139,7 +144,7 @@ spec:
   controller: k8s.io/ingress-nginx
 
 ---
-# NGINX Ingress Controller Deployment
+# NGINX Ingress Controller Deployment (NO WEBHOOKS)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -148,8 +153,10 @@ metadata:
   labels:
     app.kubernetes.io/name: ingress-nginx
     app.kubernetes.io/component: controller
+    app.kubernetes.io/part-of: ingress-nginx
 spec:
-  replicas: 1
+  replicas: 2
+  revisionHistoryLimit: 10
   selector:
     matchLabels:
       app.kubernetes.io/name: ingress-nginx
@@ -159,23 +166,24 @@ spec:
       labels:
         app.kubernetes.io/name: ingress-nginx
         app.kubernetes.io/component: controller
+        app.kubernetes.io/part-of: ingress-nginx
     spec:
       serviceAccountName: ingress-nginx
+      terminationGracePeriodSeconds: 300
       containers:
       - name: controller
         image: registry.k8s.io/ingress-nginx/controller:v1.11.1
+        imagePullPolicy: IfNotPresent
         args:
           - /nginx-ingress-controller
           - --election-id=ingress-nginx-leader
           - --controller-class=k8s.io/ingress-nginx
           - --ingress-class=nginx
           - --configmap=$(POD_NAMESPACE)/ingress-nginx-controller
-          - --validating-webhook=:8443
-          - --validating-webhook-certificate=/usr/local/certificates/cert
-          - --validating-webhook-key=/usr/local/certificates/key
           - --publish-status-address=localhost
           - --http-port=80
           - --https-port=443
+          - --metrics-per-host=false
         env:
           - name: POD_NAME
             valueFrom:
@@ -194,17 +202,17 @@ spec:
         - name: https
           containerPort: 443
           protocol: TCP
-        - name: webhook
-          containerPort: 8443
+        - name: metrics
+          containerPort: 10254
           protocol: TCP
         livenessProbe:
           httpGet:
             path: /healthz
             port: 10254
             scheme: HTTP
-          initialDelaySeconds: 10
+          initialDelaySeconds: 30
           periodSeconds: 10
-          timeoutSeconds: 1
+          timeoutSeconds: 5
           successThreshold: 1
           failureThreshold: 5
         readinessProbe:
@@ -212,26 +220,34 @@ spec:
             path: /healthz
             port: 10254
             scheme: HTTP
-          initialDelaySeconds: 10
+          initialDelaySeconds: 20
           periodSeconds: 10
-          timeoutSeconds: 1
+          timeoutSeconds: 5
           successThreshold: 1
           failureThreshold: 3
         resources:
           requests:
-            cpu: 100m
-            memory: 90Mi
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 512Mi
         securityContext:
-          allowPrivilegeEscalation: false
+          allowPrivilegeEscalation: true
           runAsUser: 101
           capabilities:
             drop:
             - ALL
             add:
             - NET_BIND_SERVICE
+        lifecycle:
+          preStop:
+            exec:
+              command:
+                - /wait-shutdown
 
 ---
-# NGINX Ingress Controller Service (NodePort for local k3s)
+# NGINX Ingress Controller Service (NodePort for Cloudflare Tunnel)
 apiVersion: v1
 kind: Service
 metadata:
@@ -240,6 +256,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ingress-nginx
     app.kubernetes.io/component: controller
+    app.kubernetes.io/part-of: ingress-nginx
 spec:
   type: NodePort
   selector:
@@ -248,51 +265,36 @@ spec:
   ports:
   - name: http
     port: 80
-    targetPort: 80
+    targetPort: http
     protocol: TCP
-    nodePort: 30080  # Fixed port for Cloudflare Tunnel
+    nodePort: 30080
   - name: https
     port: 443
-    targetPort: 443
+    targetPort: https
     protocol: TCP
     nodePort: 30443
+  - name: metrics
+    port: 10254
+    targetPort: metrics
+    protocol: TCP
 
 ---
-# Admission Webhook Service
+# Service for internal metrics scraping
 apiVersion: v1
 kind: Service
 metadata:
-  name: ingress-nginx-controller-admission
+  name: ingress-nginx-controller-metrics
   namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/component: controller
 spec:
   type: ClusterIP
-  ports:
-  - name: https-webhook
-    port: 443
-    targetPort: 8443
   selector:
     app.kubernetes.io/name: ingress-nginx
     app.kubernetes.io/component: controller
-
----
-# Validating Webhook Configuration
-apiVersion: admissionregistration.k8s.io/v1
-kind: ValidatingWebhookConfiguration
-metadata:
-  name: ingress-nginx-admission
-webhooks:
-  - name: validate.nginx.ingress.kubernetes.io
-    matchPolicy: Equivalent
-    rules:
-      - apiGroups: ["networking.k8s.io"]
-        apiVersions: ["v1"]
-        operations: ["CREATE", "UPDATE"]
-        resources: ["ingresses"]
-    failurePolicy: Fail
-    sideEffects: None
-    admissionReviewVersions: ["v1"]
-    clientConfig:
-      service:
-        namespace: ingress-nginx
-        name: ingress-nginx-controller-admission
-        path: /networking/v1/ingresses
+  ports:
+  - name: metrics
+    port: 10254
+    targetPort: metrics
+    protocol: TCP

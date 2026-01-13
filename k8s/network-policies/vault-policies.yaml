@@ -1,0 +1,176 @@
+# ============================================
+# Vault Network Policies
+# ============================================
+
+---
+# Deny all ingress to vault namespace by default
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-ingress
+  namespace: vault
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+
+---
+# Allow DNS from vault namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: vault
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# Vault: Allow ingress from services that need secrets
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vault-ingress
+  namespace: vault
+spec:
+  podSelector:
+    matchLabels:
+      app: vault
+  policyTypes:
+  - Ingress
+  ingress:
+  # From services namespace
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: services
+    ports:
+    - protocol: TCP
+      port: 8200
+  # From internal namespace
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: internal
+    ports:
+    - protocol: TCP
+      port: 8200
+  # From gateway namespace
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: gateway
+    ports:
+    - protocol: TCP
+      port: 8200
+  # From databases namespace
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: databases
+    ports:
+    - protocol: TCP
+      port: 8200
+  # From same namespace (for init/unseal and vault-agent-injector)
+  - from:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 8200
+    - protocol: TCP
+      port: 8201
+  # Allow external access (for management)
+  - ports:
+    - protocol: TCP
+      port: 8200
+
+---
+# Vault: Allow egress to Kubernetes API
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vault-egress
+  namespace: vault
+spec:
+  podSelector:
+    matchLabels:
+      app: vault
+  policyTypes:
+  - Egress
+  egress:
+  # To Kubernetes API server
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: default
+    ports:
+    - protocol: TCP
+      port: 443
+  # To same namespace
+  - to:
+    - podSelector: {}
+  # DNS already allowed above
+
+---
+# Vault Agent Injector: Allow ingress for webhook
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vault-agent-injector-ingress
+  namespace: vault
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: vault-agent-injector
+  policyTypes:
+  - Ingress
+  ingress:
+  # From Kubernetes API server (for webhook)
+  - from:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 8080
+
+---
+# Vault Agent Injector: Allow egress to Vault and K8s API
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vault-agent-injector-egress
+  namespace: vault
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: vault-agent-injector
+  policyTypes:
+  - Egress
+  egress:
+  # To Vault server
+  - to:
+    - podSelector:
+        matchLabels:
+          app: vault
+    ports:
+    - protocol: TCP
+      port: 8200
+  # To Kubernetes API server
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: default
+    ports:
+    - protocol: TCP
+      port: 443
