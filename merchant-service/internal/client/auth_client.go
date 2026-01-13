@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rhaloubi/payment-gateway/merchant-service/config"
 	"github.com/rhaloubi/payment-gateway/merchant-service/inits/logger"
 	pb "github.com/rhaloubi/payment-gateway/merchant-service/proto"
 	"go.uber.org/zap"
@@ -25,12 +25,12 @@ type AuthServiceClient struct {
 }
 
 func NewAuthServiceClient() *AuthServiceClient {
-	baseURL := os.Getenv("AUTH_SERVICE_URL")
+	baseURL := config.GetEnv("AUTH_SERVICE_URL")
 	if baseURL == "" {
 		baseURL = "http://localhost:8001"
 	}
 
-	grpcAddress := os.Getenv("AUTH_SERVICE_GRPC_URL") // From your response
+	grpcAddress := config.GetEnv("AUTH_SERVICE_GRPC_URL") // From your response
 	if grpcAddress == "" {
 		grpcAddress = "localhost:50051"
 	}

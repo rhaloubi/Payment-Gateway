@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/rhaloubi/payment-gateway/payment-api-service/config"
 	"github.com/rhaloubi/payment-gateway/payment-api-service/inits"
 	"github.com/rhaloubi/payment-gateway/payment-api-service/inits/logger"
 	"github.com/rhaloubi/payment-gateway/payment-api-service/internal/api"
@@ -14,7 +15,7 @@ import (
 )
 
 func init() {
-	if os.Getenv("APP_MODE") == "" {
+	if config.GetEnv("APP_MODE") == "" {
 		inits.InitDotEnv()
 	}
 	logger.Init()
@@ -52,7 +53,7 @@ func main() {
 		}
 	}()
 
-	port := os.Getenv("PORT")
+	port := config.GetEnv("PORT")
 	if port == "" {
 		port = "8004"
 	}

@@ -3,10 +3,10 @@ package inits
 import (
 	"bytes"
 	"html/template"
-	"os"
 	"path/filepath"
 	"strconv"
 
+	"github.com/rhaloubi/payment-gateway/auth-service/config"
 	"gopkg.in/gomail.v2"
 )
 
@@ -16,19 +16,19 @@ type EmailService struct {
 }
 
 func NewEmailService() *EmailService {
-	port, err := strconv.Atoi(os.Getenv("EMAIL_SMTP_PORT"))
+	port, err := strconv.Atoi(config.GetEnv("EMAIL_SMTP_PORT"))
 	if err != nil {
 		port = 587
 	}
 
 	return &EmailService{
 		Dialer: gomail.NewDialer(
-			os.Getenv("EMAIL_SMTP_HOST"),
+			config.GetEnv("EMAIL_SMTP_HOST"),
 			port,
-			os.Getenv("EMAIL_SMTP_USER"),
-			os.Getenv("EMAIL_SMTP_PASS"),
+			config.GetEnv("EMAIL_SMTP_USER"),
+			config.GetEnv("EMAIL_SMTP_PASS"),
 		),
-		From: os.Getenv("EMAIL_FROM"),
+		From: config.GetEnv("EMAIL_FROM"),
 	}
 }
 

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
+	"github.com/rhaloubi/payment-gateway/payment-api-service/config"
 	"github.com/rhaloubi/payment-gateway/payment-api-service/inits/logger"
 	pb "github.com/rhaloubi/payment-gateway/payment-api-service/proto"
 	"go.uber.org/zap"
@@ -24,7 +24,7 @@ type TransactionClient struct {
 }
 
 func NewTransactionClient() *TransactionClient {
-	grpcAddress := os.Getenv("TRANSACTION_SERVICE_GRPC_URL")
+	grpcAddress := config.GetEnv("TRANSACTION_SERVICE_GRPC_URL")
 	if grpcAddress == "" {
 		grpcAddress = "localhost:50053"
 	}

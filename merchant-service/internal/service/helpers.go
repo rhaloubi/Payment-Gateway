@@ -2,9 +2,10 @@ package service
 
 import (
 	"database/sql"
-	"os"
 	"strconv"
 	"time"
+
+	"github.com/rhaloubi/payment-gateway/merchant-service/config"
 )
 
 // toNullString converts a string to sql.NullString
@@ -25,7 +26,7 @@ func toNullTime(t time.Time) sql.NullTime {
 
 // getEnv gets environment variable with default
 func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
+	if value := config.GetEnv(key); value != "" {
 		return value
 	}
 	return defaultValue
@@ -33,7 +34,7 @@ func getEnv(key, defaultValue string) string {
 
 // getEnvInt gets environment variable as int with default
 func getEnvInt(key string, defaultValue int) int {
-	if value := os.Getenv(key); value != "" {
+	if value := config.GetEnv(key); value != "" {
 		if intValue, err := strconv.Atoi(value); err == nil {
 			return intValue
 		}

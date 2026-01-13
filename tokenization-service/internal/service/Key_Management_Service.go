@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"os"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rhaloubi/payment-gateway/tokenization-service/config"
 	"github.com/rhaloubi/payment-gateway/tokenization-service/inits/logger"
 	"github.com/rhaloubi/payment-gateway/tokenization-service/internal/crypto"
 	model "github.com/rhaloubi/payment-gateway/tokenization-service/internal/models"
@@ -25,7 +25,7 @@ type KeyManagementService struct {
 }
 
 func NewKeyManagementService() *KeyManagementService {
-	vaultEnabled := os.Getenv("VAULT_ENABLED") == "true"
+	vaultEnabled := config.GetEnv("VAULT_ENABLED") == "true"
 
 	return &KeyManagementService{
 		keyRepo:           repository.NewEncryptionKeyRepository(),

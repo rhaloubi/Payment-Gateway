@@ -3,8 +3,8 @@ package service
 import (
 	"crypto/tls"
 	"fmt"
-	"os"
 
+	"github.com/rhaloubi/payment-gateway/merchant-service/config"
 	"github.com/rhaloubi/payment-gateway/merchant-service/inits/logger"
 	model "github.com/rhaloubi/payment-gateway/merchant-service/internal/models"
 	"go.uber.org/zap"
@@ -23,14 +23,14 @@ type EmailService struct {
 
 // NewEmailService creates a new email service
 func NewEmailService() *EmailService {
-	smtpUsername := os.Getenv("MAILTRAP_USERNAME")
-	smtpPassword := os.Getenv("MAILTRAP_PASSWORD")
-	
+	smtpUsername := config.GetEnv("MAILTRAP_USERNAME")
+	smtpPassword := config.GetEnv("MAILTRAP_PASSWORD")
+
 	// Validate Mailtrap credentials
 	if smtpUsername == "" || smtpPassword == "" {
 		logger.Log.Warn("Mailtrap credentials not configured. Email sending will be disabled.")
 	}
-	
+
 	return &EmailService{
 		smtpHost:     getEnv("MAILTRAP_HOST", "sandbox.smtp.mailtrap.io"),
 		smtpPort:     getEnvInt("MAILTRAP_PORT", 2525),

@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/rhaloubi/payment-gateway/transaction-service/config"
 	"github.com/rhaloubi/payment-gateway/transaction-service/inits"
 	"github.com/rhaloubi/payment-gateway/transaction-service/inits/logger"
 	"github.com/rhaloubi/payment-gateway/transaction-service/internal/service"
@@ -13,7 +14,7 @@ import (
 )
 
 func init() {
-	if os.Getenv("APP_MODE") == "" {
+	if config.GetEnv("APP_MODE") == "" {
 		inits.InitDotEnv()
 	}
 	logger.Init()
@@ -40,7 +41,7 @@ func main() {
 	go startCurrencyUpdateWorker(ctx, currencyService)
 
 	// Get gRPC port
-	grpcPort := os.Getenv("GRPC_PORT")
+	grpcPort := config.GetEnv("GRPC_PORT")
 	if grpcPort == "" {
 		grpcPort = "50053"
 	}
@@ -52,7 +53,7 @@ func main() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-	port := os.Getenv("PORT")
+	port := config.GetEnv("PORT")
 	if port == "" {
 		port = "8005"
 	}

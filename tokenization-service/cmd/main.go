@@ -5,6 +5,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/rhaloubi/payment-gateway/tokenization-service/config"
 	"github.com/rhaloubi/payment-gateway/tokenization-service/inits"
 	"github.com/rhaloubi/payment-gateway/tokenization-service/inits/logger"
 	"github.com/rhaloubi/payment-gateway/tokenization-service/internal/grpc"
@@ -14,7 +15,7 @@ import (
 )
 
 func init() {
-	if os.Getenv("APP_MODE") == "" {
+	if config.GetEnv("APP_MODE") == "" {
 		inits.InitDotEnv()
 	}
 	inits.InitDB()
@@ -31,7 +32,7 @@ func main() {
 
 	// Start gRPC server in a goroutine
 	go func() {
-		logger.Log.Info("🚀 gRPC server running on :" + os.Getenv("GRPC_PORT"))
+		logger.Log.Info("🚀 gRPC server running on :" + config.GetEnv("GRPC_PORT"))
 		if err := grpcServer.Serve(lis); err != nil {
 			logger.Log.Fatal("❌ Failed to serve gRPC", zap.Error(err))
 		}

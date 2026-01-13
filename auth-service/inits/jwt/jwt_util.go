@@ -4,11 +4,11 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/rhaloubi/payment-gateway/auth-service/config"
 )
 
 // JWTUtil handles JWT operations
@@ -26,7 +26,7 @@ type JWTClaims struct {
 
 // NewJWTUtil creates a new JWT utility
 func NewJWTUtil() *JWTUtil {
-	secretKey := os.Getenv("JWT_SECRET_KEY")
+	secretKey := config.GetEnv("JWT_SECRET_KEY")
 	if secretKey == "" {
 		secretKey = "default-secret-key-change-in-production"
 	}

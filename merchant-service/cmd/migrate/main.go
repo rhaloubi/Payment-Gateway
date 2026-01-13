@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/rhaloubi/payment-gateway/merchant-service/config"
 	"github.com/rhaloubi/payment-gateway/merchant-service/inits"
 	"github.com/rhaloubi/payment-gateway/merchant-service/inits/logger"
 	"github.com/rhaloubi/payment-gateway/merchant-service/internal/migrations"
@@ -13,7 +14,7 @@ func main() {
 	if len(os.Args) < 2 {
 		log.Fatal("usage: migrate [up|down]")
 	}
-	if os.Getenv("APP_MODE") == "" {
+	if config.GetEnv("APP_MODE") == "" {
 		inits.InitDotEnv()
 	}
 	logger.Init()

@@ -1,5 +1,5 @@
 # -------------------------
-# ServiceAccount (REQUIRED FOR VAULT)
+# ServiceAccount
 # -------------------------
 apiVersion: v1
 kind: ServiceAccount
@@ -8,7 +8,7 @@ metadata:
   namespace: services
 ---
 # -------------------------
-# Auth Service Deployment - Secrets loaded as env vars
+# Auth Service Deployment - Clean version with file-based secrets
 # -------------------------
 apiVersion: apps/v1
 kind: Deployment
@@ -56,20 +56,6 @@ spec:
         ports:
         - containerPort: 8001
         - containerPort: 50051
-        command: ["/bin/sh"]
-        args:
-          - "-c"
-          - |
-            # Read secrets from vault files and export as env vars
-            export DATABASE_DSN=$(cat /vault/secrets/database-dsn)
-            export REDIS_DSN=$(cat /vault/secrets/redis-dsn)
-            export JWT_SECRET_KEY=$(cat /vault/secrets/jwt-secret)
-            
-            # Debug: Print that secrets are loaded (remove in production)
-            echo "Secrets loaded successfully"
-            
-            # Start the application (adjust path if needed)
-            exec /app/auth-service
         env:
         - name: PORT
           value: "8001"
@@ -77,6 +63,13 @@ spec:
           value: "production"
         - name: GRPC_PORT
           value: "50051"
+        # Point to Vault secret files - Go app will read these automatically
+        - name: DATABASE_DSN_FILE
+          value: "/vault/secrets/database-dsn"
+        - name: REDIS_DSN_FILE
+          value: "/vault/secrets/redis-dsn"
+        - name: JWT_SECRET_KEY_FILE
+          value: "/vault/secrets/jwt-secret"
         - name: VAULT_ADDR
           value: "http://vault.vault.svc.cluster.local:8200"
         - name: GIN_MODE

@@ -5,6 +5,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/rhaloubi/payment-gateway/merchant-service/config"
 	"github.com/rhaloubi/payment-gateway/merchant-service/inits"
 	"github.com/rhaloubi/payment-gateway/merchant-service/inits/logger"
 	"github.com/rhaloubi/payment-gateway/merchant-service/internal/api"
@@ -12,7 +13,7 @@ import (
 )
 
 func init() {
-	if os.Getenv("APP_MODE") == "" {
+	if config.GetEnv("APP_MODE") == "" {
 		inits.InitDotEnv()
 	}
 	inits.InitDB()

@@ -2,14 +2,14 @@ package middleware
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rhaloubi/payment-gateway/auth-service/config"
 )
 
 func InternalServiceMiddleware() gin.HandlerFunc {
 	// Get shared secret from environment (for development)
-	internalSecret := os.Getenv("INTERNAL_SERVICE_SECRET")
+	internalSecret := config.GetEnv("INTERNAL_SERVICE_SECRET")
 	if internalSecret == "" {
 		// For development, accept any internal request
 		// In production, this should FAIL if secret is not set

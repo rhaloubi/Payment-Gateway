@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/rhaloubi/payment-gateway/auth-service/config"
 	"github.com/rhaloubi/payment-gateway/auth-service/inits"
 	"github.com/rhaloubi/payment-gateway/auth-service/inits/logger"
 	"github.com/rhaloubi/payment-gateway/auth-service/internal/api"
@@ -19,7 +20,7 @@ import (
 )
 
 func init() {
-	if os.Getenv("APP_MODE") == "" {
+	if config.GetEnv("APP_MODE") == "" {
 		inits.InitDotEnv()
 	}
 	inits.InitDB()
@@ -38,7 +39,7 @@ func main() {
 	pb.RegisterAPIKeyServiceServer(grpcServer, handler.NewGRPCAPIKeyService())
 
 	httpServer := &http.Server{
-		Addr:    ":" + os.Getenv("PORT"),
+		Addr:    ":" + config.GetEnv("PORT"),
 		Handler: inits.R,
 	}
 
@@ -47,7 +48,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		logger.Log.Info("🚀 HTTP (Gin) server running on :" + os.Getenv("PORT"))
+		logger.Log.Info("🚀 HTTP (Gin) server running on :" + config.GetEnv("PORT"))
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Log.Error("HTTP server error", zap.Error(err))
 		}

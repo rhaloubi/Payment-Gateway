@@ -2,10 +2,10 @@ package jwt
 
 import (
 	"errors"
-	"os"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/rhaloubi/payment-gateway/tokenization-service/config"
 )
 
 // JWTClaims represents the JWT claims structure
@@ -21,7 +21,7 @@ type JWTValidator struct {
 }
 
 func NewJWTValidator() *JWTValidator {
-	secretKey := os.Getenv("JWT_SECRET_KEY")
+	secretKey := config.GetEnv("JWT_SECRET_KEY")
 	if secretKey == "" {
 		panic("JWT_SECRET_KEY environment variable is required")
 	}

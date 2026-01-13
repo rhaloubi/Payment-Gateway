@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
+	"github.com/rhaloubi/payment-gateway/transaction-service/config"
 	"github.com/rhaloubi/payment-gateway/transaction-service/inits/logger"
 	pb "github.com/rhaloubi/payment-gateway/transaction-service/proto"
 	"go.uber.org/zap"
@@ -23,7 +23,7 @@ type TokenizationClient struct {
 
 func NewTokenizationClient() (*TokenizationClient, error) {
 
-	grpcAddress := os.Getenv("TOKENIZATION_SERVICE_GRPC_URL") // From your response
+	grpcAddress := config.GetEnv("TOKENIZATION_SERVICE_GRPC_URL") // From your response
 	if grpcAddress == "" {
 		grpcAddress = "localhost:50053"
 	}

@@ -7,10 +7,10 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rhaloubi/payment-gateway/payment-api-service/config"
 	"github.com/rhaloubi/payment-gateway/payment-api-service/inits/logger"
 	model "github.com/rhaloubi/payment-gateway/payment-api-service/internal/models"
 	"github.com/rhaloubi/payment-gateway/payment-api-service/internal/repository"
@@ -155,7 +155,7 @@ func (s *PaymentIntentService) CreatePaymentIntent(ctx context.Context, req *Cre
 		Status:       intent.Status,
 		Amount:       intent.Amount,
 		Currency:     intent.Currency,
-		CheckoutURL:  intent.GetCheckoutURL(os.Getenv("CHECKOUT_URL")),
+		CheckoutURL:  intent.GetCheckoutURL(config.GetEnv("CHECKOUT_URL")),
 		ExpiresAt:    intent.ExpiresAt,
 		CreatedAt:    intent.CreatedAt,
 	}, nil
