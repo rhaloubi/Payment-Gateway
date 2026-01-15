@@ -18,28 +18,36 @@ spec:
       annotations:
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/role: "merchant-service"
-        vault.hashicorp.com/agent-inject-env: "VAULT_ADDR"
 
+        # DATABASE DSN
         vault.hashicorp.com/agent-inject-secret-database-dsn: "secret/data/database/merchant-dsn"
         vault.hashicorp.com/agent-inject-template-database-dsn: |
           {{- with secret "secret/data/database/merchant-dsn" -}}
           {{ .Data.data.value }}
           {{- end }}
+
+        # REDIS DSN
         vault.hashicorp.com/agent-inject-secret-redis-dsn: "secret/data/database/redis-dsn"
         vault.hashicorp.com/agent-inject-template-redis-dsn: |
           {{- with secret "secret/data/database/redis-dsn" -}}
           {{ .Data.data.value }}
           {{- end }}
+
+        # JWT SECRET
         vault.hashicorp.com/agent-inject-secret-jwt-secret: "secret/data/app/jwt-secret"
         vault.hashicorp.com/agent-inject-template-jwt-secret: |
           {{- with secret "secret/data/app/jwt-secret" -}}
           {{ .Data.data.value }}
           {{- end }}
+
+        # MAILTRAP USERNAME
         vault.hashicorp.com/agent-inject-secret-mailtrap-username: "secret/data/app/mailtrap-username"
         vault.hashicorp.com/agent-inject-template-mailtrap-username: |
           {{- with secret "secret/data/app/mailtrap-username" -}}
           {{ .Data.data.value }}
           {{- end }}
+
+        # MAILTRAP PASSWORD
         vault.hashicorp.com/agent-inject-secret-mailtrap-password: "secret/data/app/mailtrap-password"
         vault.hashicorp.com/agent-inject-template-mailtrap-password: |
           {{- with secret "secret/data/app/mailtrap-password" -}}
@@ -57,22 +65,22 @@ spec:
           value: "8002"
         - name: APP_MODE
           value: "production"
-        - name: DATABASE_DSN
-          value: "file:///vault/secrets/merchant-dsn"
-        - name: REDIS_DSN
-          value: "file:///vault/secrets/redis-dsn"
+        - name: DATABASE_DSN_FILE
+          value: "/vault/secrets/database-dsn"
+        - name: REDIS_DSN_FILE
+          value: "/vault/secrets/redis-dsn"
         - name: AUTH_SERVICE_URL
           value: "http://auth-service.services:8001"
         - name: AUTH_SERVICE_GRPC_URL
           value: "auth-service.services:50051"
-        - name: JWT_SECRET_KEY
-          value: "file:///vault/secrets/jwt-secret"
+        - name: JWT_SECRET_KEY_FILE
+          value: "/vault/secrets/jwt-secret"
         - name: GIN_MODE
           value: "release"
-        - name: MAILTRAP_USERNAME
-          value: "file:///vault/secrets/mailtrap-username"
-        - name: MAILTRAP_PASSWORD
-          value: "file:///vault/secrets/mailtrap-password"
+        - name: MAILTRAP_USERNAME_FILE
+          value: "/vault/secrets/mailtrap-username"
+        - name: MAILTRAP_PASSWORD_FILE
+          value: "/vault/secrets/mailtrap-password"
         - name: MAILTRAP_HOST
           value: "smtp.mailtrap.io"
         - name: MAILTRAP_PORT

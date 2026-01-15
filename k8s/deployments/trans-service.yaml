@@ -18,12 +18,15 @@ spec:
       annotations:
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/role: "transaction-service"
-        vault.hashicorp.com/agent-inject-env: "VAULT_ADDR"
+
+        # DATABASE DSN
         vault.hashicorp.com/agent-inject-secret-transaction-dsn: "secret/data/database/transaction-dsn"
         vault.hashicorp.com/agent-inject-template-transaction-dsn: |
           {{- with secret "secret/data/database/transaction-dsn" -}}
           {{ .Data.data.value }}
           {{- end }}
+
+        # REDIS DSN
         vault.hashicorp.com/agent-inject-secret-redis-dsn: "secret/data/database/redis-dsn"
         vault.hashicorp.com/agent-inject-template-redis-dsn: |
           {{- with secret "secret/data/database/redis-dsn" -}}
@@ -41,10 +44,10 @@ spec:
           value: "50053"
         - name: APP_MODE
           value: "production"
-        - name: DATABASE_DSN
-          value: "file:///vault/secrets/transaction-dsn"
-        - name: REDIS_DSN
-          value: "file:///vault/secrets/redis-dsn"
+        - name: DATABASE_DSN_FILE
+          value: "/vault/secrets/transaction-dsn"
+        - name: REDIS_DSN_FILE
+          value: "/vault/secrets/redis-dsn"
         - name: TOKENIZATION_SERVICE_GRPC
           value: "tokenization-service.internal:50052"
         - name: VAULT_ADDR

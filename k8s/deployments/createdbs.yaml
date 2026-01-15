@@ -12,7 +12,6 @@ spec:
       annotations:
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/role: "database-service"
-        vault.hashicorp.com/agent-inject-env: "VAULT_ADDR"
         vault.hashicorp.com/agent-inject-secret-admin-dsn: "secret/data/database/admin-dsn"
         vault.hashicorp.com/agent-inject-template-admin-dsn: |
           {{- with secret "secret/data/database/admin-dsn" -}}
@@ -28,15 +27,19 @@ spec:
           - sh
           - -c
           - |
+            # Read the DSN from the vault secret file
+            export DATABASE_DSN=$(cat /vault/secrets/admin-dsn)
+            
+            # Create databases
             psql "$DATABASE_DSN" <<EOF
-            CREATE DATABASE micro_auth;
-            CREATE DATABASE micro_merchant;
-            CREATE DATABASE micro_payment;
-            CREATE DATABASE micro_tokenization;
-            CREATE DATABASE micro_transaction;
+            CREATE DATABASE IF NOT EXISTS micro_auth;
+            CREATE DATABASE IF NOT EXISTS micro_merchant;
+            CREATE DATABASE IF NOT EXISTS micro_payment;
+            CREATE DATABASE IF NOT EXISTS micro_tokenization;
+            CREATE DATABASE IF NOT EXISTS micro_transaction;
             EOF
+            
+            echo "✅ Databases created successfully"
         env:
-        - name: DATABASE_DSN
-          value: "file:///vault/secrets/admin-dsn"
         - name: VAULT_ADDR
           value: "http://vault.vault.svc.cluster.local:8200"

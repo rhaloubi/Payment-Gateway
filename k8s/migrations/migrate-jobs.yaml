@@ -1,4 +1,3 @@
-
 ---
 # Auth Service Migration
 apiVersion: batch/v1
@@ -6,33 +5,34 @@ kind: Job
 metadata:
   name: auth-migrate
   namespace: services
-  annotations:
-    vault.hashicorp.com/agent-inject: "true"
-    vault.hashicorp.com/role: "database-service"
-    vault.hashicorp.com/agent-inject-env: "VAULT_ADDR"
-    vault.hashicorp.com/agent-inject-secret-auth-dsn: "secret/data/database/auth-dsn"
-    vault.hashicorp.com/agent-inject-template-auth-dsn: |
-      {{- with secret "secret/data/database/auth-dsn" -}}
-      {{ .Data.data.value }}
-      {{- end }}
 spec:
   backoffLimit: 3
   template:
     metadata:
       labels:
         app: auth-migrate
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "database-service"
+        vault.hashicorp.com/agent-inject-secret-auth-dsn: "secret/data/database/auth-dsn"
+        vault.hashicorp.com/agent-inject-template-auth-dsn: |
+          {{- with secret "secret/data/database/auth-dsn" -}}
+          {{ .Data.data.value }}
+          {{- end }}
     spec:
       serviceAccountName: database-service
       restartPolicy: OnFailure
       containers:
       - name: migrate
-        image: rhaloubi8/payment-gateway-auth:latest  
-        command: ["/auth-migrate", "up"]
+        image: rhaloubi8/payment-gateway-auth:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            export DATABASE_DSN=$(cat /vault/secrets/auth-dsn)
+            exec /auth-migrate up
         env:
         - name: APP_MODE
           value: "production"
-        - name: DATABASE_DSN
-          value: "file:///vault/secrets/auth-dsn"
         - name: VAULT_ADDR
           value: "http://vault.vault.svc.cluster.local:8200"
 
@@ -43,33 +43,34 @@ kind: Job
 metadata:
   name: merchant-migrate
   namespace: services
-  annotations:
-    vault.hashicorp.com/agent-inject: "true"
-    vault.hashicorp.com/role: "database-service"
-    vault.hashicorp.com/agent-inject-env: "VAULT_ADDR"
-    vault.hashicorp.com/agent-inject-secret-merchant-dsn: "secret/data/database/merchant-dsn"
-    vault.hashicorp.com/agent-inject-template-merchant-dsn: |
-      {{- with secret "secret/data/database/merchant-dsn" -}}
-      {{ .Data.data.value }}
-      {{- end }}
 spec:
   backoffLimit: 3
   template:
     metadata:
       labels:
         app: merchant-migrate
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "database-service"
+        vault.hashicorp.com/agent-inject-secret-merchant-dsn: "secret/data/database/merchant-dsn"
+        vault.hashicorp.com/agent-inject-template-merchant-dsn: |
+          {{- with secret "secret/data/database/merchant-dsn" -}}
+          {{ .Data.data.value }}
+          {{- end }}
     spec:
       serviceAccountName: database-service  
       restartPolicy: OnFailure
       containers:
       - name: migrate
         image: rhaloubi8/payment-gateway-merchant:latest
-        command: ["/merchant-migrate", "up"]
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            export DATABASE_DSN=$(cat /vault/secrets/merchant-dsn)
+            exec /merchant-migrate up
         env:
         - name: APP_MODE
           value: "production"
-        - name: DATABASE_DSN
-          value: "file:///vault/secrets/merchant-dsn"
         - name: VAULT_ADDR
           value: "http://vault.vault.svc.cluster.local:8200"
 
@@ -80,33 +81,34 @@ kind: Job
 metadata:
   name: payment-api-migrate
   namespace: services
-  annotations:
-    vault.hashicorp.com/agent-inject: "true"
-    vault.hashicorp.com/role: "database-service"
-    vault.hashicorp.com/agent-inject-env: "VAULT_ADDR"
-    vault.hashicorp.com/agent-inject-secret-payment-api-dsn: "secret/data/database/payment-api-dsn"
-    vault.hashicorp.com/agent-inject-template-payment-api-dsn: |
-      {{- with secret "secret/data/database/payment-api-dsn" -}}
-      {{ .Data.data.value }}
-      {{- end }}
 spec:
   backoffLimit: 3
   template:
     metadata:
       labels:
         app: payment-api-migrate
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "database-service"
+        vault.hashicorp.com/agent-inject-secret-payment-api-dsn: "secret/data/database/payment-api-dsn"
+        vault.hashicorp.com/agent-inject-template-payment-api-dsn: |
+          {{- with secret "secret/data/database/payment-api-dsn" -}}
+          {{ .Data.data.value }}
+          {{- end }}
     spec:
       serviceAccountName: database-service
       restartPolicy: OnFailure
       containers:
       - name: migrate
         image: rhaloubi8/payment-gateway-payment-api:latest
-        command: ["/payment-api-migrate", "up"]
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            export DATABASE_DSN=$(cat /vault/secrets/payment-api-dsn)
+            exec /payment-api-migrate up
         env:
         - name: APP_MODE
           value: "production"
-        - name: DATABASE_DSN
-          value: "file:///vault/secrets/payment-api-dsn"
         - name: VAULT_ADDR
           value: "http://vault.vault.svc.cluster.local:8200"
 
@@ -117,33 +119,34 @@ kind: Job
 metadata:
   name: tokenization-migrate
   namespace: internal
-  annotations:
-    vault.hashicorp.com/agent-inject: "true"
-    vault.hashicorp.com/role: "database-service"
-    vault.hashicorp.com/agent-inject-env: "VAULT_ADDR"
-    vault.hashicorp.com/agent-inject-secret-tokenization-dsn: "secret/data/database/tokenization-dsn"
-    vault.hashicorp.com/agent-inject-template-tokenization-dsn: |
-      {{- with secret "secret/data/database/tokenization-dsn" -}}
-      {{ .Data.data.value }}
-      {{- end }}
 spec:
   backoffLimit: 3
   template:
     metadata:
       labels:
         app: tokenization-migrate
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "database-service"
+        vault.hashicorp.com/agent-inject-secret-tokenization-dsn: "secret/data/database/tokenization-dsn"
+        vault.hashicorp.com/agent-inject-template-tokenization-dsn: |
+          {{- with secret "secret/data/database/tokenization-dsn" -}}
+          {{ .Data.data.value }}
+          {{- end }}
     spec:
       serviceAccountName: database-service
       restartPolicy: OnFailure
       containers:
       - name: migrate
         image: rhaloubi8/payment-gateway-tokenization:latest
-        command: ["/tokenization-migrate", "up"]
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            export DATABASE_DSN=$(cat /vault/secrets/tokenization-dsn)
+            exec /tokenization-migrate up
         env:
         - name: APP_MODE
           value: "production"
-        - name: DATABASE_DSN
-          value: "file:///vault/secrets/tokenization-dsn"
         - name: VAULT_ADDR
           value: "http://vault.vault.svc.cluster.local:8200"
 
@@ -154,32 +157,33 @@ kind: Job
 metadata:
   name: transaction-migrate
   namespace: internal
-  annotations:
-    vault.hashicorp.com/agent-inject: "true"
-    vault.hashicorp.com/role: "database-service"
-    vault.hashicorp.com/agent-inject-env: "VAULT_ADDR"
-    vault.hashicorp.com/agent-inject-secret-transaction-dsn: "secret/data/database/transaction-dsn"
-    vault.hashicorp.com/agent-inject-template-transaction-dsn: |
-      {{- with secret "secret/data/database/transaction-dsn" -}}
-      {{ .Data.data.value }}
-      {{- end }}
 spec:
   backoffLimit: 3
   template:
     metadata:
       labels:
         app: transaction-migrate
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "database-service"
+        vault.hashicorp.com/agent-inject-secret-transaction-dsn: "secret/data/database/transaction-dsn"
+        vault.hashicorp.com/agent-inject-template-transaction-dsn: |
+          {{- with secret "secret/data/database/transaction-dsn" -}}
+          {{ .Data.data.value }}
+          {{- end }}
     spec:
       serviceAccountName: database-service
       restartPolicy: OnFailure
       containers:
       - name: migrate
         image: rhaloubi8/payment-gateway-transaction:latest
-        command: ["/transaction-migrate", "up"]
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            export DATABASE_DSN=$(cat /vault/secrets/transaction-dsn)
+            exec /transaction-migrate up
         env:
         - name: APP_MODE
           value: "production"
-        - name: DATABASE_DSN
-          value: "file:///vault/secrets/transaction-dsn"
         - name: VAULT_ADDR
           value: "http://vault.vault.svc.cluster.local:8200"
