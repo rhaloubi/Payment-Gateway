@@ -17,7 +17,9 @@ spec:
         app: transaction-service
       annotations:
         vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-init: "false"
         vault.hashicorp.com/role: "transaction-service"
+        vault.hashicorp.com/agent-pre-populate-only: "false"
 
         # DATABASE DSN
         vault.hashicorp.com/agent-inject-secret-transaction-dsn: "secret/data/database/transaction-dsn"

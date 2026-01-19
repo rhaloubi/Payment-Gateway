@@ -13,14 +13,15 @@ spec:
         app: auth-rollback
       annotations:
         vault.hashicorp.com/agent-inject: "true"
-        vault.hashicorp.com/role: "database-service"
+        vault.hashicorp.com/role: "auth-service"
+        vault.hashicorp.com/agent-pre-populate-only: "true"
         vault.hashicorp.com/agent-inject-secret-auth-dsn: "secret/data/database/auth-dsn"
         vault.hashicorp.com/agent-inject-template-auth-dsn: |
           {{- with secret "secret/data/database/auth-dsn" -}}
           {{ .Data.data.value }}
           {{- end }}
     spec:
-      serviceAccountName: database-service  
+      serviceAccountName: auth-service  
       restartPolicy: Never
       containers:
       - name: rollback
@@ -49,14 +50,15 @@ spec:
         app: merchant-rollback
       annotations:
         vault.hashicorp.com/agent-inject: "true"
-        vault.hashicorp.com/role: "database-service"
+        vault.hashicorp.com/role: "merchant-service"
+        vault.hashicorp.com/agent-pre-populate-only: "true"
         vault.hashicorp.com/agent-inject-secret-merchant-dsn: "secret/data/database/merchant-dsn"
         vault.hashicorp.com/agent-inject-template-merchant-dsn: |
           {{- with secret "secret/data/database/merchant-dsn" -}}
           {{ .Data.data.value }}
           {{- end }}
     spec:
-      serviceAccountName: database-service  
+      serviceAccountName: merchant-service  
       restartPolicy: Never
       containers:
       - name: rollback
@@ -85,14 +87,15 @@ spec:
         app: payment-api-rollback
       annotations:
         vault.hashicorp.com/agent-inject: "true"
-        vault.hashicorp.com/role: "database-service"
+        vault.hashicorp.com/role: "payment-api-service"
+        vault.hashicorp.com/agent-pre-populate-only: "true"
         vault.hashicorp.com/agent-inject-secret-payment-api-dsn: "secret/data/database/payment-api-dsn"
         vault.hashicorp.com/agent-inject-template-payment-api-dsn: |
           {{- with secret "secret/data/database/payment-api-dsn" -}}
           {{ .Data.data.value }}
           {{- end }}
     spec:
-      serviceAccountName: database-service  
+      serviceAccountName: payment-api-service  
       restartPolicy: Never
       containers:
       - name: rollback
@@ -121,14 +124,15 @@ spec:
         app: tokenization-rollback
       annotations:
         vault.hashicorp.com/agent-inject: "true"
-        vault.hashicorp.com/role: "database-service"
+        vault.hashicorp.com/role: "tokenization-service"
+        vault.hashicorp.com/agent-pre-populate-only: "true"
         vault.hashicorp.com/agent-inject-secret-tokenization-dsn: "secret/data/database/tokenization-dsn"
         vault.hashicorp.com/agent-inject-template-tokenization-dsn: |
           {{- with secret "secret/data/database/tokenization-dsn" -}}
           {{ .Data.data.value }}
           {{- end }}
     spec:
-      serviceAccountName: database-service  
+      serviceAccountName: tokenization-service  
       restartPolicy: Never
       containers:
       - name: rollback
@@ -157,14 +161,15 @@ spec:
         app: transaction-rollback
       annotations:
         vault.hashicorp.com/agent-inject: "true"
-        vault.hashicorp.com/role: "database-service"
+        vault.hashicorp.com/role: "transaction-service"
+        vault.hashicorp.com/agent-pre-populate-only: "true"
         vault.hashicorp.com/agent-inject-secret-transaction-dsn: "secret/data/database/transaction-dsn"
         vault.hashicorp.com/agent-inject-template-transaction-dsn: |
           {{- with secret "secret/data/database/transaction-dsn" -}}
           {{ .Data.data.value }}
           {{- end }}
     spec:
-      serviceAccountName: database-service  
+      serviceAccountName: transaction-service  
       restartPolicy: Never
       containers:
       - name: rollback

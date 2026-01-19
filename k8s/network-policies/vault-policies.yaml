@@ -1,9 +1,10 @@
 # ============================================
-# Vault Network Policies
+# Vault Network Policies (FULL WORKING SET)
 # ============================================
 
----
-# Deny all ingress to vault namespace by default
+# --------------------------------------------
+# 1. Default deny all ingress to Vault namespace
+# --------------------------------------------
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -13,9 +14,11 @@ spec:
   podSelector: {}
   policyTypes:
   - Ingress
-
 ---
-# Allow DNS from vault namespace
+# --------------------------------------------
+# 2. Allow DNS resolution (UDP + TCP 53)
+# REQUIRED for service discovery
+# --------------------------------------------
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -36,9 +39,12 @@ spec:
     ports:
     - protocol: UDP
       port: 53
-
+    - protocol: TCP
+      port: 53
 ---
-# Vault: Allow ingress from services that need secrets
+# --------------------------------------------
+# 3. Allow ingress to Vault from required namespaces
+# --------------------------------------------
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -59,6 +65,7 @@ spec:
     ports:
     - protocol: TCP
       port: 8200
+
   # From internal namespace
   - from:
     - namespaceSelector:
@@ -67,6 +74,7 @@ spec:
     ports:
     - protocol: TCP
       port: 8200
+
   # From gateway namespace
   - from:
     - namespaceSelector:
@@ -75,6 +83,7 @@ spec:
     ports:
     - protocol: TCP
       port: 8200
+
   # From databases namespace
   - from:
     - namespaceSelector:
@@ -83,7 +92,8 @@ spec:
     ports:
     - protocol: TCP
       port: 8200
-  # From same namespace (for init/unseal and vault-agent-injector)
+
+  # From same namespace (vault pods + injector)
   - from:
     - podSelector: {}
     ports:
@@ -91,13 +101,16 @@ spec:
       port: 8200
     - protocol: TCP
       port: 8201
-  # Allow external access (for management)
+
+  # Optional: allow admin access
   - ports:
     - protocol: TCP
       port: 8200
-
 ---
-# Vault: Allow egress to Kubernetes API
+# --------------------------------------------
+# 4. Vault egress (Kubernetes API + internal)
+# REQUIRED for Kubernetes auth
+# --------------------------------------------
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -110,21 +123,21 @@ spec:
   policyTypes:
   - Egress
   egress:
-  # To Kubernetes API server
+  # Kubernetes API server (token review)
   - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: default
+    - ipBlock:
+        cidr: 0.0.0.0/0
     ports:
     - protocol: TCP
       port: 443
-  # To same namespace
+
+  # Internal vault communication
   - to:
     - podSelector: {}
-  # DNS already allowed above
-
 ---
-# Vault Agent Injector: Allow ingress for webhook
+# --------------------------------------------
+# 5. Vault Agent Injector ingress (webhook)
+# --------------------------------------------
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -137,15 +150,15 @@ spec:
   policyTypes:
   - Ingress
   ingress:
-  # From Kubernetes API server (for webhook)
   - from:
     - namespaceSelector: {}
     ports:
     - protocol: TCP
       port: 8080
-
 ---
-# Vault Agent Injector: Allow egress to Vault and K8s API
+# --------------------------------------------
+# 6. Vault Agent Injector egress
+# --------------------------------------------
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -166,11 +179,11 @@ spec:
     ports:
     - protocol: TCP
       port: 8200
-  # To Kubernetes API server
+
+  # To Kubernetes API
   - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: default
+    - ipBlock:
+        cidr: 0.0.0.0/0
     ports:
     - protocol: TCP
       port: 443
