@@ -37,7 +37,7 @@ export function getCurrencySymbol(currency: string): string {
     MAD: "MAD",
   };
   
-  return symbols[currency.toUpperCase()] || currency;
+  return symbols[currency.toUpperCase()] ?? currency;
 }
 
 /**

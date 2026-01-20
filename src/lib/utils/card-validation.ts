@@ -8,7 +8,7 @@ export function validateCardNumber(cardNumber: string): boolean {
   
   // Check for Visa (starts with 4) or Mastercard (starts with 51-55)
   // We strictly allow only these two brands
-  if (!/^4/.test(digits) && !/^5[1-5]/.test(digits)) {
+  if (!digits.startsWith("4") && !/^5[1-5]/.test(digits)) {
     return false;
   }
 
@@ -42,7 +42,7 @@ export function validateCardNumber(cardNumber: string): boolean {
 export function detectCardBrand(cardNumber: string): CardBrand {
   const digits = cardNumber.replace(/\D/g, "");
 
-  if (/^4/.test(digits)) return "visa";
+  if (digits.startsWith("4")) return "visa";
   if (/^5[1-5]/.test(digits)) return "mastercard";
   return "unknown";
 }
@@ -97,7 +97,7 @@ export function validateCVV(cvv: string, cardBrand: CardBrand): boolean {
  */
 export function formatCardNumber(cardNumber: string): string {
   const digits = cardNumber.replace(/\D/g, "");
-  const groups = digits.match(/.{1,4}/g) || [];
+  const groups = digits.match(/.{1,4}/g) ?? [];
   return groups.join(" ");
 }
 

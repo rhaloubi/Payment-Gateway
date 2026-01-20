@@ -4,7 +4,7 @@ import type {
   CardData,
 } from "~/types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 /**
  * Fetch payment intent details (browser-safe, no auth)
@@ -25,13 +25,13 @@ export async function getPaymentIntent(
     );
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({
+      const error = (await response.json().catch(() => ({
         error: "Failed to fetch payment intent",
-      }));
-      throw new Error(error.error || "Failed to fetch payment intent");
+      }))) as { error?: string };
+      throw new Error(error.error ?? "Failed to fetch payment intent");
     }
 
-    return await response.json();
+    return (await response.json()) as PaymentIntentResponse;
   } catch (error) {
     console.error("Error fetching payment intent:", error);
     throw error;
@@ -70,13 +70,13 @@ export async function confirmPaymentIntent(
     );
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({
+      const error = (await response.json().catch(() => ({
         error: "Payment failed",
-      }));
-      throw new Error(error.error || "Payment failed");
+      }))) as { error?: string };
+      throw new Error(error.error ?? "Payment failed");
     }
 
-    return await response.json();
+    return (await response.json()) as ConfirmPaymentResponse;
   } catch (error) {
     console.error("Error confirming payment:", error);
     throw error;

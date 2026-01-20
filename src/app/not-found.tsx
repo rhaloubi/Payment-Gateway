@@ -47,7 +47,7 @@ export default function NotFound() {
         >
           <h2 className="text-2xl font-semibold text-foreground mb-3">Page not found</h2>
           <p className="text-muted-foreground font-mono text-sm leading-relaxed">
-            The page you're looking for doesn't exist or has been moved to another location.
+            The page you&apos;re looking for doesn&apos;t exist or has been moved to another location.
           </p>
         </div>
 
@@ -64,7 +64,7 @@ export default function NotFound() {
 
         {/* Decorative elements */}
         <div className="mt-16 flex justify-center gap-2">
-          {[...Array(3)].map((_, i) => (
+          {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
               className="w-2 h-2 bg-primary/60 rounded-full animate-bounce"

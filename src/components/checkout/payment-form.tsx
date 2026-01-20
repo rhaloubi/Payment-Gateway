@@ -15,15 +15,16 @@ import {
   formatExpiryDate,
   parseExpiryDate,
 } from "~/lib/utils/card-validation";
-import { CreditCard, Lock, AlertCircle, Loader2 } from "lucide-react";
+import { CreditCard, Lock, AlertCircle } from "lucide-react";
 import type { CardData, CardFormData } from "~/types";
+import Image from "next/image";
 
 export const VisaIcon = () => (
-  <img src="/images/visa.svg" alt="Visa" className="w-5 h-5" />
+  <Image src="/images/visa.svg" alt="Visa" width={20} height={20} />
 );
 
 export const MastercardIcon = () => (
-  <img src="/images/mastercard.svg" alt="Mastercard" className="w-5 h-5" />
+  <Image src="/images/mastercard.svg" alt="Mastercard" width={20} height={20} />
 );
 
 const CardDetection = ({ cardNumber }: { cardNumber: string }) => {

@@ -39,7 +39,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
         const response = await getPaymentIntent(intentId);
 
         if (!response.success || !response.data) {
-          throw new Error(response.error || "Failed to load payment details");
+          throw new Error(response.error ?? "Failed to load payment details");
         }
 
         const intentData = response.data;
@@ -47,7 +47,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
         // Check status
         if (intentData.status === "expired") {
           setError("This payment session has expired. Please create a new payment.");
-           window.location.href = intentData.cancel_url || '';
+           window.location.href = intentData.cancel_url ?? '';
           setLoading(false);
           return;
         }
@@ -55,14 +55,14 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
         if (intentData.status === "authorized" || intentData.status === "captured") {
           setError(`Payment already ${intentData.status}. Redirecting...`);
           setTimeout(() => {
-            window.location.href = intentData.success_url || '';
+            window.location.href = intentData.success_url ?? '';
           }, 1500);
           return;
         }
 
         if (intentData.status === "failed" || intentData.status === "canceled") {
           setError(`This payment has ${intentData.status}. Please create a new payment.`);
-          window.location.href = intentData.cancel_url || '';
+          window.location.href = intentData.cancel_url ?? '';
           setLoading(false);
           return;
         }
@@ -76,7 +76,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
       }
     }
 
-    loadIntent();
+    void loadIntent();
   }, [intentId, clientSecret, router, ]);
 
   // Handle payment submission
@@ -94,7 +94,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
       );
 
       if (!response.success || !response.data) {
-        throw new Error(response.error || `Payment failed`);
+        throw new Error(response.error ?? `Payment failed`);
       }
 
       const payment = response.data;
@@ -158,7 +158,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
   // Checkout form
   return (
     <div className="min-h-screen bg-background py-12 font-sans">
-      {showSuccessAnimation && <PaymentSuccess successURL={intent?.success_url || ''} />}
+      {showSuccessAnimation && <PaymentSuccess successURL={intent?.success_url ?? ''} />}
       
       <div className="container mx-auto px-4 lg:px-8 max-w-6xl">
         <div className="text-center mb-12">

@@ -9,7 +9,7 @@ interface PaymentSuccessProps {
   successURL: string
 }
 
-export function PaymentSuccess({ cardType, successURL }: PaymentSuccessProps) {
+export function PaymentSuccess({ cardType: _cardType, successURL }: PaymentSuccessProps) {
   const [showConfetti, setShowConfetti] = useState(false)
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number }>>([])
   const [showCheck, setShowCheck] = useState(false)
@@ -19,6 +19,7 @@ export function PaymentSuccess({ cardType, successURL }: PaymentSuccessProps) {
     const playSound = () => {
       // Audio context logic (wrapped in try/catch for safety)
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
         const AudioContext = window.AudioContext || (window as any).webkitAudioContext
         if (!AudioContext) return;
         
