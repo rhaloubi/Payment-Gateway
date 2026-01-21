@@ -6,13 +6,42 @@ option go_package = "github.com/rhaloubi/payment-gateway/tokenization-service/pr
 
 // TokenizationService provides secure card tokenization
 service TokenizationService {
+  // TokenizeCard creates a token from card data
+  rpc TokenizeCard(TokenizeCardRequest) returns (TokenizeCardResponse);
+  
   // Detokenize retrieves card data from a token (internal only)
   rpc Detokenize(DetokenizeRequest) returns (DetokenizeResponse);
   
   // ValidateToken checks if a token is valid
   rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
   
+  // RevokeToken invalidates a token
+  rpc RevokeToken(RevokeTokenRequest) returns (RevokeTokenResponse);
+}
 
+// =========================================================================
+// TokenizeCard
+// =========================================================================
+
+message TokenizeCardRequest {
+  string merchant_id = 1;
+  string card_number = 2;
+  string cardholder_name = 3;
+  int32 exp_month = 4;
+  int32 exp_year = 5;
+  string cvv = 6;
+  bool is_single_use = 7;
+  string request_id = 8;
+  string ip_address = 9;
+  string user_agent = 10;
+  string created_by = 11; // UUID
+}
+
+message TokenizeCardResponse {
+  string token = 1;
+  CardMetadata card = 2;
+  bool is_new_token = 3;
+  string error = 4;
 }
 
 message CardMetadata {
@@ -67,3 +96,19 @@ message ValidateTokenResponse {
   string error = 6;
 }
 
+// =========================================================================
+// RevokeToken
+// =========================================================================
+
+message RevokeTokenRequest {
+  string token = 1;
+  string merchant_id = 2;
+  string revoked_by = 3;  // UUID
+  string reason = 4;
+}
+
+message RevokeTokenResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+}
