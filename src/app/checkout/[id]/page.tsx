@@ -47,7 +47,9 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
         // Check status
         if (intentData.status === "expired") {
           setError("This payment session has expired. Please create a new payment.");
-           window.location.href = intentData.cancel_url ?? '';
+           window.location.href = intentData.cancel_url 
+              ? `${intentData.cancel_url}?payment-intents_id=${intentData.id}` 
+              : '';
           setLoading(false);
           return;
         }
@@ -55,14 +57,18 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
         if (intentData.status === "authorized" || intentData.status === "captured") {
           setError(`Payment already ${intentData.status}. Redirecting...`);
           setTimeout(() => {
-            window.location.href = intentData.success_url ?? '';
+            window.location.href = intentData.success_url 
+              ? `${intentData.success_url}?payment-intents_id=${intentData.id}` 
+              : '';
           }, 1500);
           return;
         }
 
         if (intentData.status === "failed" || intentData.status === "canceled") {
           setError(`This payment has ${intentData.status}. Please create a new payment.`);
-          window.location.href = intentData.cancel_url ?? '';
+          window.location.href = intentData.cancel_url 
+              ? `${intentData.cancel_url}?payment-intents_id=${intentData.id}` 
+              : '';
           setLoading(false);
           return;
         }
@@ -158,7 +164,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
   // Checkout form
   return (
     <div className="min-h-screen bg-background py-12 font-sans">
-      {showSuccessAnimation && <PaymentSuccess successURL={intent?.success_url ?? ''} />}
+      {showSuccessAnimation && <PaymentSuccess successURL={intent?.success_url ?? ''} intentId={intentId} />}
       
       <div className="container mx-auto px-4 lg:px-8 max-w-6xl">
         <div className="text-center mb-12">
