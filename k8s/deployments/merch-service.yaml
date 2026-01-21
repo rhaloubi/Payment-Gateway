@@ -1,4 +1,13 @@
 # -------------------------
+# ServiceAccount
+# -------------------------
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: merchant-service
+  namespace: services
+---
+# -------------------------
 # Merchant Service
 # -------------------------
 apiVersion: apps/v1
@@ -7,7 +16,7 @@ metadata:
   name: merchant-service
   namespace: services
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: merchant-service
@@ -20,6 +29,14 @@ spec:
         vault.hashicorp.com/agent-inject-init: "false"
         vault.hashicorp.com/role: "merchant-service"
         vault.hashicorp.com/agent-pre-populate-only: "false"
+
+        # Resource limits for Vault Agent
+        vault.hashicorp.com/agent-requests-cpu: "25m"
+        vault.hashicorp.com/agent-limits-cpu: "50m"
+        vault.hashicorp.com/agent-requests-mem: "64Mi"
+        vault.hashicorp.com/agent-limits-mem: "128Mi"
+        vault.hashicorp.com/agent-init-requests-cpu: "25m"
+        vault.hashicorp.com/agent-init-limits-cpu: "50m"
 
         # DATABASE DSN
         vault.hashicorp.com/agent-inject-secret-database-dsn: "secret/data/database/merchant-dsn"

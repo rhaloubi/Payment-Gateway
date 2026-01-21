@@ -67,11 +67,13 @@ spec:
         - vault
         - server
         - -config=/vault/config/vault.hcl
+
         ports:
         - name: http
           containerPort: 8200
         - name: internal
           containerPort: 8201
+
         env:
         - name: VAULT_ADDR
           value: "http://127.0.0.1:8200"
@@ -81,6 +83,7 @@ spec:
           value: "true"
         - name: SKIP_SETCAP
           value: "true"
+
         volumeMounts:
         - name: vault-config
           mountPath: /vault/config
@@ -97,16 +100,18 @@ spec:
         readinessProbe:
           httpGet:
             path: /v1/sys/health?standbyok=true&uninitcode=204
-          port: 8200
-        initialDelaySeconds: 10
-        periodSeconds: 10
+            port: 8200
+          initialDelaySeconds: 10
+          periodSeconds: 10
+
         resources:
           requests:
-            cpu: 100m
-            memory: 512Mi
+            cpu: 50m
+            memory: 256Mi
           limits:
-            cpu: 500m
-            memory: 1Gi
+            cpu: 250m
+            memory: 512Mi
+
       volumes:
       - name: vault-config
         configMap:

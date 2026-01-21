@@ -12,7 +12,11 @@ k8s/secrets/*-actual.yaml
 # Terraform
 terraform/*.tfstate
 terraform/.terraform/
+terraform/variables.tf
+terraform/terraform.tfvars
 
 # Backups
 backups/
 EOF
+
+security*

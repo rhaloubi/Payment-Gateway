@@ -1,3 +1,11 @@
+# ServiceAccount for Postgres
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: database-service
+  namespace: databases
+
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -17,8 +25,17 @@ spec:
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/role: "database-service"
 
+        # Resource limits for Vault Agent
+        vault.hashicorp.com/agent-requests-cpu: "25m"
+        vault.hashicorp.com/agent-limits-cpu: "50m"
+        vault.hashicorp.com/agent-requests-mem: "64Mi"
+        vault.hashicorp.com/agent-limits-mem: "128Mi"
+        vault.hashicorp.com/agent-init-requests-cpu: "25m"
+        vault.hashicorp.com/agent-init-limits-cpu: "50m"
+
         vault.hashicorp.com/agent-inject-secret-admin_dsn: secret/data/database/admin-dsn
         vault.hashicorp.com/agent-inject-secret-postgres_user: secret/data/database/postgres_user
+        vault.hashicorp.com/agent-inject-secret-postgres_pas: secret/data/database/postgres_pas
         vault.hashicorp.com/agent-inject-secret-postgres_db: secret/data/database/postgres_db
 
         vault.hashicorp.com/agent-inject-template-admin_dsn: |
@@ -28,6 +45,11 @@ spec:
 
         vault.hashicorp.com/agent-inject-template-postgres_user: |
           {{- with secret "secret/data/database/postgres_user" -}}
+          {{ .Data.data.value }}
+          {{- end }}
+
+        vault.hashicorp.com/agent-inject-template-postgres_pas: |
+          {{- with secret "secret/data/database/postgres_pas" -}}
           {{ .Data.data.value }}
           {{- end }}
 

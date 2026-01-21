@@ -155,11 +155,26 @@ func (s *PaymentService) AuthorizePayment(ctx context.Context, req *AuthorizePay
 		logger.Log.Error("Transaction authorization failed", zap.Error(err))
 		return nil, fmt.Errorf("authorization failed: %w", err)
 	}
+	if authResp.TransactionId == "" {
+		logger.Log.Error("Transaction service returned empty transaction_id",
+			zap.Bool("approved", authResp.Approved),
+			zap.String("merchant_id", req.MerchantID.String()),
+		)
+		return nil, fmt.Errorf("transaction service did not return transaction_id")
+	}
 
+	txID, err := uuid.Parse(authResp.TransactionId)
+	if err != nil {
+		logger.Log.Error("Invalid transaction_id returned by transaction service",
+			zap.String("transaction_id", authResp.TransactionId),
+			zap.Error(err),
+		)
+		return nil, fmt.Errorf("invalid transaction_id from transaction service")
+	}
 	// Step 6: Create payment record
 	payment := &model.Payment{
 		MerchantID:    req.MerchantID,
-		TransactionID: uuid.MustParse(authResp.TransactionId),
+		TransactionID: txID,
 		Type:          model.PaymentTypeAuthorize,
 		Amount:        req.Amount,
 		Currency:      req.Currency,

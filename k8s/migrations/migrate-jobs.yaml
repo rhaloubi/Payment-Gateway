@@ -1,4 +1,3 @@
----
 # Auth Service Migration
 apiVersion: batch/v1
 kind: Job
@@ -14,9 +13,13 @@ spec:
       annotations:
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/role: "auth-service"
-        vault.hashicorp.com/agent-pre-populate-only: "true"  
-        vault.hashicorp.com/agent-inject-secret-auth-dsn: "secret/data/database/auth-dsn"
-        vault.hashicorp.com/agent-inject-template-auth-dsn: |
+        vault.hashicorp.com/agent-pre-populate-only: "true"
+        vault.hashicorp.com/agent-requests-cpu: "25m"
+        vault.hashicorp.com/agent-init-requests-cpu: "25m"
+        # Explicitly set the filename to match DATABASE_DSN_FILE env var
+        vault.hashicorp.com/agent-inject-secret-DATABASE_DSN: "secret/data/database/auth-dsn"
+        vault.hashicorp.com/agent-inject-file-DATABASE_DSN: "DATABASE_DSN"
+        vault.hashicorp.com/agent-inject-template-DATABASE_DSN: |
           {{- with secret "secret/data/database/auth-dsn" -}}
           {{ .Data.data.value }}
           {{- end }}
@@ -26,14 +29,13 @@ spec:
       containers:
       - name: migrate
         image: rhaloubi8/payment-gateway-auth:latest
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            export DATABASE_DSN=$(cat /vault/secrets/auth-dsn)
-            exec /auth-migrate up
+        command: ["/auth-migrate"]
+        args: ["up"]
         env:
         - name: APP_MODE
           value: "production"
+        - name: DATABASE_DSN_FILE
+          value: "/vault/secrets/DATABASE_DSN"
         - name: VAULT_ADDR
           value: "http://vault.vault.svc.cluster.local:8200"
 
@@ -54,8 +56,11 @@ spec:
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/role: "merchant-service"
         vault.hashicorp.com/agent-pre-populate-only: "true"
-        vault.hashicorp.com/agent-inject-secret-merchant-dsn: "secret/data/database/merchant-dsn"
-        vault.hashicorp.com/agent-inject-template-merchant-dsn: |
+        vault.hashicorp.com/agent-requests-cpu: "25m"
+        vault.hashicorp.com/agent-init-requests-cpu: "25m"
+        vault.hashicorp.com/agent-inject-secret-DATABASE_DSN: "secret/data/database/merchant-dsn"
+        vault.hashicorp.com/agent-inject-file-DATABASE_DSN: "DATABASE_DSN"
+        vault.hashicorp.com/agent-inject-template-DATABASE_DSN: |
           {{- with secret "secret/data/database/merchant-dsn" -}}
           {{ .Data.data.value }}
           {{- end }}
@@ -65,14 +70,13 @@ spec:
       containers:
       - name: migrate
         image: rhaloubi8/payment-gateway-merchant:latest
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            export DATABASE_DSN=$(cat /vault/secrets/merchant-dsn)
-            exec /merchant-migrate up
+        command: ["/merchant-migrate"]
+        args: ["up"]
         env:
         - name: APP_MODE
           value: "production"
+        - name: DATABASE_DSN_FILE
+          value: "/vault/secrets/DATABASE_DSN"
         - name: VAULT_ADDR
           value: "http://vault.vault.svc.cluster.local:8200"
 
@@ -92,9 +96,12 @@ spec:
       annotations:
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/role: "payment-api-service"
+        vault.hashicorp.com/agent-requests-cpu: "25m"
+        vault.hashicorp.com/agent-init-requests-cpu: "25m"
         vault.hashicorp.com/agent-pre-populate-only: "true"
-        vault.hashicorp.com/agent-inject-secret-payment-api-dsn: "secret/data/database/payment-api-dsn"
-        vault.hashicorp.com/agent-inject-template-payment-api-dsn: |
+        vault.hashicorp.com/agent-inject-secret-DATABASE_DSN: "secret/data/database/payment-api-dsn"
+        vault.hashicorp.com/agent-inject-file-DATABASE_DSN: "DATABASE_DSN"
+        vault.hashicorp.com/agent-inject-template-DATABASE_DSN: |
           {{- with secret "secret/data/database/payment-api-dsn" -}}
           {{ .Data.data.value }}
           {{- end }}
@@ -104,14 +111,13 @@ spec:
       containers:
       - name: migrate
         image: rhaloubi8/payment-gateway-payment-api:latest
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            export DATABASE_DSN=$(cat /vault/secrets/payment-api-dsn)
-            exec /payment-api-migrate up
+        command: ["/payment-api-migrate"]
+        args: ["up"]
         env:
         - name: APP_MODE
           value: "production"
+        - name: DATABASE_DSN_FILE
+          value: "/vault/secrets/DATABASE_DSN"
         - name: VAULT_ADDR
           value: "http://vault.vault.svc.cluster.local:8200"
 
@@ -132,8 +138,11 @@ spec:
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/role: "tokenization-service"
         vault.hashicorp.com/agent-pre-populate-only: "true"
-        vault.hashicorp.com/agent-inject-secret-tokenization-dsn: "secret/data/database/tokenization-dsn"
-        vault.hashicorp.com/agent-inject-template-tokenization-dsn: |
+        vault.hashicorp.com/agent-requests-cpu: "25m"
+        vault.hashicorp.com/agent-init-requests-cpu: "25m"
+        vault.hashicorp.com/agent-inject-secret-DATABASE_DSN: "secret/data/database/tokenization-dsn"
+        vault.hashicorp.com/agent-inject-file-DATABASE_DSN: "DATABASE_DSN"
+        vault.hashicorp.com/agent-inject-template-DATABASE_DSN: |
           {{- with secret "secret/data/database/tokenization-dsn" -}}
           {{ .Data.data.value }}
           {{- end }}
@@ -143,14 +152,13 @@ spec:
       containers:
       - name: migrate
         image: rhaloubi8/payment-gateway-tokenization:latest
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            export DATABASE_DSN=$(cat /vault/secrets/tokenization-dsn)
-            exec /tokenization-migrate up
+        command: ["/tokenization-migrate"]
+        args: ["up"]
         env:
         - name: APP_MODE
           value: "production"
+        - name: DATABASE_DSN_FILE
+          value: "/vault/secrets/DATABASE_DSN"
         - name: VAULT_ADDR
           value: "http://vault.vault.svc.cluster.local:8200"
 
@@ -171,8 +179,12 @@ spec:
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/role: "transaction-service"
         vault.hashicorp.com/agent-pre-populate-only: "true"
-        vault.hashicorp.com/agent-inject-secret-transaction-dsn: "secret/data/database/transaction-dsn"
-        vault.hashicorp.com/agent-inject-template-transaction-dsn: |
+        vault.hashicorp.com/agent-requests-cpu: "25m"
+        vault.hashicorp.com/agent-init-requests-cpu: "25m"
+        # Corrected for Consistency and Distroless support
+        vault.hashicorp.com/agent-inject-secret-DATABASE_DSN: "secret/data/database/transaction-dsn"
+        vault.hashicorp.com/agent-inject-file-DATABASE_DSN: "DATABASE_DSN"
+        vault.hashicorp.com/agent-inject-template-DATABASE_DSN: |
           {{- with secret "secret/data/database/transaction-dsn" -}}
           {{ .Data.data.value }}
           {{- end }}
@@ -182,13 +194,13 @@ spec:
       containers:
       - name: migrate
         image: rhaloubi8/payment-gateway-transaction:latest
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            export DATABASE_DSN=$(cat /vault/secrets/transaction-dsn)
-            exec /transaction-migrate up
+        # Removed /bin/sh -c to support distroless
+        command: ["/transaction-migrate"]
+        args: ["up"]
         env:
         - name: APP_MODE
           value: "production"
+        - name: DATABASE_DSN_FILE
+          value: "/vault/secrets/DATABASE_DSN"
         - name: VAULT_ADDR
           value: "http://vault.vault.svc.cluster.local:8200"

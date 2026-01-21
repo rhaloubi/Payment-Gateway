@@ -155,7 +155,7 @@ func (s *PaymentIntentService) CreatePaymentIntent(ctx context.Context, req *Cre
 		Status:       intent.Status,
 		Amount:       intent.Amount,
 		Currency:     intent.Currency,
-		CheckoutURL:  intent.GetCheckoutURL(config.GetEnv("CHECKOUT_URL")),
+		CheckoutURL:  fmt.Sprintf("%s?client_secret=%s", intent.GetCheckoutURL(config.GetEnv("CHECKOUT_URL")), intent.ClientSecret),
 		ExpiresAt:    intent.ExpiresAt,
 		CreatedAt:    intent.CreatedAt,
 	}, nil

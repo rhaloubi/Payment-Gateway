@@ -155,7 +155,7 @@ metadata:
     app.kubernetes.io/component: controller
     app.kubernetes.io/part-of: ingress-nginx
 spec:
-  replicas: 2
+  replicas: 1
   revisionHistoryLimit: 10
   selector:
     matchLabels:
@@ -227,11 +227,11 @@ spec:
           failureThreshold: 3
         resources:
           requests:
-            cpu: 200m
-            memory: 256Mi
+            cpu: 100m
+            memory: 128Mi
           limits:
-            cpu: 1000m
-            memory: 512Mi
+            cpu: 500m
+            memory: 256Mi
         securityContext:
           allowPrivilegeEscalation: true
           runAsUser: 101
