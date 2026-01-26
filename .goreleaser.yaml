@@ -1,11 +1,7 @@
-# .goreleaser.yml
-# Schema: https://goreleaser.com/static/schema.json
-
 version: 2
 
 before:
   hooks:
-    # Clean dependencies and generate code if needed
     - go mod tidy
     - go generate ./...
 
@@ -23,11 +19,11 @@ builds:
       - arm64
 
 archives:
-  - formats: [tar.gz]
-    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
-    format_overrides:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    overrides:
       - goos: windows
-        formats: [zip]
+        format: zip
 
 changelog:
   sort: asc
@@ -39,12 +35,8 @@ changelog:
 release:
   github:
     owner: rhaloubi
-    name: Payment-Gateway
-
-  # optional footer in release notes
-  footer: |
-    ---
-    Released by [GoReleaser](https://github.com/goreleaser/goreleaser)
+    name: payment-gateway-cli
+  replace_existing_artifacts: true
 
 brews:
   - name: payment-cli
@@ -55,6 +47,3 @@ brews:
       email: "redahaloubi8@gmail.com"
     install: |
       bin.install "payment-cli"
-
-
-
