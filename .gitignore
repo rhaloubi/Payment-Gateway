@@ -1,3 +1,5 @@
 # Added by goreleaser init:
 dist/
 /build
+
+/payment-cli

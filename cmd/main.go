@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	version = "1.0.0"
+	version = "1.1.0"
 	cfgFile string
 	debug   bool
 	output  string
@@ -22,7 +22,7 @@ func main() {
 		Short: "💳 Payment Gateway CLI",
 		Long: `
 ╔═══════════════════════════════════════════════════════════════╗
-║                  💳 Payment Gateway CLI                       ║
+║                  💳 Payment Gateway CLI v1.1.0                ║
 ║                                                               ║
 ║  Beautiful command-line tool for payment gateway management   ║
 ╚═══════════════════════════════════════════════════════════════╝
@@ -30,12 +30,18 @@ func main() {
 A developer-friendly CLI for managing merchants, testing payments,
 and debugging your payment infrastructure.
 
+New in v1.1.0:
+  • Payment Intents with hosted checkout
+  • Enhanced configuration management
+  • Production-first default URLs
+  • Real-time payment status polling
+
 Examples:
   payment-cli init
-  payment-cli register
-  payment-cli login
+  payment-cli auth register
+  payment-cli auth login
   payment-cli merchant create
-  payment-cli payment authorize 
+  payment-cli payment intent create
   payment-cli payment transactions
 `,
 		Version: version,
