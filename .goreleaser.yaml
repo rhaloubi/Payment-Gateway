@@ -6,44 +6,40 @@ before:
     - go generate ./...
 
 builds:
-  - main: ./cmd/main.go
+  - id: linux
+    main: ./cmd/main.go
     binary: payment-cli
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
-      - amd64
-      - arm64
+    env: [CGO_ENABLED=0]
+    goos: [linux]
+    goarch: [amd64, arm64]
+
+  - id: darwin
+    main: ./cmd/main.go
+    binary: payment-cli
+    env: [CGO_ENABLED=0]
+    goos: [darwin]
+    goarch: [amd64, arm64]
+
+  - id: windows
+    main: ./cmd/main.go
+    binary: payment-cli
+    env: [CGO_ENABLED=0]
+    goos: [windows]
+    goarch: [amd64]
 
 archives:
-  - format: tar.gz
+  - id: unix
+    format: tar.gz
+    builds: [linux, darwin]
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
-    overrides:
-      - goos: windows
-        format: zip
 
-changelog:
-  sort: asc
-  filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
+  - id: windows
+    format: zip
+    builds: [windows]
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
 
 release:
   github:
     owner: rhaloubi
     name: payment-gateway-cli
   replace_existing_artifacts: true
-
-brews:
-  - name: payment-cli
-    description: "CLI for interacting with the payment gateway"
-    homepage: "https://github.com/rhaloubi/Payment-Gateway"
-    commit_author:
-      name: "Reda Haloubi"
-      email: "redahaloubi8@gmail.com"
-    install: |
-      bin.install "payment-cli"
