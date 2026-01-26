@@ -41,5 +41,5 @@ archives:
 release:
   github:
     owner: rhaloubi
-    name: payment-gateway-cli
+    name: Payment-Gateway
   replace_existing_artifacts: true
