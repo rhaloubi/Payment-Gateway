@@ -20,13 +20,16 @@ func NewPaymentCommands() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "payment",
 		Short: "💳 Payment operations",
-		Long:  "Manage payments, including authorization ",
+		Long:  "Manage payments, including authorization, intents, and transactions",
 	}
+
+	// Add all payment subcommands
 	cmd.AddCommand(NewAuthorizePaymentCommands())
 	cmd.AddCommand(NewCapturePaymentCommands())
 	cmd.AddCommand(NewVoidPaymentCommands())
 	cmd.AddCommand(NewRefundPaymentCommands())
 	cmd.AddCommand(NewTransactionCommands())
+	cmd.AddCommand(NewPaymentIntentCommands())
 
 	return cmd
 }
@@ -129,7 +132,7 @@ func NewCapturePaymentCommands() *cobra.Command {
 		Long:  "Capture a payment using the payment gateway",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ui.Info("💳 Payment Capture")
-			ui.Warning("⚠️  Pleace go to the Payment Gateway Dashboard to capture the payment!")
+			ui.Warning("⚠️  Please go to the Payment Gateway Dashboard to capture the payment!")
 			return nil
 		},
 	}
@@ -143,7 +146,7 @@ func NewVoidPaymentCommands() *cobra.Command {
 		Long:  "Void a payment using the payment gateway",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ui.Info("💳 Payment Void")
-			ui.Warning("⚠️  Pleace go to the Payment Gateway Dashboard to void the payment!")
+			ui.Warning("⚠️  Please go to the Payment Gateway Dashboard to void the payment!")
 			return nil
 		},
 	}
@@ -157,7 +160,7 @@ func NewRefundPaymentCommands() *cobra.Command {
 		Long:  "Refund a payment using the payment gateway",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ui.Info("💳 Payment Refund")
-			ui.Warning("⚠️  Pleace go to the Payment Gateway Dashboard to refund the payment!")
+			ui.Warning("⚠️  Please go to the Payment Gateway Dashboard to refund the payment!")
 			return nil
 		},
 	}

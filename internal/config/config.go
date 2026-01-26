@@ -16,7 +16,9 @@ type Config struct {
 }
 
 type Environment struct {
-	APIURL string `yaml:"api_url"`
+	APIURL     string `yaml:"api_url"`
+	AuthURL    string `yaml:"auth_url"`
+	PaymentURL string `yaml:"payment_url"`
 }
 
 type Credentials struct {
@@ -44,15 +46,19 @@ func Init() error {
 
 	configPath := GetConfigPath()
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		// Create default config
+		// Create default config with production URLs
 		defaultConfig := &Config{
-			CurrentEnv: "development",
+			CurrentEnv: "production",
 			Environments: map[string]Environment{
-				"development": {
-					APIURL: "http://localhost:8080",
-				},
 				"production": {
-					APIURL: "https://api.example.com",
+					APIURL:     "https://paymentgateway.redahaloubi.com",
+					AuthURL:    "https://paymentgateway.redahaloubi.com",
+					PaymentURL: "https://paymentgateway.redahaloubi.com",
+				},
+				"development": {
+					APIURL:     "http://localhost:8080",
+					AuthURL:    "http://localhost:8080",
+					PaymentURL: "http://localhost:8080",
 				},
 			},
 			Preferences: Preferences{
@@ -124,7 +130,7 @@ func SaveCredentials(accessToken, refreshToken, email string) error {
 	return Save()
 }
 
-// get merchnat id
+// GetMerchantID returns the current merchant ID
 func GetMerchantID() string {
 	if globalConfig == nil {
 		return ""
@@ -132,7 +138,7 @@ func GetMerchantID() string {
 	return globalConfig.Credentials.MerchantID
 }
 
-// get api key
+// GetApiKey returns the current API key
 func GetApiKey() string {
 	if globalConfig == nil {
 		return ""
@@ -140,8 +146,9 @@ func GetApiKey() string {
 	return globalConfig.Credentials.ApiKey
 }
 
+// SetMerchantID sets the merchant ID
 func SetMerchantID(id string) error {
-	if globalConfig != nil {
+	if globalConfig == nil {
 		if err := Load(""); err != nil {
 			return err
 		}
@@ -150,14 +157,62 @@ func SetMerchantID(id string) error {
 	return Save()
 }
 
+// SetApiKey sets the API key
 func SetApiKey(apiKey string) error {
-	if globalConfig != nil {
+	if globalConfig == nil {
 		if err := Load(""); err != nil {
 			return err
 		}
 	}
 	globalConfig.Credentials.ApiKey = apiKey
 	return Save()
+}
+
+// SetCurrentEnv switches the current environment
+func SetCurrentEnv(env string) error {
+	if globalConfig == nil {
+		if err := Load(""); err != nil {
+			return err
+		}
+	}
+
+	if _, exists := globalConfig.Environments[env]; !exists {
+		return fmt.Errorf("environment '%s' not found", env)
+	}
+
+	globalConfig.CurrentEnv = env
+	return Save()
+}
+
+// SetConfigValue sets a specific config value
+func SetConfigValue(key, value string) error {
+	if globalConfig == nil {
+		if err := Load(""); err != nil {
+			return err
+		}
+	}
+
+	switch key {
+	case "output_format":
+		globalConfig.Preferences.OutputFormat = value
+	case "color_enabled":
+		globalConfig.Preferences.ColorEnabled = value == "true"
+	case "debug_mode":
+		globalConfig.Preferences.DebugMode = value == "true"
+	default:
+		return fmt.Errorf("unknown config key: %s", key)
+	}
+
+	return Save()
+}
+
+// ResetConfig resets config to default values
+func ResetConfig() error {
+	configPath := GetConfigPath()
+	if err := os.Remove(configPath); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	return Init()
 }
 
 // ClearCredentials removes saved credentials
@@ -182,17 +237,33 @@ func getConfigDir() string {
 
 func GetCurrentEnv() string {
 	if globalConfig == nil {
-		return "development"
+		return "production"
 	}
 	return globalConfig.CurrentEnv
 }
 
 func GetAPIURL() string {
-	if globalConfig != nil {
-		return "http://localhost:8080"
+	if globalConfig == nil {
+		return "https://paymentgateway.redahaloubi.com"
 	}
 	env := globalConfig.Environments[globalConfig.CurrentEnv]
 	return env.APIURL
+}
+
+func GetAuthURL() string {
+	if globalConfig == nil {
+		return "https://paymentgateway.redahaloubi.com"
+	}
+	env := globalConfig.Environments[globalConfig.CurrentEnv]
+	return env.AuthURL
+}
+
+func GetPaymentURL() string {
+	if globalConfig == nil {
+		return "https://paymentgateway.redahaloubi.com"
+	}
+	env := globalConfig.Environments[globalConfig.CurrentEnv]
+	return env.PaymentURL
 }
 
 func GetAccessToken() string {
@@ -207,6 +278,27 @@ func GetUserEmail() string {
 		return ""
 	}
 	return globalConfig.Credentials.UserEmail
+}
+
+func GetOutputFormat() string {
+	if globalConfig == nil {
+		return "table"
+	}
+	return globalConfig.Preferences.OutputFormat
+}
+
+func GetColorEnabled() bool {
+	if globalConfig == nil {
+		return true
+	}
+	return globalConfig.Preferences.ColorEnabled
+}
+
+func GetDebugMode() bool {
+	if globalConfig == nil {
+		return false
+	}
+	return globalConfig.Preferences.DebugMode
 }
 
 func SetDebug(enabled bool) {
